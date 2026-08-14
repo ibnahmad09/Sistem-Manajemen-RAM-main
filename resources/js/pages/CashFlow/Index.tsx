@@ -2,9 +2,9 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { DollarSign, Minus, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type CashierCashEntry, type PaginatedData } from '@/types';
 import { cn, formatRupiah } from '@/lib/utils';
 import * as cashFlowRoute from '@/routes/cash-flow';
+import type {BreadcrumbItem, CashierCashEntry, PaginatedData} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Arus Kas', href: '/cash-flow' },
@@ -58,7 +58,9 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(cashFlowRoute.store(), {
-            onSuccess: () => { setIsModalOpen(false); reset(); },
+            onSuccess: () => {
+ setIsModalOpen(false); reset(); 
+},
         });
     };
 
@@ -139,6 +141,7 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                                 ) : (
                                     entries.data.map((entry) => {
                                         const isIn = entry.type === 'cash_in';
+
                                         return (
                                             <tr key={entry.id} className="hover:bg-muted/20 transition-colors">
                                                 <td className="px-5 py-3 text-muted-foreground">

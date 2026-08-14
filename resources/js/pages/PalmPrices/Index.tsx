@@ -2,9 +2,9 @@ import { Head, useForm } from '@inertiajs/react';
 import { Plus, Wheat, X } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type PalmPrice } from '@/types';
 import { formatRupiah } from '@/lib/utils';
 import * as palmPricesRoute from '@/routes/palm-prices';
+import type {BreadcrumbItem, PalmPrice} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Harga Sawit', href: '/palm-prices' },
@@ -27,7 +27,9 @@ export default function PalmPricesIndex({ prices }: Props) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(palmPricesRoute.store(), {
-            onSuccess: () => { setIsModalOpen(false); reset(); },
+            onSuccess: () => {
+ setIsModalOpen(false); reset(); 
+},
         });
     };
 

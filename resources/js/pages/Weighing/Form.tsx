@@ -1,11 +1,11 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Calculator, Save, Scale } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Farmer, type PalmPrice } from '@/types';
 import { calculateTransaction, formatKg, formatRupiah } from '@/lib/utils';
-import * as weighingRoute from '@/routes/weighing';
 import * as farmersRoute from '@/routes/farmers';
+import * as weighingRoute from '@/routes/weighing';
+import type {BreadcrumbItem, Farmer, PalmPrice} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Timbangan', href: '/weighing' },
@@ -16,6 +16,44 @@ interface Props {
     farmers: Farmer[];
     latestPrice: PalmPrice | null;
     roundingMode: string;
+}
+
+function NumberInput({
+    label,
+    value,
+    onChange,
+    placeholder = '0',
+    step = '0.01',
+    required = false,
+    className = '',
+    error,
+}: {
+    label: string;
+    value: number;
+    onChange: (value: number) => void;
+    placeholder?: string;
+    step?: string;
+    required?: boolean;
+    className?: string;
+    error?: string;
+}) {
+    return (
+        <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-foreground">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            <input
+                type="number"
+                step={step}
+                min="0"
+                value={value || ''}
+                onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+                placeholder={placeholder}
+                className={`h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 font-mono text-sm outline-none focus:ring-2 focus:ring-primary transition ${className}`}
+            />
+            {error && <p className="text-xs text-red-500">{error}</p>}
+        </div>
+    );
 }
 
 export default function WeighingForm({ farmers, latestPrice, roundingMode }: Props) {
@@ -40,9 +78,12 @@ export default function WeighingForm({ farmers, latestPrice, roundingMode }: Pro
     const fetchDebt = async (farmerId: string) => {
         if (!farmerId) {
             setCurrentDebt(0);
+
             return;
         }
+
         setLoadingDebt(true);
+
         try {
             const res = await fetch(farmersRoute.debt(parseInt(farmerId)).url);
             const json = await res.json();
@@ -76,38 +117,6 @@ export default function WeighingForm({ farmers, latestPrice, roundingMode }: Pro
         e.preventDefault();
         post(weighingRoute.store());
     };
-
-    const NumberInput = ({
-        label,
-        field,
-        placeholder = '0',
-        step = '0.01',
-        required = false,
-        className = '',
-    }: {
-        label: string;
-        field: keyof typeof data;
-        placeholder?: string;
-        step?: string;
-        required?: boolean;
-        className?: string;
-    }) => (
-        <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">
-                {label} {required && <span className="text-red-500">*</span>}
-            </label>
-            <input
-                type="number"
-                step={step}
-                min="0"
-                value={(data[field] as number) || ''}
-                onChange={(e) => setData(field, parseFloat(e.target.value) || 0)}
-                placeholder={placeholder}
-                className={`h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 font-mono text-sm outline-none focus:ring-2 focus:ring-primary transition ${className}`}
-            />
-            {errors[field] && <p className="text-xs text-red-500">{String(errors[field])}</p>}
-        </div>
-    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -183,8 +192,8 @@ export default function WeighingForm({ farmers, latestPrice, roundingMode }: Pro
                                 <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-muted-foreground">Hasil Timbangan</h2>
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div className="space-y-4">
-                                        <NumberInput label="Berat Bruto (kg)" field="gross_weight" required className="text-lg font-bold" />
-                                        <NumberInput label="Berat Tara / Kendaraan (kg)" field="tare_weight" required className="text-lg font-bold" />
+                                        <NumberInput label="Berat Bruto (kg)" value={data.gross_weight} onChange={(v) => setData('gross_weight', v)} error={errors.gross_weight} required className="text-lg font-bold" />
+                                        <NumberInput label="Berat Tara / Kendaraan (kg)" value={data.tare_weight} onChange={(v) => setData('tare_weight', v)} error={errors.tare_weight} required className="text-lg font-bold" />
                                     </div>
                                     <div className="flex flex-col items-center justify-center rounded-xl border border-sidebar-border/30 bg-muted/20 p-6 text-center">
                                         <Scale className="mb-2 h-8 w-8 text-muted-foreground/40" />
@@ -230,7 +239,7 @@ export default function WeighingForm({ farmers, latestPrice, roundingMode }: Pro
                                                 </div>
                                             )}
                                         </div>
-                                        <NumberInput label="Harga Sawit per KG (Rp)" field="palm_price_per_kg" required />
+                                        <NumberInput label="Harga Sawit per KG (Rp)" value={data.palm_price_per_kg} onChange={(v) => setData('palm_price_per_kg', v)} error={errors.palm_price_per_kg} required />
                                     </div>
 
                                     {/* Sortiran */}
@@ -249,8 +258,8 @@ export default function WeighingForm({ farmers, latestPrice, roundingMode }: Pro
                                         </div>
                                         {data.has_sorting && (
                                             <div className="grid grid-cols-2 gap-2">
-                                                <NumberInput label="Berat (kg)" field="sorting_weight" />
-                                                <NumberInput label="Harga/kg (Rp)" field="sorting_price_per_kg" />
+                                                <NumberInput label="Berat (kg)" value={data.sorting_weight} onChange={(v) => setData('sorting_weight', v)} error={errors.sorting_weight} />
+                                                <NumberInput label="Harga/kg (Rp)" value={data.sorting_price_per_kg} onChange={(v) => setData('sorting_price_per_kg', v)} error={errors.sorting_price_per_kg} />
                                             </div>
                                         )}
                                     </div>

@@ -1,10 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
 import { BarChart3, CreditCard, Scale, TrendingUp, Users } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type WeighingTransaction } from '@/types';
 import { formatRupiah, formatKg } from '@/lib/utils';
-import * as weighingRoute from '@/routes/weighing';
 import * as farmersRoute from '@/routes/farmers';
+import * as weighingRoute from '@/routes/weighing';
+import type {BreadcrumbItem, WeighingTransaction} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard Super Admin', href: '/dashboard/super-admin' },

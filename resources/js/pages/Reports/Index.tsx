@@ -2,8 +2,8 @@ import { Head, router } from '@inertiajs/react';
 import { BarChart3, Download, Search } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
 import { formatKg, formatRupiah } from '@/lib/utils';
+import type {BreadcrumbItem} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Laporan', href: '/reports' },

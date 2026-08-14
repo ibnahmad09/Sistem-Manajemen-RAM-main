@@ -8,6 +8,7 @@ function createMockEncoder() {
     const record = (method: string) =>
         vi.fn((...args: unknown[]) => {
             calls.push({ method, args });
+
             return mock;
         });
 

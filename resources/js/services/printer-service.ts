@@ -40,6 +40,7 @@ class PrinterService {
     get pairedDevices(): PairedPrinter[] {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
+
             return raw ? JSON.parse(raw) : [];
         } catch {
             return [];
@@ -48,6 +49,7 @@ class PrinterService {
 
     on(listener: PrinterEventListener) {
         this.listeners.push(listener);
+
         return () => {
             this.listeners = this.listeners.filter((l) => l !== listener);
         };
@@ -59,30 +61,41 @@ class PrinterService {
 
     private setStatus(status: PrinterStatus, printer?: PairedPrinter) {
         this.status = status;
-        if (printer) this.activePrinter = printer;
+
+        if (printer) {
+this.activePrinter = printer;
+}
+
         this.notify();
     }
 
     private savePairedDevice(device: PairedPrinter) {
         const list = this.pairedDevices;
         const idx = list.findIndex((d) => d.id === device.id);
+
         if (idx >= 0) {
             list[idx] = device;
         } else {
             list.push(device);
         }
+
         localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
         localStorage.setItem(ACTIVE_KEY, device.id);
     }
 
     getActivePrinter(): PairedPrinter | null {
         const activeId = localStorage.getItem(ACTIVE_KEY);
-        if (!activeId) return null;
+
+        if (!activeId) {
+return null;
+}
+
         return this.pairedDevices.find((d) => d.id === activeId) ?? null;
     }
 
     setActivePrinter(id: string) {
         const device = this.pairedDevices.find((d) => d.id === id);
+
         if (device) {
             localStorage.setItem(ACTIVE_KEY, id);
             this.activePrinter = device;
@@ -93,9 +106,11 @@ class PrinterService {
     forgetPrinter(id: string) {
         const list = this.pairedDevices.filter((d) => d.id !== id);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+
         if (this.activePrinter?.id === id) {
             localStorage.removeItem(ACTIVE_KEY);
             this.activePrinter = null;
+
             if (this.status === 'connected') {
                 this.disconnect();
             } else {
@@ -152,16 +167,25 @@ class PrinterService {
             });
         } catch (err) {
             this.setStatus('disconnected');
+
             throw err;
         }
     }
 
     async reconnect(deviceId: string): Promise<void> {
-        if (!this.webBluetoothSupported) return;
-        if (!navigator.bluetooth.getDevices) return;
+        if (!this.webBluetoothSupported) {
+return;
+}
+
+        if (!navigator.bluetooth.getDevices) {
+return;
+}
 
         const device = this.pairedDevices.find((d) => d.id === deviceId);
-        if (!device) throw new Error('Printer tidak ditemukan.');
+
+        if (!device) {
+throw new Error('Printer tidak ditemukan.');
+}
 
         this.setStatus('connecting');
 
@@ -198,6 +222,7 @@ class PrinterService {
             });
         } catch (err) {
             this.setStatus('disconnected');
+
             throw err;
         }
     }
@@ -208,19 +233,23 @@ class PrinterService {
                 await this.printer.disconnect();
             } catch {
             }
+
             this.printer = null;
         }
+
         this.setStatus('disconnected');
     }
 
     async autoReconnect(): Promise<boolean> {
         const active = this.getActivePrinter();
+
         if (!active || !this.webBluetoothSupported || !navigator.bluetooth.getDevices) {
             return false;
         }
 
         try {
             await this.reconnect(active.id);
+
             return true;
         } catch {
             return false;
@@ -233,7 +262,10 @@ class PrinterService {
         }
 
         const active = this.activePrinter;
-        if (!active) throw new Error('Tidak ada printer aktif.');
+
+        if (!active) {
+throw new Error('Tidak ada printer aktif.');
+}
 
         const { default: ReceiptPrinterEncoder } = await import('@point-of-sale/receipt-printer-encoder');
 

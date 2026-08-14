@@ -1,11 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Bluetooth, BluetoothConnected, CheckCircle, Printer, PrinterIcon } from 'lucide-react';
 import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type WeighingTransaction } from '@/types';
-import { formatKg, formatRupiah } from '@/lib/utils';
 import { usePrinter } from '@/hooks/use-printer';
+import AppLayout from '@/layouts/app-layout';
+import { formatKg, formatRupiah } from '@/lib/utils';
 import * as weighingRoute from '@/routes/weighing';
+import type {BreadcrumbItem, WeighingTransaction} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Timbangan', href: '/weighing' },
@@ -37,6 +37,7 @@ export default function WeighingSuccess({ transaction }: Props) {
     const handleBluetoothPrint = async () => {
         setPrintError(null);
         setPrinting(true);
+
         try {
             await print(transaction);
         } catch (err) {

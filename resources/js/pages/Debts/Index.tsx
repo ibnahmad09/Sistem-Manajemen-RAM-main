@@ -2,9 +2,9 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { CreditCard, PlusCircle, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Farmer, type FarmerDebt } from '@/types';
 import { cn, formatRupiah } from '@/lib/utils';
 import * as debtsRoute from '@/routes/debts';
+import type {BreadcrumbItem, Farmer, FarmerDebt} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Hutang Petani', href: '/debts' },
@@ -113,7 +113,9 @@ export default function DebtsIndex({ farmers, debts }: Props) {
                                     className="overflow-hidden rounded-xl border border-sidebar-border/50 bg-card hover:border-primary/40 transition-colors"
                                 >
                                     <button
-                                        onClick={() => { setSelectedFarmer(farmer); setIsHistoryOpen(true); }}
+                                        onClick={() => {
+ setSelectedFarmer(farmer); setIsHistoryOpen(true); 
+}}
                                         className="flex w-full items-start justify-between p-4 text-left"
                                     >
                                         <div className="flex items-center gap-3">
@@ -222,13 +224,17 @@ export default function DebtsIndex({ farmers, debts }: Props) {
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => { setIsHistoryOpen(false); openAction('loan', selectedFarmer); }}
+                                    onClick={() => {
+ setIsHistoryOpen(false); openAction('loan', selectedFarmer); 
+}}
                                     className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-sm hover:border-red-500/50 hover:text-red-600 transition-colors"
                                 >
                                     Pinjam <TrendingUp className="h-3.5 w-3.5" />
                                 </button>
                                 <button
-                                    onClick={() => { setIsHistoryOpen(false); openAction('payment', selectedFarmer); }}
+                                    onClick={() => {
+ setIsHistoryOpen(false); openAction('payment', selectedFarmer); 
+}}
                                     className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-sm hover:border-emerald-500/50 hover:text-emerald-600 transition-colors"
                                 >
                                     Bayar <TrendingDown className="h-3.5 w-3.5" />

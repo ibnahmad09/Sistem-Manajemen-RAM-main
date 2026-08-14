@@ -1,11 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
 import { Scale, Users, CreditCard, DollarSign, TrendingUp, Clock, ArrowRight } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Farmer, type WeighingTransaction } from '@/types';
 import { formatRupiah, formatKg } from '@/lib/utils';
-import * as weighingRoute from '@/routes/weighing';
-import * as farmersRoute from '@/routes/farmers';
 import * as debtsRoute from '@/routes/debts';
+import * as farmersRoute from '@/routes/farmers';
+import * as weighingRoute from '@/routes/weighing';
+import type {BreadcrumbItem, Farmer, WeighingTransaction} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard Kasir', href: '/dashboard/cashier' },

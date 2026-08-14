@@ -23,12 +23,12 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import * as farmersRoute from '@/routes/farmers';
-import * as weighingRoute from '@/routes/weighing';
-import * as debtsRoute from '@/routes/debts';
-import * as palmPricesRoute from '@/routes/palm-prices';
 import * as cashFlowRoute from '@/routes/cash-flow';
+import * as debtsRoute from '@/routes/debts';
+import * as farmersRoute from '@/routes/farmers';
+import * as palmPricesRoute from '@/routes/palm-prices';
 import * as reportsRoute from '@/routes/reports';
+import * as weighingRoute from '@/routes/weighing';
 import type { NavItem } from '@/types';
 
 function useNavItems(): NavItem[] {

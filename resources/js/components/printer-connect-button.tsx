@@ -22,7 +22,9 @@ export function PrinterConnectButton() {
     const { state } = useSidebar();
     const isMobile = useIsMobile();
 
-    if (!isSupported) return null;
+    if (!isSupported) {
+return null;
+}
 
     const icon = isConnecting ? BluetoothSearching : status === 'connected' ? BluetoothConnected : Bluetooth;
     const label = isConnecting ? 'Menghubungkan...' : status === 'connected' ? (activePrinter?.name ?? 'Printer') : 'Hubungkan Printer';

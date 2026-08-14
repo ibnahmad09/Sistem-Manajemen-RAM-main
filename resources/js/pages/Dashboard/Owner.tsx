@@ -1,8 +1,8 @@
 import { Head } from '@inertiajs/react';
 import { BarChart3, DollarSign, Scale, TrendingDown } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
 import { formatRupiah } from '@/lib/utils';
+import type {BreadcrumbItem} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard Owner', href: '/dashboard/owner' },

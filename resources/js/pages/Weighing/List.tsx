@@ -2,9 +2,9 @@ import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Filter, Scale, Search } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Farmer, type PaginatedData, type WeighingTransaction } from '@/types';
 import { formatKg, formatRupiah } from '@/lib/utils';
 import * as weighingRoute from '@/routes/weighing';
+import type {BreadcrumbItem, Farmer, PaginatedData, WeighingTransaction} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Riwayat Timbangan', href: '/weighing' },

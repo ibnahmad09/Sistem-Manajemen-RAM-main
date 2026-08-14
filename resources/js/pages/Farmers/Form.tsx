@@ -1,8 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Farmer } from '@/types';
 import * as farmersRoute from '@/routes/farmers';
+import type {BreadcrumbItem, Farmer} from '@/types';
 
 interface Props {
     farmer?: Farmer;
@@ -25,6 +25,7 @@ export default function FarmerForm({ farmer }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (isEditing) {
             put(farmersRoute.update({ farmer: farmer.id }));
         } else {

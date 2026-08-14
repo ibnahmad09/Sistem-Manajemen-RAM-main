@@ -2,9 +2,9 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Search, Pencil, Trash2, Phone, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type Farmer } from '@/types';
 import { formatRupiah, cn } from '@/lib/utils';
 import * as farmersRoute from '@/routes/farmers';
+import type {BreadcrumbItem, Farmer} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Data Petani', href: '/farmers' },
@@ -23,7 +23,10 @@ export default function FarmersIndex({ farmers }: Props) {
     );
 
     const handleDelete = (farmer: Farmer) => {
-        if (!confirm(`Hapus petani "${farmer.name}"? Data transaksi terkait akan ikut terhapus.`)) return;
+        if (!confirm(`Hapus petani "${farmer.name}"? Data transaksi terkait akan ikut terhapus.`)) {
+return;
+}
+
         router.delete(farmersRoute.destroy({ farmer: farmer.id }));
     };
 

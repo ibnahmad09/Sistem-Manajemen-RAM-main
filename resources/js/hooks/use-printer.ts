@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { printerService, type PairedPrinter, type PrinterStatus } from '@/services/printer-service';
+import { printerService   } from '@/services/printer-service';
+import type {PairedPrinter, PrinterStatus} from '@/services/printer-service';
 import type { WeighingTransaction } from '@/types';
 
 interface UsePrinterReturn {
@@ -37,6 +38,7 @@ export function usePrinter(): UsePrinterReturn {
 
     const connect = useCallback(async () => {
         setIsConnecting(true);
+
         try {
             await printerService.connect();
         } finally {

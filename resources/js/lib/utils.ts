@@ -34,6 +34,7 @@ export function formatKg(weight: number): string {
 /** Parse a string/number input to a float, returning 0 for invalid values */
 export function parseNumber(value: string | number): number {
     const parsed = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value;
+
     return isNaN(parsed) ? 0 : parsed;
 }
 

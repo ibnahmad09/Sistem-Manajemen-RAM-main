@@ -1,5 +1,5 @@
-import type { WeighingTransaction } from '@/types';
 import { formatRupiah, formatKg } from '@/lib/utils';
+import type { WeighingTransaction } from '@/types';
 
 export function buildReceipt(encoder: any, tx: WeighingTransaction): Uint8Array {
     const dateStr = new Date(tx.transaction_date).toLocaleDateString('id-ID');
