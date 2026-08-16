@@ -1,10 +1,16 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Filter, Scale, Search } from 'lucide-react';
+import { Calendar, Clock, Filter, Scale, Search } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { formatKg, formatRupiah } from '@/lib/utils';
 import * as weighingRoute from '@/routes/weighing';
-import type {BreadcrumbItem, Farmer, PaginatedData, WeighingTransaction} from '@/types';
+import type {
+    BreadcrumbItem,
+    Farmer,
+    PaginatedData,
+    WeighingLoad,
+    WeighingTransaction,
+} from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Riwayat Timbangan', href: '/weighing' },
@@ -13,10 +19,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface Props {
     transactions: PaginatedData<WeighingTransaction & { farmer: Farmer }>;
     filters: { farmer_id?: string; date_start?: string; date_end?: string };
+    activeDrafts: (WeighingTransaction & {
+        farmer?: Farmer;
+        loads?: WeighingLoad[];
+    })[];
 }
 
 const STATUS_BADGE: Record<string, string> = {
-    printed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    printed:
+        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     draft: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
     revised: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
@@ -29,7 +40,11 @@ const STATUS_LABEL: Record<string, string> = {
     cancelled: 'Batal',
 };
 
-export default function WeighingList({ transactions, filters }: Props) {
+export default function WeighingList({
+    transactions,
+    filters,
+    activeDrafts,
+}: Props) {
     const [dateStart, setDateStart] = useState(filters.date_start ?? '');
     const [dateEnd, setDateEnd] = useState(filters.date_end ?? '');
 
@@ -55,7 +70,9 @@ export default function WeighingList({ transactions, filters }: Props) {
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Riwayat Timbangan</h1>
+                        <h1 className="text-2xl font-bold text-foreground">
+                            Riwayat Timbangan
+                        </h1>
                         <p className="text-sm text-muted-foreground">
                             {transactions.total} total transaksi
                         </p>
@@ -69,6 +86,76 @@ export default function WeighingList({ transactions, filters }: Props) {
                     </Link>
                 </div>
 
+                {/* Timbangan Berjalan */}
+                {activeDrafts.length > 0 && (
+                    <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900/40 dark:bg-yellow-950/20">
+                        <div className="mb-3 flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                            <h2 className="text-sm font-bold text-foreground">
+                                Timbangan Berjalan
+                            </h2>
+                            <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                {activeDrafts.length} draft
+                            </span>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {activeDrafts.map((draft) => (
+                                <div
+                                    key={draft.id}
+                                    className="flex items-center justify-between gap-3 rounded-lg border border-yellow-200/70 bg-card p-3 dark:border-yellow-900/30"
+                                >
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-foreground">
+                                            {draft.farmer?.name ??
+                                                draft.farmer_name_snapshot}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {formatKg(draft.net_weight)} ·{' '}
+                                            {draft.loads?.length ?? 1} muatan ·{' '}
+                                            {new Date(
+                                                draft.updated_at,
+                                            ).toLocaleString('id-ID', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })}
+                                        </p>
+                                    </div>
+                                    <div className="flex shrink-0 items-center gap-2">
+                                        <Link
+                                            href={weighingRoute.create({
+                                                query: { draft: draft.id },
+                                            })}
+                                            className="inline-flex h-8 items-center rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+                                        >
+                                            Lanjutkan
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                if (
+                                                    confirm(
+                                                        `Batalkan draft untuk "${draft.farmer?.name ?? draft.farmer_name_snapshot}"?`,
+                                                    )
+                                                ) {
+                                                    router.post(
+                                                        weighingRoute.cancel(
+                                                            draft.id,
+                                                        ).url,
+                                                    );
+                                                }
+                                            }}
+                                            className="inline-flex h-8 items-center rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium text-muted-foreground transition hover:border-red-400/60 hover:text-red-500"
+                                        >
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Filter */}
                 <div className="flex flex-wrap items-end gap-3 rounded-xl border border-sidebar-border/50 bg-card p-4">
                     <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -76,7 +163,9 @@ export default function WeighingList({ transactions, filters }: Props) {
                         Filter:
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground">Dari</label>
+                        <label className="text-xs text-muted-foreground">
+                            Dari
+                        </label>
                         <input
                             type="date"
                             value={dateStart}
@@ -85,7 +174,9 @@ export default function WeighingList({ transactions, filters }: Props) {
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground">Sampai</label>
+                        <label className="text-xs text-muted-foreground">
+                            Sampai
+                        </label>
                         <input
                             type="date"
                             value={dateEnd}
@@ -103,7 +194,7 @@ export default function WeighingList({ transactions, filters }: Props) {
                     {(filters.date_start || filters.date_end) && (
                         <button
                             onClick={clearFilter}
-                            className="h-9 rounded-lg border border-sidebar-border/50 px-4 text-sm text-muted-foreground hover:text-foreground transition"
+                            className="h-9 rounded-lg border border-sidebar-border/50 px-4 text-sm text-muted-foreground transition hover:text-foreground"
                         >
                             Reset
                         </button>
@@ -116,63 +207,111 @@ export default function WeighingList({ transactions, filters }: Props) {
                         <table className="w-full text-sm">
                             <thead className="border-b border-sidebar-border/30 bg-muted/30">
                                 <tr>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">No. Nota</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Petani</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Tanggal</th>
-                                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-widest text-muted-foreground">Berat Bersih</th>
-                                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-widest text-muted-foreground">Total Bayar</th>
-                                    <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">Status</th>
-                                    <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">Aksi</th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        No. Nota
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Petani
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Tanggal
+                                    </th>
+                                    <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Berat Bersih
+                                    </th>
+                                    <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Total Bayar
+                                    </th>
+                                    <th className="px-5 py-3 text-center text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Status
+                                    </th>
+                                    <th className="px-5 py-3 text-center text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Aksi
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-sidebar-border/20">
                                 {transactions.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="py-12 text-center text-sm italic text-muted-foreground">
+                                        <td
+                                            colSpan={7}
+                                            className="py-12 text-center text-sm text-muted-foreground italic"
+                                        >
                                             Belum ada transaksi timbangan.
                                         </td>
                                     </tr>
                                 ) : (
                                     transactions.data.map((tx) => (
-                                        <tr key={tx.id} className="hover:bg-muted/20 transition-colors">
+                                        <tr
+                                            key={tx.id}
+                                            className="transition-colors hover:bg-muted/20"
+                                        >
                                             <td className="px-5 py-3">
-                                                <span className="font-mono text-xs font-bold text-primary">{tx.nota_number}</span>
+                                                <span className="font-mono text-xs font-bold text-primary">
+                                                    {tx.nota_number}
+                                                </span>
                                             </td>
                                             <td className="px-5 py-3">
                                                 <div className="flex items-center gap-2.5">
                                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
-                                                        {tx.farmer_name_snapshot.charAt(0)}
+                                                        {tx.farmer_name_snapshot.charAt(
+                                                            0,
+                                                        )}
                                                     </div>
-                                                    <span className="font-medium">{tx.farmer_name_snapshot}</span>
+                                                    <span className="font-medium">
+                                                        {
+                                                            tx.farmer_name_snapshot
+                                                        }
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="px-5 py-3">
                                                 <div className="flex items-center gap-1.5 text-muted-foreground">
                                                     <Calendar className="h-3.5 w-3.5" />
                                                     <span className="text-xs">
-                                                        {new Date(tx.transaction_date).toLocaleDateString('id-ID', {
-                                                            day: '2-digit', month: 'short', year: 'numeric',
-                                                        })}
+                                                        {new Date(
+                                                            tx.transaction_date,
+                                                        ).toLocaleDateString(
+                                                            'id-ID',
+                                                            {
+                                                                day: '2-digit',
+                                                                month: 'short',
+                                                                year: 'numeric',
+                                                            },
+                                                        )}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="px-5 py-3 text-right">
-                                                <span className="font-mono text-sm font-semibold">{formatKg(tx.net_weight)}</span>
+                                                <span className="font-mono text-sm font-semibold">
+                                                    {formatKg(tx.net_weight)}
+                                                </span>
                                             </td>
                                             <td className="px-5 py-3 text-right">
                                                 <span className="font-mono text-sm font-bold text-emerald-600">
-                                                    {formatRupiah(tx.final_paid_amount_rounded)}
+                                                    {formatRupiah(
+                                                        tx.final_paid_amount_rounded,
+                                                    )}
                                                 </span>
                                             </td>
                                             <td className="px-5 py-3 text-center">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[tx.status] ?? ''}`}>
-                                                    {STATUS_LABEL[tx.status] ?? tx.status}
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[tx.status] ?? ''}`}
+                                                >
+                                                    {STATUS_LABEL[tx.status] ??
+                                                        tx.status}
                                                 </span>
                                             </td>
                                             <td className="px-5 py-3 text-center">
                                                 <Link
-                                                    href={weighingRoute.success({ query: { nota: tx.nota_number } }).url}
-                                                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium hover:border-primary/50 hover:text-primary transition-colors"
+                                                    href={
+                                                        weighingRoute.success({
+                                                            query: {
+                                                                nota: tx.nota_number,
+                                                            },
+                                                        }).url
+                                                    }
+                                                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium transition-colors hover:border-primary/50 hover:text-primary"
                                                 >
                                                     Nota
                                                 </Link>
@@ -192,7 +331,9 @@ export default function WeighingList({ transactions, filters }: Props) {
                             <button
                                 key={i}
                                 disabled={!link.url}
-                                onClick={() => link.url && router.visit(link.url)}
+                                onClick={() =>
+                                    link.url && router.visit(link.url)
+                                }
                                 className={`h-9 min-w-[2.25rem] rounded-lg border px-3 text-sm transition ${
                                     link.active
                                         ? 'border-primary bg-primary text-primary-foreground'

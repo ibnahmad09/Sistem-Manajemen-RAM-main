@@ -1,10 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Plus, Wheat, X } from 'lucide-react';
 import { useState } from 'react';
+import CurrencyInput from '@/components/currency-input';
 import AppLayout from '@/layouts/app-layout';
 import { formatRupiah } from '@/lib/utils';
 import * as palmPricesRoute from '@/routes/palm-prices';
-import type {BreadcrumbItem, PalmPrice} from '@/types';
+import type { BreadcrumbItem, PalmPrice } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Harga Sawit', href: '/palm-prices' },
@@ -26,10 +27,11 @@ export default function PalmPricesIndex({ prices }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(palmPricesRoute.store(), {
+        post(palmPricesRoute.store().url, {
             onSuccess: () => {
- setIsModalOpen(false); reset(); 
-},
+                setIsModalOpen(false);
+                reset();
+            },
         });
     };
 
@@ -41,8 +43,12 @@ export default function PalmPricesIndex({ prices }: Props) {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Manajemen Harga Sawit</h1>
-                        <p className="text-sm text-muted-foreground">{prices.length} riwayat harga tercatat</p>
+                        <h1 className="text-2xl font-bold text-foreground">
+                            Manajemen Harga Sawit
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            {prices.length} riwayat harga tercatat
+                        </p>
                     </div>
                     <button
                         onClick={() => setIsModalOpen(true)}
@@ -60,14 +66,24 @@ export default function PalmPricesIndex({ prices }: Props) {
                             <Wheat className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Harga Aktif Saat Ini</p>
+                            <p className="text-xs font-bold tracking-widest text-emerald-700 uppercase dark:text-emerald-400">
+                                Harga Aktif Saat Ini
+                            </p>
                             <p className="font-mono text-3xl font-black text-emerald-800 dark:text-emerald-300">
-                                {formatRupiah(latestPrice.price_per_kg)}<span className="text-base font-normal">/kg</span>
+                                {formatRupiah(latestPrice.price_per_kg)}
+                                <span className="text-base font-normal">
+                                    /kg
+                                </span>
                             </p>
                             <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-500">
                                 Berlaku sejak{' '}
-                                {new Date(latestPrice.effective_date).toLocaleDateString('id-ID', {
-                                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                                {new Date(
+                                    latestPrice.effective_date,
+                                ).toLocaleDateString('id-ID', {
+                                    weekday: 'long',
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
                                 })}
                             </p>
                         </div>
@@ -79,33 +95,59 @@ export default function PalmPricesIndex({ prices }: Props) {
                     <table className="w-full text-sm">
                         <thead className="border-b border-sidebar-border/30 bg-muted/30">
                             <tr>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">#</th>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Harga/Kg</th>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Tanggal Efektif</th>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Catatan</th>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Dibuat Oleh</th>
-                                <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">Status</th>
+                                <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                    #
+                                </th>
+                                <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                    Harga/Kg
+                                </th>
+                                <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                    Tanggal Efektif
+                                </th>
+                                <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                    Catatan
+                                </th>
+                                <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                    Dibuat Oleh
+                                </th>
+                                <th className="px-5 py-3 text-center text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                    Status
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-sidebar-border/20">
                             {prices.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="py-12 text-center text-sm italic text-muted-foreground">
+                                    <td
+                                        colSpan={6}
+                                        className="py-12 text-center text-sm text-muted-foreground italic"
+                                    >
                                         Belum ada data harga sawit.
                                     </td>
                                 </tr>
                             ) : (
                                 prices.map((price, i) => (
-                                    <tr key={price.id} className="hover:bg-muted/20 transition-colors">
-                                        <td className="px-5 py-3 text-muted-foreground">{i + 1}</td>
+                                    <tr
+                                        key={price.id}
+                                        className="transition-colors hover:bg-muted/20"
+                                    >
+                                        <td className="px-5 py-3 text-muted-foreground">
+                                            {i + 1}
+                                        </td>
                                         <td className="px-5 py-3">
                                             <span className="font-mono text-base font-bold text-foreground">
-                                                {formatRupiah(price.price_per_kg)}
+                                                {formatRupiah(
+                                                    price.price_per_kg,
+                                                )}
                                             </span>
                                         </td>
                                         <td className="px-5 py-3 text-muted-foreground">
-                                            {new Date(price.effective_date).toLocaleDateString('id-ID', {
-                                                day: '2-digit', month: 'short', year: 'numeric',
+                                            {new Date(
+                                                price.effective_date,
+                                            ).toLocaleDateString('id-ID', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                year: 'numeric',
                                             })}
                                         </td>
                                         <td className="px-5 py-3 text-muted-foreground italic">
@@ -120,7 +162,9 @@ export default function PalmPricesIndex({ prices }: Props) {
                                                     ✓ Aktif
                                                 </span>
                                             ) : (
-                                                <span className="text-xs text-muted-foreground">Riwayat</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    Riwayat
+                                                </span>
                                             )}
                                         </td>
                                     </tr>
@@ -138,11 +182,13 @@ export default function PalmPricesIndex({ prices }: Props) {
                         <div className="flex items-center justify-between border-b border-sidebar-border/30 px-6 py-4">
                             <div className="flex items-center gap-2">
                                 <Wheat className="h-5 w-5 text-emerald-500" />
-                                <h2 className="font-bold text-foreground">Tambah Harga Baru</h2>
+                                <h2 className="font-bold text-foreground">
+                                    Tambah Harga Baru
+                                </h2>
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground hover:text-foreground transition-colors"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:text-foreground"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -150,37 +196,54 @@ export default function PalmPricesIndex({ prices }: Props) {
 
                         <form onSubmit={handleSubmit} className="space-y-4 p-6">
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold">Harga per KG (Rp) <span className="text-red-500">*</span></label>
-                                <input
-                                    type="number"
+                                <label className="text-sm font-semibold">
+                                    Harga per KG (Rp){' '}
+                                    <span className="text-red-500">*</span>
+                                </label>
+                                <CurrencyInput
                                     value={data.price_per_kg}
-                                    onChange={(e) => setData('price_per_kg', e.target.value)}
+                                    onChange={(raw) =>
+                                        setData('price_per_kg', raw)
+                                    }
                                     required
-                                    min="0"
-                                    step="50"
                                     placeholder="0"
-                                    className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 font-mono text-sm outline-none focus:ring-2 focus:ring-primary"
                                 />
-                                {errors.price_per_kg && <p className="text-xs text-red-500">{errors.price_per_kg}</p>}
+                                {errors.price_per_kg && (
+                                    <p className="text-xs text-red-500">
+                                        {errors.price_per_kg}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold">Tanggal Efektif <span className="text-red-500">*</span></label>
+                                <label className="text-sm font-semibold">
+                                    Tanggal Efektif{' '}
+                                    <span className="text-red-500">*</span>
+                                </label>
                                 <input
                                     type="date"
                                     value={data.effective_date}
-                                    onChange={(e) => setData('effective_date', e.target.value)}
+                                    onChange={(e) =>
+                                        setData(
+                                            'effective_date',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                     className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold">Catatan</label>
+                                <label className="text-sm font-semibold">
+                                    Catatan
+                                </label>
                                 <input
                                     type="text"
                                     value={data.note}
-                                    onChange={(e) => setData('note', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('note', e.target.value)
+                                    }
                                     placeholder="Keterangan harga ini..."
                                     className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                                 />
@@ -190,7 +253,7 @@ export default function PalmPricesIndex({ prices }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 rounded-lg border border-sidebar-border/50 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition"
+                                    className="flex-1 rounded-lg border border-sidebar-border/50 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted/30"
                                 >
                                     Batal
                                 </button>
@@ -199,7 +262,9 @@ export default function PalmPricesIndex({ prices }: Props) {
                                     disabled={processing}
                                     className="flex-1 rounded-lg bg-primary py-2 text-sm font-bold text-primary-foreground shadow transition hover:bg-primary/90 disabled:opacity-60"
                                 >
-                                    {processing ? 'Menyimpan...' : 'Simpan Harga'}
+                                    {processing
+                                        ? 'Menyimpan...'
+                                        : 'Simpan Harga'}
                                 </button>
                             </div>
                         </form>

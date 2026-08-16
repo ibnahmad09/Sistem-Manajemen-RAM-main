@@ -113,6 +113,22 @@ class WeighingTransaction extends Model
     }
 
     /**
+     * Get the weighing loads (muatan) for this transaction
+     */
+    public function loads()
+    {
+        return $this->hasMany(WeighingLoad::class)->orderBy('seq_no');
+    }
+
+    /**
+     * Scope: only active draft transactions (belum difinalisasi)
+     */
+    public function scopeActiveDraft($query)
+    {
+        return $query->where('status', 'draft')->where('is_latest_version', true);
+    }
+
+    /**
      * Get debt records associated with this transaction
      */
     public function debts()
@@ -137,47 +153,115 @@ class WeighingTransaction extends Model
      */
     public static function calculate(array $data, string $roundingMode = 'none'): array
     {
-        // 1. Netto = Bruto - Tara
-        $initialWeight = $data['gross_weight'] - $data['tare_weight'];
+        $result = self::calculateLoads([
+            [
+                'gross_weight' => $data['gross_weight'],
+                'tare_weight' => $data['tare_weight'],
+                'has_sorting' => $data['has_sorting'] ?? false,
+                'sorting_weight' => $data['sorting_weight'] ?? 0,
+                'sorting_price_per_kg' => $data['sorting_price_per_kg'] ?? 0,
+            ],
+        ], $data, $roundingMode);
 
-        // 2. Potongan (Kg) = Netto * (Persen_Potongan / 100)
-        $deductionWeight = 0;
-        if ($data['has_deduction'] ?? true) {
-            $deductionWeight = $initialWeight * (($data['deduction_percentage'] ?? 3) / 100);
+        return [
+            'initial_weight' => $result['initial_weight'],
+            'deduction_weight' => $result['deduction_weight'],
+            'net_weight' => $result['net_weight'],
+            'palm_total_amount' => $result['palm_total_amount'],
+            'sorting_total_amount' => $result['sorting_total_amount'],
+            'gross_total_amount' => $result['gross_total_amount'],
+            'remaining_debt_amount' => $result['remaining_debt_amount'],
+            'final_paid_amount' => $result['final_paid_amount'],
+            'final_paid_amount_rounded' => $result['final_paid_amount_rounded'],
+        ];
+    }
+
+    /**
+     * Calculate a multi-load transaction (one nota = many loads).
+     *
+     * Each load is calculated individually (netto kotor, potongan, netto bersih,
+     * sortiran), then aggregated. Debt and final payment are computed from the total.
+     *
+     * @param  array  $loads  List of loads, each with gross_weight, tare_weight,
+     *                        has_sorting, sorting_weight, sorting_price_per_kg
+     * @param  array  $data  Global input data (has_deduction, deduction_percentage,
+     *                       palm_price_per_kg, previous_debt_amount, debt_paid_amount)
+     * @param  string  $roundingMode  Rounding mode (none, nearest_100, nearest_500, nearest_1000)
+     * @return array Calculated values including per-load breakdown
+     */
+    public static function calculateLoads(array $loads, array $data, string $roundingMode = 'none'): array
+    {
+        $hasDeduction = $data['has_deduction'] ?? true;
+        $deductionPercentage = $data['deduction_percentage'] ?? 3;
+        $palmPricePerKg = $data['palm_price_per_kg'];
+
+        $loadResults = [];
+        $totalGross = 0;
+        $totalTare = 0;
+        $totalInitial = 0;
+        $totalDeduction = 0;
+        $totalNet = 0;
+        $totalSortingWeight = 0;
+        $totalSortingAmount = 0;
+        $palmTotalAmount = 0;
+        $hasSortingAny = false;
+
+        foreach ($loads as $i => $load) {
+            $gross = (float) ($load['gross_weight'] ?? 0);
+            $tare = (float) ($load['tare_weight'] ?? 0);
+            $initial = $gross - $tare;
+            $deductionWeight = $hasDeduction ? $initial * ($deductionPercentage / 100) : 0;
+            $net = $initial - $deductionWeight;
+            $loadHasSorting = (bool) ($load['has_sorting'] ?? false);
+            $sortingWeight = (float) ($load['sorting_weight'] ?? 0);
+            $sortingPricePerKg = (float) ($load['sorting_price_per_kg'] ?? 0);
+            $sortingTotal = $loadHasSorting ? $sortingWeight * $sortingPricePerKg : 0;
+
+            $totalGross += $gross;
+            $totalTare += $tare;
+            $totalInitial += $initial;
+            $totalDeduction += $deductionWeight;
+            $totalNet += $net;
+            $totalSortingWeight += $sortingWeight;
+            $totalSortingAmount += $sortingTotal;
+            $palmTotalAmount += $net * $palmPricePerKg;
+            $hasSortingAny = $hasSortingAny || $loadHasSorting;
+
+            $loadResults[] = [
+                'seq_no' => $i + 1,
+                'gross_weight' => round($gross, 2),
+                'tare_weight' => round($tare, 2),
+                'initial_weight' => round($initial, 2),
+                'deduction_weight' => round($deductionWeight, 2),
+                'net_weight' => round($net, 2),
+                'has_sorting' => $loadHasSorting,
+                'sorting_weight' => round($sortingWeight, 2),
+                'sorting_price_per_kg' => round($sortingPricePerKg, 2),
+                'sorting_total_amount' => round($sortingTotal, 2),
+            ];
         }
 
-        // 3. Berat_Bersih = Netto - Potongan
-        $netWeight = $initialWeight - $deductionWeight;
+        $grossTotalAmount = $palmTotalAmount + $totalSortingAmount;
 
-        // 4. Total_Bayar_Sawit = Berat_Bersih * Harga_Per_Kg
-        $palmTotalAmount = $netWeight * $data['palm_price_per_kg'];
-
-        // 5. Sortiran (optional)
-        $sortingTotalAmount = 0;
-        if ($data['has_sorting'] ?? false) {
-            $sortingTotalAmount = ($data['sorting_weight'] ?? 0) * ($data['sorting_price_per_kg'] ?? 0);
-        }
-
-        // 6. Total Kotor
-        $grossTotalAmount = $palmTotalAmount + $sortingTotalAmount;
-
-        // 7. Debt handling
         $debtPaidAmount = $data['debt_paid_amount'] ?? 0;
         $previousDebtAmount = $data['previous_debt_amount'] ?? 0;
         $remainingDebtAmount = max(0, $previousDebtAmount - $debtPaidAmount);
 
-        // 8. Final payment
         $finalPaidAmount = $grossTotalAmount - $debtPaidAmount;
 
-        // 9. Rounding
         $finalPaidAmountRounded = self::applyRounding($finalPaidAmount, $roundingMode);
 
         return [
-            'initial_weight' => round($initialWeight, 2),
-            'deduction_weight' => round($deductionWeight, 2),
-            'net_weight' => round($netWeight, 2),
+            'loads' => $loadResults,
+            'gross_weight' => round($totalGross, 2),
+            'tare_weight' => round($totalTare, 2),
+            'initial_weight' => round($totalInitial, 2),
+            'deduction_weight' => round($totalDeduction, 2),
+            'net_weight' => round($totalNet, 2),
+            'has_sorting' => $hasSortingAny,
+            'sorting_weight' => round($totalSortingWeight, 2),
+            'sorting_total_amount' => round($totalSortingAmount, 2),
             'palm_total_amount' => round($palmTotalAmount, 2),
-            'sorting_total_amount' => round($sortingTotalAmount, 2),
             'gross_total_amount' => round($grossTotalAmount, 2),
             'remaining_debt_amount' => round($remainingDebtAmount, 2),
             'final_paid_amount' => round($finalPaidAmount, 2),

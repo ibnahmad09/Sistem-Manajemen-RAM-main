@@ -14,6 +14,7 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $query = WeighingTransaction::where('is_latest_version', true)
+            ->where('status', '!=', 'draft')
             ->orderBy('transaction_date', 'desc');
 
         if ($request->filled('date_start')) {

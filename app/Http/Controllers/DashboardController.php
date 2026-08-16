@@ -20,14 +20,18 @@ class DashboardController extends Controller
 
         // Statistics
         $totalFarmers = Farmer::where('status', 'active')->count();
-        $totalTransactionsToday = WeighingTransaction::whereDate('transaction_date', today())->count();
+        $totalTransactionsToday = WeighingTransaction::whereDate('transaction_date', today())
+            ->where('status', '!=', 'draft')
+            ->count();
         $totalRevenueToday = WeighingTransaction::whereDate('transaction_date', today())
+            ->where('status', '!=', 'draft')
             ->sum('gross_total_amount');
         $totalDebt = Farmer::sum('balance');
 
         // Recent transactions
         $recentTransactions = WeighingTransaction::with(['farmer', 'cashier'])
             ->where('is_latest_version', true)
+            ->where('status', '!=', 'draft')
             ->orderBy('transaction_date', 'desc')
             ->limit(10)
             ->get();
@@ -38,6 +42,7 @@ class DashboardController extends Controller
             DB::raw('SUM(gross_total_amount) as total')
         )
             ->where('transaction_date', '>=', now()->subMonths(6))
+            ->where('status', '!=', 'draft')
             ->groupBy('month')
             ->orderBy('month', 'asc')
             ->get();
@@ -64,14 +69,17 @@ class DashboardController extends Controller
         // Today's statistics
         $transactionsToday = WeighingTransaction::where('cashier_id', $user->id)
             ->whereDate('transaction_date', today())
+            ->where('status', '!=', 'draft')
             ->count();
 
         $revenueToday = WeighingTransaction::where('cashier_id', $user->id)
             ->whereDate('transaction_date', today())
+            ->where('status', '!=', 'draft')
             ->sum('gross_total_amount');
 
         $cashOutToday = WeighingTransaction::where('cashier_id', $user->id)
             ->whereDate('transaction_date', today())
+            ->where('status', '!=', 'draft')
             ->sum('final_paid_amount_rounded');
 
         // Cash balance
@@ -89,6 +97,7 @@ class DashboardController extends Controller
         $recentTransactions = WeighingTransaction::with('farmer')
             ->where('cashier_id', $user->id)
             ->where('is_latest_version', true)
+            ->where('status', '!=', 'draft')
             ->orderBy('transaction_date', 'desc')
             ->limit(10)
             ->get();
@@ -125,14 +134,17 @@ class DashboardController extends Controller
             DB::raw('COUNT(*) as transactions')
         )
             ->where('transaction_date', '>=', now()->subMonths(12))
+            ->where('status', '!=', 'draft')
             ->groupBy('month')
             ->orderBy('month', 'desc')
             ->get();
 
         // Total statistics
-        $totalRevenue = WeighingTransaction::sum('gross_total_amount');
-        $totalPaidOut = WeighingTransaction::sum('final_paid_amount_rounded');
-        $totalTransactions = WeighingTransaction::where('is_latest_version', true)->count();
+        $totalRevenue = WeighingTransaction::where('status', '!=', 'draft')->sum('gross_total_amount');
+        $totalPaidOut = WeighingTransaction::where('status', '!=', 'draft')->sum('final_paid_amount_rounded');
+        $totalTransactions = WeighingTransaction::where('is_latest_version', true)
+            ->where('status', '!=', 'draft')
+            ->count();
         $totalDebt = Farmer::sum('balance');
 
         // Top farmers by transaction volume
@@ -143,6 +155,7 @@ class DashboardController extends Controller
             DB::raw('SUM(gross_total_amount) as total_revenue')
         )
             ->where('is_latest_version', true)
+            ->where('status', '!=', 'draft')
             ->groupBy('farmer_id', 'farmer_name_snapshot')
             ->orderBy('total_revenue', 'desc')
             ->limit(10)

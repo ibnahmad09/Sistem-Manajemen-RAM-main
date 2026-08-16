@@ -9,7 +9,10 @@ export interface PairedPrinter {
 }
 
 export type PrinterStatus = 'disconnected' | 'connecting' | 'connected';
-export type PrinterEventListener = (status: PrinterStatus, printer?: PairedPrinter) => void;
+export type PrinterEventListener = (
+    status: PrinterStatus,
+    printer?: PairedPrinter,
+) => void;
 
 const STORAGE_KEY = 'paired_printers';
 const ACTIVE_KEY = 'active_printer_id';
@@ -22,7 +25,8 @@ class PrinterService {
     private webBluetoothSupported: boolean = false;
 
     constructor() {
-        this.webBluetoothSupported = typeof navigator !== 'undefined' && 'bluetooth' in navigator;
+        this.webBluetoothSupported =
+            typeof navigator !== 'undefined' && 'bluetooth' in navigator;
     }
 
     get isSupported(): boolean {
@@ -56,15 +60,17 @@ class PrinterService {
     }
 
     private notify() {
-        this.listeners.forEach((l) => l(this.status, this.activePrinter ?? undefined));
+        this.listeners.forEach((l) =>
+            l(this.status, this.activePrinter ?? undefined),
+        );
     }
 
     private setStatus(status: PrinterStatus, printer?: PairedPrinter) {
         this.status = status;
 
         if (printer) {
-this.activePrinter = printer;
-}
+            this.activePrinter = printer;
+        }
 
         this.notify();
     }
@@ -87,8 +93,8 @@ this.activePrinter = printer;
         const activeId = localStorage.getItem(ACTIVE_KEY);
 
         if (!activeId) {
-return null;
-}
+            return null;
+        }
 
         return this.pairedDevices.find((d) => d.id === activeId) ?? null;
     }
@@ -127,11 +133,18 @@ return null;
         this.setStatus('connecting');
 
         try {
-            const { default: WebBluetoothReceiptPrinter } = await import('@point-of-sale/webbluetooth-receipt-printer');
+            const { default: WebBluetoothReceiptPrinter } =
+                await import('@point-of-sale/webbluetooth-receipt-printer');
             this.printer = new WebBluetoothReceiptPrinter();
 
             return new Promise((resolve, reject) => {
-                const onConnected = (device: { type: string; name: string; id: string; language: string; codepageMapping: string }) => {
+                const onConnected = (device: {
+                    type: string;
+                    name: string;
+                    id: string;
+                    language: string;
+                    codepageMapping: string;
+                }) => {
                     const paired: PairedPrinter = {
                         id: device.id,
                         name: device.name,
@@ -161,7 +174,9 @@ return null;
                 setTimeout(() => {
                     if (this.status === 'connecting') {
                         this.setStatus('disconnected');
-                        reject(new Error('Time out: printer tidak terdeteksi.'));
+                        reject(
+                            new Error('Time out: printer tidak terdeteksi.'),
+                        );
                     }
                 }, 30000);
             });
@@ -174,27 +189,34 @@ return null;
 
     async reconnect(deviceId: string): Promise<void> {
         if (!this.webBluetoothSupported) {
-return;
-}
+            return;
+        }
 
         if (!navigator.bluetooth.getDevices) {
-return;
-}
+            return;
+        }
 
         const device = this.pairedDevices.find((d) => d.id === deviceId);
 
         if (!device) {
-throw new Error('Printer tidak ditemukan.');
-}
+            throw new Error('Printer tidak ditemukan.');
+        }
 
         this.setStatus('connecting');
 
         try {
-            const { default: WebBluetoothReceiptPrinter } = await import('@point-of-sale/webbluetooth-receipt-printer');
+            const { default: WebBluetoothReceiptPrinter } =
+                await import('@point-of-sale/webbluetooth-receipt-printer');
             this.printer = new WebBluetoothReceiptPrinter();
 
             return new Promise((resolve, reject) => {
-                const onConnected = (d: { type: string; name: string; id: string; language: string; codepageMapping: string }) => {
+                const onConnected = (d: {
+                    type: string;
+                    name: string;
+                    id: string;
+                    language: string;
+                    codepageMapping: string;
+                }) => {
                     this.setStatus('connected', {
                         id: d.id,
                         name: d.name,
@@ -232,6 +254,7 @@ throw new Error('Printer tidak ditemukan.');
             try {
                 await this.printer.disconnect();
             } catch {
+                // Abaikan error saat putus koneksi; status di-set di bawah.
             }
 
             this.printer = null;
@@ -243,7 +266,11 @@ throw new Error('Printer tidak ditemukan.');
     async autoReconnect(): Promise<boolean> {
         const active = this.getActivePrinter();
 
-        if (!active || !this.webBluetoothSupported || !navigator.bluetooth.getDevices) {
+        if (
+            !active ||
+            !this.webBluetoothSupported ||
+            !navigator.bluetooth.getDevices
+        ) {
             return false;
         }
 
@@ -258,20 +285,29 @@ throw new Error('Printer tidak ditemukan.');
 
     async printReceipt(transaction: WeighingTransaction): Promise<void> {
         if (!this.printer || this.status !== 'connected') {
-            throw new Error('Printer tidak terhubung. Hubungkan printer terlebih dahulu.');
+            throw new Error(
+                'Printer tidak terhubung. Hubungkan printer terlebih dahulu.',
+            );
         }
 
         const active = this.activePrinter;
 
         if (!active) {
-throw new Error('Tidak ada printer aktif.');
-}
+            throw new Error('Tidak ada printer aktif.');
+        }
 
-        const { default: ReceiptPrinterEncoder } = await import('@point-of-sale/receipt-printer-encoder');
+        const { default: ReceiptPrinterEncoder } =
+            await import('@point-of-sale/receipt-printer-encoder');
 
         const encoder = new ReceiptPrinterEncoder({
             language: active.language as 'esc-pos' | 'star-prnt' | 'star-line',
-            codepageMapping: active.codepageMapping as 'epson' | 'zjiang' | 'xprinter' | 'mpt' | 'default' | 'star',
+            codepageMapping: active.codepageMapping as
+                | 'epson'
+                | 'zjiang'
+                | 'xprinter'
+                | 'mpt'
+                | 'default'
+                | 'star',
             width: 48,
         });
 

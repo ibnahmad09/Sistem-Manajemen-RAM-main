@@ -1,11 +1,18 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Bluetooth, BluetoothConnected, CheckCircle, Printer, PrinterIcon } from 'lucide-react';
+import {
+    ArrowLeft,
+    Bluetooth,
+    BluetoothConnected,
+    CheckCircle,
+    Printer,
+    PrinterIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { usePrinter } from '@/hooks/use-printer';
 import AppLayout from '@/layouts/app-layout';
 import { formatKg, formatRupiah } from '@/lib/utils';
 import * as weighingRoute from '@/routes/weighing';
-import type {BreadcrumbItem, WeighingTransaction} from '@/types';
+import type { BreadcrumbItem, WeighingTransaction } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Timbangan', href: '/weighing' },
@@ -16,7 +23,15 @@ interface Props {
     transaction: WeighingTransaction;
 }
 
-function Row({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) {
+function Row({
+    label,
+    value,
+    bold = false,
+}: {
+    label: string;
+    value: string;
+    bold?: boolean;
+}) {
     return (
         <div className={`flex justify-between ${bold ? 'font-bold' : ''}`}>
             <span>{label}</span>
@@ -30,7 +45,8 @@ function Divider() {
 }
 
 export default function WeighingSuccess({ transaction }: Props) {
-    const { status, isSupported, activePrinter, connect, print, isConnecting } = usePrinter();
+    const { status, isSupported, activePrinter, connect, print, isConnecting } =
+        usePrinter();
     const [printError, setPrintError] = useState<string | null>(null);
     const [printing, setPrinting] = useState(false);
 
@@ -41,7 +57,9 @@ export default function WeighingSuccess({ transaction }: Props) {
         try {
             await print(transaction);
         } catch (err) {
-            setPrintError(err instanceof Error ? err.message : 'Gagal mencetak.');
+            setPrintError(
+                err instanceof Error ? err.message : 'Gagal mencetak.',
+            );
         } finally {
             setPrinting(false);
         }
@@ -62,7 +80,7 @@ export default function WeighingSuccess({ transaction }: Props) {
                 <div className="mb-8 flex flex-wrap items-center gap-3 print:hidden">
                     <Link
                         href={weighingRoute.create()}
-                        className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition"
+                        className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Timbangan Baru
@@ -92,7 +110,7 @@ export default function WeighingSuccess({ transaction }: Props) {
                                 <button
                                     onClick={connect}
                                     disabled={isConnecting}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition disabled:opacity-60"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted/30 disabled:opacity-60"
                                 >
                                     {isConnecting ? (
                                         <>
@@ -109,14 +127,18 @@ export default function WeighingSuccess({ transaction }: Props) {
                             )}
 
                             {printError && (
-                                <p className="w-full text-xs text-red-500">{printError}</p>
+                                <p className="w-full text-xs text-red-500">
+                                    {printError}
+                                </p>
                             )}
 
-                            <span className="text-xs text-muted-foreground">atau</span>
+                            <span className="text-xs text-muted-foreground">
+                                atau
+                            </span>
 
                             <button
                                 onClick={handleBrowserPrint}
-                                className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition"
+                                className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted/30"
                                 title="Gunakan dialog print browser (ESC/POS tidak aktif)"
                             >
                                 <PrinterIcon className="h-4 w-4" />
@@ -144,9 +166,14 @@ export default function WeighingSuccess({ transaction }: Props) {
                 <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-4 dark:border-emerald-900/40 dark:bg-emerald-900/10 print:hidden">
                     <CheckCircle className="h-6 w-6 text-emerald-600" />
                     <div>
-                        <p className="font-bold text-emerald-800 dark:text-emerald-400">Transaksi Berhasil Disimpan!</p>
+                        <p className="font-bold text-emerald-800 dark:text-emerald-400">
+                            Transaksi Berhasil Disimpan!
+                        </p>
                         <p className="text-sm text-emerald-700 dark:text-emerald-500">
-                            Nota: <span className="font-mono font-bold">{transaction.nota_number}</span>
+                            Nota:{' '}
+                            <span className="font-mono font-bold">
+                                {transaction.nota_number}
+                            </span>
                         </p>
                     </div>
                 </div>
@@ -154,16 +181,20 @@ export default function WeighingSuccess({ transaction }: Props) {
                 {/* ── NOTA THERMAL 80mm ── */}
                 <div
                     id="nota-thermal"
-                    className="w-[80mm] border border-sidebar-border/50 bg-white p-4 font-mono text-[10px] uppercase leading-tight text-black shadow-sm print:border-none print:shadow-none"
+                    className="w-[80mm] border border-sidebar-border/50 bg-white p-4 font-mono text-[10px] leading-tight text-black uppercase shadow-sm print:border-none print:shadow-none"
                     style={{ fontFamily: "'Courier New', Courier, monospace" }}
                 >
                     {/* Header */}
                     <div className="mb-4 space-y-0.5 text-center">
-                        <h1 className="text-sm font-black tracking-tighter">RAM SAWIT HND JAYA</h1>
+                        <h1 className="text-sm font-black tracking-tighter">
+                            RAM SAWIT HND JAYA
+                        </h1>
                         <p className="text-[8px]">Jl. Perkebunan Sawit No. 1</p>
                         <p className="text-[8px]">Telp: 0812-xxxx-xxxx</p>
                         <Divider />
-                        <h2 className="text-[9px] font-bold">NOTA TIMBANGAN SAWIT</h2>
+                        <h2 className="text-[9px] font-bold">
+                            NOTA TIMBANGAN SAWIT
+                        </h2>
                         <p className="text-[8px]">{transaction.nota_number}</p>
                     </div>
 
@@ -171,33 +202,121 @@ export default function WeighingSuccess({ transaction }: Props) {
                     <div className="mb-3 space-y-0.5">
                         <Row
                             label="TANGGAL:"
-                            value={new Date(transaction.transaction_date).toLocaleDateString('id-ID')}
+                            value={new Date(
+                                transaction.transaction_date,
+                            ).toLocaleDateString('id-ID')}
                         />
                         <Row
                             label="JAM:"
-                            value={new Date(transaction.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                            value={new Date(
+                                transaction.created_at,
+                            ).toLocaleTimeString('id-ID', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                            })}
                         />
-                        <Row label="KASIR:" value={transaction.cashier_name_snapshot} />
-                        <Row label="PETANI:" value={transaction.farmer_name_snapshot} bold />
+                        <Row
+                            label="KASIR:"
+                            value={transaction.cashier_name_snapshot}
+                        />
+                        <Row
+                            label="PETANI:"
+                            value={transaction.farmer_name_snapshot}
+                            bold
+                        />
                     </div>
 
                     <Divider />
 
                     {/* Weights */}
-                    <div className="mb-3 space-y-0.5">
-                        <Row label="BRUTO:" value={formatKg(transaction.gross_weight)} />
-                        <Row label="TARE (MOBIL):" value={formatKg(transaction.tare_weight)} />
-                        <Row label="NETTO KOTOR:" value={formatKg(transaction.initial_weight)} bold />
-                        {transaction.has_deduction && (
-                            <Row
-                                label={`POTONGAN (${transaction.deduction_percentage}%):`}
-                                value={`-${formatKg(transaction.deduction_weight)}`}
-                            />
-                        )}
-                        <div className="border-t border-dotted border-black pt-1">
-                            <Row label="NETTO BERSIH:" value={formatKg(transaction.net_weight)} bold />
+                    {transaction.loads?.length ? (
+                        <div className="mb-3 space-y-0.5">
+                            <p className="text-[8px] font-bold">
+                                RINCIAN MUATAN:
+                            </p>
+                            {transaction.loads.map((load, i) => (
+                                <div
+                                    key={load.id}
+                                    className={
+                                        i > 0
+                                            ? 'mt-1 space-y-0.5 border-t border-dotted border-black pt-1'
+                                            : 'space-y-0.5'
+                                    }
+                                >
+                                    <p className="text-[8px] font-bold">
+                                        MUATAN #{load.seq_no}
+                                    </p>
+                                    <Row
+                                        label="BRUTO:"
+                                        value={formatKg(load.gross_weight)}
+                                    />
+                                    <Row
+                                        label="TARE:"
+                                        value={formatKg(load.tare_weight)}
+                                    />
+                                    {load.has_sorting && (
+                                        <Row
+                                            label="SORTIRAN:"
+                                            value={`-${formatKg(
+                                                load.sorting_weight,
+                                            )}`}
+                                        />
+                                    )}
+                                    <Row
+                                        label="NETTO:"
+                                        value={formatKg(load.net_weight)}
+                                        bold
+                                    />
+                                </div>
+                            ))}
+                            {transaction.has_deduction && (
+                                <Row
+                                    label={`POTONGAN (${transaction.deduction_percentage}%):`}
+                                    value={`-${formatKg(
+                                        transaction.deduction_weight,
+                                    )}`}
+                                />
+                            )}
+                            <div className="border-t border-dotted border-black pt-1">
+                                <Row
+                                    label="NETTO BERSIH:"
+                                    value={formatKg(transaction.net_weight)}
+                                    bold
+                                />
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="mb-3 space-y-0.5">
+                            <Row
+                                label="BRUTO:"
+                                value={formatKg(transaction.gross_weight)}
+                            />
+                            <Row
+                                label="TARE (MOBIL):"
+                                value={formatKg(transaction.tare_weight)}
+                            />
+                            <Row
+                                label="NETTO KOTOR:"
+                                value={formatKg(transaction.initial_weight)}
+                                bold
+                            />
+                            {transaction.has_deduction && (
+                                <Row
+                                    label={`POTONGAN (${transaction.deduction_percentage}%):`}
+                                    value={`-${formatKg(
+                                        transaction.deduction_weight,
+                                    )}`}
+                                />
+                            )}
+                            <div className="border-t border-dotted border-black pt-1">
+                                <Row
+                                    label="NETTO BERSIH:"
+                                    value={formatKg(transaction.net_weight)}
+                                    bold
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     <Divider />
 
@@ -205,23 +324,31 @@ export default function WeighingSuccess({ transaction }: Props) {
                     <div className="mb-3 space-y-0.5">
                         <Row
                             label="HARGA/KG:"
-                            value={new Intl.NumberFormat('id-ID').format(transaction.palm_price_per_kg)}
+                            value={new Intl.NumberFormat('id-ID').format(
+                                transaction.palm_price_per_kg,
+                            )}
                         />
                         <Row
                             label="TOTAL SAWIT:"
-                            value={new Intl.NumberFormat('id-ID').format(transaction.palm_total_amount)}
+                            value={new Intl.NumberFormat('id-ID').format(
+                                transaction.palm_total_amount,
+                            )}
                             bold
                         />
                         {transaction.has_sorting && (
                             <Row
                                 label={`SORTIRAN (${formatKg(transaction.sorting_weight)}):`}
-                                value={new Intl.NumberFormat('id-ID').format(transaction.sorting_total_amount)}
+                                value={new Intl.NumberFormat('id-ID').format(
+                                    transaction.sorting_total_amount,
+                                )}
                             />
                         )}
                         <div className="border-t border-dotted border-black pt-1">
                             <Row
                                 label="TOTAL KOTOR:"
-                                value={new Intl.NumberFormat('id-ID').format(transaction.gross_total_amount)}
+                                value={new Intl.NumberFormat('id-ID').format(
+                                    transaction.gross_total_amount,
+                                )}
                                 bold
                             />
                         </div>
@@ -234,16 +361,22 @@ export default function WeighingSuccess({ transaction }: Props) {
                             <div className="mb-3 space-y-0.5">
                                 <Row
                                     label="HUTANG SEBELUMNYA:"
-                                    value={new Intl.NumberFormat('id-ID').format(transaction.previous_debt_amount)}
+                                    value={new Intl.NumberFormat(
+                                        'id-ID',
+                                    ).format(transaction.previous_debt_amount)}
                                 />
                                 <Row
                                     label="BAYAR HUTANG (-):"
-                                    value={new Intl.NumberFormat('id-ID').format(transaction.debt_paid_amount)}
+                                    value={new Intl.NumberFormat(
+                                        'id-ID',
+                                    ).format(transaction.debt_paid_amount)}
                                     bold
                                 />
                                 <Row
                                     label="SISA HUTANG:"
-                                    value={new Intl.NumberFormat('id-ID').format(transaction.remaining_debt_amount)}
+                                    value={new Intl.NumberFormat(
+                                        'id-ID',
+                                    ).format(transaction.remaining_debt_amount)}
                                 />
                             </div>
                         </>
@@ -252,9 +385,16 @@ export default function WeighingSuccess({ transaction }: Props) {
                     {/* Final Amount */}
                     <div className="my-3 border border-black p-2 text-center">
                         <p className="text-[8px] font-bold">TOTAL DITERIMA</p>
-                        <p className="text-sm font-black">{formatRupiah(transaction.final_paid_amount_rounded)}</p>
-                        <p className="text-[7px] mt-0.5">
-                            METODE: {transaction.payment_method === 'cash' ? 'TUNAI' : 'TRANSFER BANK'}
+                        <p className="text-sm font-black">
+                            {formatRupiah(
+                                transaction.final_paid_amount_rounded,
+                            )}
+                        </p>
+                        <p className="mt-0.5 text-[7px]">
+                            METODE:{' '}
+                            {transaction.payment_method === 'cash'
+                                ? 'TUNAI'
+                                : 'TRANSFER BANK'}
                         </p>
                     </div>
 
@@ -263,24 +403,36 @@ export default function WeighingSuccess({ transaction }: Props) {
                         <div>
                             <p className="text-[8px]">KASIR</p>
                             <div className="mt-8 border-t border-black pt-1">
-                                <p className="text-[8px] font-bold">{transaction.cashier_name_snapshot}</p>
+                                <p className="text-[8px] font-bold">
+                                    {transaction.cashier_name_snapshot}
+                                </p>
                             </div>
                         </div>
                         <div>
                             <p className="text-[8px]">PETANI</p>
                             <div className="mt-8 border-t border-black pt-1">
-                                <p className="text-[8px] font-bold">{transaction.farmer_name_snapshot}</p>
+                                <p className="text-[8px] font-bold">
+                                    {transaction.farmer_name_snapshot}
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     <Divider />
-                    <p className="mt-2 text-center text-[7px] normal-case">Terima kasih atas kepercayaannya</p>
+                    <p className="mt-2 text-center text-[7px] font-bold normal-case">
+                        NB: Harap hitung kembali Bang anda, kami tidak menerima
+                        komplain saat sudah keluar dari RAMP
+                    </p>
+                    <Divider />
+                    <p className="mt-2 text-center text-[7px] normal-case">
+                        Terima kasih atas kepercayaannya
+                    </p>
                 </div>
 
                 {/* Print Styles */}
-                <style dangerouslySetInnerHTML={{
-                    __html: `
+                <style
+                    dangerouslySetInnerHTML={{
+                        __html: `
                         @media print {
                             @page {
                                 margin: 0;
@@ -313,7 +465,8 @@ export default function WeighingSuccess({ transaction }: Props) {
                             }
                         }
                     `,
-                }} />
+                    }}
+                />
             </div>
         </AppLayout>
     );

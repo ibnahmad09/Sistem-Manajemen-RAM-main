@@ -1,12 +1,16 @@
 import { formatRupiah, formatKg } from '@/lib/utils';
 import type { WeighingTransaction } from '@/types';
 
-export function buildReceipt(encoder: any, tx: WeighingTransaction): Uint8Array {
+export function buildReceipt(
+    encoder: any,
+    tx: WeighingTransaction,
+): Uint8Array {
     const dateStr = new Date(tx.transaction_date).toLocaleDateString('id-ID');
     const timeStr = new Date(tx.created_at).toLocaleTimeString('id-ID', {
         hour: '2-digit',
         minute: '2-digit',
     });
+    const loads = tx.loads ?? [];
 
     return encoder
         .initialize()
@@ -43,17 +47,59 @@ export function buildReceipt(encoder: any, tx: WeighingTransaction): Uint8Array 
 
         .drawLine()
 
-        .text(`BRUTO: ${formatKg(tx.gross_weight)}`)
-        .text(`TARE (MOBIL): ${formatKg(tx.tare_weight)}`)
-        .bold(true)
-        .text(`NETTO KOTOR: ${formatKg(tx.initial_weight)}`)
-        .bold(false)
+        .align('left');
 
+    if (loads.length) {
+        encoder.bold(true).text('RINCIAN MUATAN').bold(false);
+        loads.forEach((load) => {
+            encoder.text(
+                `#${load.seq_no} BRUTO: ${formatKg(load.gross_weight)}`,
+            );
+            encoder.text(`#${load.seq_no} TARE: ${formatKg(load.tare_weight)}`);
+
+            if (load.has_sorting) {
+                encoder.text(
+                    `#${load.seq_no} SORTIRAN: -${formatKg(load.sorting_weight)}`,
+                );
+            }
+
+            encoder
+                .bold(true)
+                .text(`#${load.seq_no} NETTO: ${formatKg(load.net_weight)}`)
+                .bold(false);
+        });
+        encoder.newline();
+    } else {
+        encoder.text(`BRUTO: ${formatKg(tx.gross_weight)}`);
+        encoder.text(`TARE (MOBIL): ${formatKg(tx.tare_weight)}`);
+        encoder
+            .bold(true)
+            .text(`NETTO KOTOR: ${formatKg(tx.initial_weight)}`)
+            .bold(false);
+        encoder.newline();
+    }
+
+    if (tx.has_deduction) {
+        encoder.text(
+            `POTONGAN (${tx.deduction_percentage}%): -${formatKg(tx.deduction_weight)}`,
+        );
+    }
+
+    encoder
+        .bold(true)
+        .text(`NETTO BERSIH: ${formatKg(tx.net_weight)}`)
+        .bold(false);
+
+    encoder
         .newline()
 
-        .text(`HARGA/KG: ${new Intl.NumberFormat('id-ID').format(tx.palm_price_per_kg)}`)
+        .text(
+            `HARGA/KG: ${new Intl.NumberFormat('id-ID').format(tx.palm_price_per_kg)}`,
+        )
         .bold(true)
-        .text(`TOTAL SAWIT: ${new Intl.NumberFormat('id-ID').format(tx.palm_total_amount)}`)
+        .text(
+            `TOTAL SAWIT: ${new Intl.NumberFormat('id-ID').format(tx.palm_total_amount)}`,
+        )
         .bold(false)
 
         .newline()
@@ -67,9 +113,19 @@ export function buildReceipt(encoder: any, tx: WeighingTransaction): Uint8Array 
         .text(formatRupiah(tx.final_paid_amount_rounded))
         .bold(false)
         .size(0)
-        .text(`METODE: ${tx.payment_method === 'cash' ? 'TUNAI' : 'TRANSFER BANK'}`)
+        .text(
+            `METODE: ${tx.payment_method === 'cash' ? 'TUNAI' : 'TRANSFER BANK'}`,
+        )
 
         .newline()
+        .newline()
+
+        .align('left')
+        .text('NB: Harap hitung kembali Bang')
+        .text('anda, kami tidak menerima')
+        .text('komplain saat sudah keluar')
+        .text('dari RAMP.')
+
         .newline()
         .newline()
 

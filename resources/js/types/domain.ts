@@ -22,9 +22,26 @@ export interface PalmPrice {
     updated_at: string;
 }
 
+export interface WeighingLoad {
+    id: number;
+    weighing_transaction_id: number;
+    seq_no: number;
+    gross_weight: number;
+    tare_weight: number;
+    initial_weight: number;
+    deduction_weight: number;
+    net_weight: number;
+    has_sorting: boolean;
+    sorting_weight: number;
+    sorting_price_per_kg: number;
+    sorting_total_amount: number;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface WeighingTransaction {
     id: number;
-    nota_number: string;
+    nota_number: string | null;
     farmer_id: number;
     farmer_name_snapshot: string;
     cashier_id: number;
@@ -60,6 +77,7 @@ export interface WeighingTransaction {
     created_by: number;
     farmer?: Farmer;
     cashier?: { id: number; name: string };
+    loads?: WeighingLoad[];
     created_at: string;
     updated_at: string;
 }

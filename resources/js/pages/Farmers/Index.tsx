@@ -4,7 +4,7 @@ import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { formatRupiah, cn } from '@/lib/utils';
 import * as farmersRoute from '@/routes/farmers';
-import type {BreadcrumbItem, Farmer} from '@/types';
+import type { BreadcrumbItem, Farmer } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Data Petani', href: '/farmers' },
@@ -17,15 +17,20 @@ interface Props {
 export default function FarmersIndex({ farmers }: Props) {
     const [search, setSearch] = useState('');
 
-    const filtered = farmers.filter((f) =>
-        f.name.toLowerCase().includes(search.toLowerCase()) ||
-        (f.address ?? '').toLowerCase().includes(search.toLowerCase()),
+    const filtered = farmers.filter(
+        (f) =>
+            f.name.toLowerCase().includes(search.toLowerCase()) ||
+            (f.address ?? '').toLowerCase().includes(search.toLowerCase()),
     );
 
     const handleDelete = (farmer: Farmer) => {
-        if (!confirm(`Hapus petani "${farmer.name}"? Data transaksi terkait akan ikut terhapus.`)) {
-return;
-}
+        if (
+            !confirm(
+                `Hapus petani "${farmer.name}"? Data transaksi terkait akan ikut terhapus.`,
+            )
+        ) {
+            return;
+        }
 
         router.delete(farmersRoute.destroy({ farmer: farmer.id }));
     };
@@ -38,8 +43,12 @@ return;
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Data Petani</h1>
-                        <p className="text-sm text-muted-foreground">{farmers.length} petani terdaftar</p>
+                        <h1 className="text-2xl font-bold text-foreground">
+                            Data Petani
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            {farmers.length} petani terdaftar
+                        </p>
                     </div>
                     <Link
                         href={farmersRoute.create()}
@@ -52,13 +61,13 @@ return;
 
                 {/* Search */}
                 <div className="relative max-w-sm">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
                         placeholder="Cari nama atau alamat..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background pr-4 pl-10 text-sm outline-none focus:ring-2 focus:ring-primary"
                     />
                 </div>
 
@@ -67,19 +76,19 @@ return;
                     <table className="w-full text-sm">
                         <thead className="border-b border-sidebar-border/30 bg-muted/30">
                             <tr>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                                <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                     Petani
                                 </th>
-                                <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                                <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                     Kontak
                                 </th>
-                                <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                                <th className="px-5 py-3 text-center text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                     Status
                                 </th>
-                                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                                <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                     Saldo Hutang
                                 </th>
-                                <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                                <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                     Aksi
                                 </th>
                             </tr>
@@ -87,19 +96,29 @@ return;
                         <tbody className="divide-y divide-sidebar-border/20">
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-sm text-muted-foreground italic">
-                                        {search ? 'Petani tidak ditemukan.' : 'Belum ada petani terdaftar.'}
+                                    <td
+                                        colSpan={5}
+                                        className="py-12 text-center text-sm text-muted-foreground italic"
+                                    >
+                                        {search
+                                            ? 'Petani tidak ditemukan.'
+                                            : 'Belum ada petani terdaftar.'}
                                     </td>
                                 </tr>
                             ) : (
                                 filtered.map((farmer) => (
-                                    <tr key={farmer.id} className="hover:bg-muted/20 transition-colors">
+                                    <tr
+                                        key={farmer.id}
+                                        className="transition-colors hover:bg-muted/20"
+                                    >
                                         <td className="px-5 py-3">
                                             <div className="flex items-center gap-3">
                                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
                                                     {farmer.name.charAt(0)}
                                                 </div>
-                                                <span className="font-medium text-foreground">{farmer.name}</span>
+                                                <span className="font-medium text-foreground">
+                                                    {farmer.name}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="px-5 py-3 text-muted-foreground">
@@ -113,7 +132,9 @@ return;
                                                 {farmer.address && (
                                                     <div className="flex items-center gap-1.5 text-xs">
                                                         <MapPin className="h-3 w-3" />
-                                                        <span className="max-w-[200px] truncate">{farmer.address}</span>
+                                                        <span className="max-w-[200px] truncate">
+                                                            {farmer.address}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
@@ -127,14 +148,18 @@ return;
                                                         : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
                                                 )}
                                             >
-                                                {farmer.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                                                {farmer.status === 'active'
+                                                    ? 'Aktif'
+                                                    : 'Nonaktif'}
                                             </span>
                                         </td>
                                         <td className="px-5 py-3 text-right">
                                             <span
                                                 className={cn(
                                                     'font-mono text-sm font-bold',
-                                                    farmer.balance > 0 ? 'text-red-600' : 'text-emerald-600',
+                                                    farmer.balance > 0
+                                                        ? 'text-red-600'
+                                                        : 'text-emerald-600',
                                                 )}
                                             >
                                                 {formatRupiah(farmer.balance)}
@@ -143,14 +168,18 @@ return;
                                         <td className="px-5 py-3 text-right">
                                             <div className="flex items-center justify-end gap-1.5">
                                                 <Link
-                                                    href={farmersRoute.edit({ farmer: farmer.id })}
-                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                                                    href={farmersRoute.edit({
+                                                        farmer: farmer.id,
+                                                    })}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
                                                 >
                                                     <Pencil className="h-3.5 w-3.5" />
                                                 </Link>
                                                 <button
-                                                    onClick={() => handleDelete(farmer)}
-                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground hover:border-red-500/50 hover:text-red-600 transition-colors"
+                                                    onClick={() =>
+                                                        handleDelete(farmer)
+                                                    }
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:border-red-500/50 hover:text-red-600"
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </button>
@@ -165,7 +194,8 @@ return;
 
                 {filtered.length > 0 && (
                     <p className="text-xs text-muted-foreground">
-                        Menampilkan {filtered.length} dari {farmers.length} petani
+                        Menampilkan {filtered.length} dari {farmers.length}{' '}
+                        petani
                     </p>
                 )}
             </div>

@@ -1,11 +1,19 @@
 import { Head, Link } from '@inertiajs/react';
-import { Scale, Users, CreditCard, DollarSign, TrendingUp, Clock, ArrowRight } from 'lucide-react';
+import {
+    Scale,
+    Users,
+    CreditCard,
+    DollarSign,
+    TrendingUp,
+    Clock,
+    ArrowRight,
+} from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { formatRupiah, formatKg } from '@/lib/utils';
 import * as debtsRoute from '@/routes/debts';
 import * as farmersRoute from '@/routes/farmers';
 import * as weighingRoute from '@/routes/weighing';
-import type {BreadcrumbItem, Farmer, WeighingTransaction} from '@/types';
+import type { BreadcrumbItem, Farmer, WeighingTransaction } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard Kasir', href: '/dashboard/cashier' },
@@ -38,18 +46,30 @@ function StatCard({
     return (
         <div className="rounded-xl border border-sidebar-border/50 bg-card p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-                <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">{title}</p>
-                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${color}`}>
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                    {title}
+                </p>
+                <div
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg ${color}`}
+                >
                     <Icon className="h-4 w-4 text-white" />
                 </div>
             </div>
-            <p className="font-mono text-2xl font-bold text-foreground">{value}</p>
-            {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
+            <p className="font-mono text-2xl font-bold text-foreground">
+                {value}
+            </p>
+            {subtitle && (
+                <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+            )}
         </div>
     );
 }
 
-export default function CashierDashboard({ stats, recentTransactions, farmersWithDebt }: Props) {
+export default function CashierDashboard({
+    stats,
+    recentTransactions,
+    farmersWithDebt,
+}: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard Kasir" />
@@ -58,9 +78,16 @@ export default function CashierDashboard({ stats, recentTransactions, farmersWit
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Dashboard Kasir</h1>
+                        <h1 className="text-2xl font-bold text-foreground">
+                            Dashboard Kasir
+                        </h1>
                         <p className="text-sm text-muted-foreground">
-                            {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            {new Date().toLocaleDateString('id-ID', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            })}
                         </p>
                     </div>
                     <Link
@@ -98,8 +125,14 @@ export default function CashierDashboard({ stats, recentTransactions, farmersWit
                         title="Saldo Kas"
                         value={formatRupiah(stats.cashBalance)}
                         icon={DollarSign}
-                        color={stats.cashBalance >= 0 ? 'bg-green-600' : 'bg-red-500'}
-                        subtitle={stats.cashBalance >= 0 ? 'tersedia' : 'defisit'}
+                        color={
+                            stats.cashBalance >= 0
+                                ? 'bg-green-600'
+                                : 'bg-red-500'
+                        }
+                        subtitle={
+                            stats.cashBalance >= 0 ? 'tersedia' : 'defisit'
+                        }
                     />
                 </div>
 
@@ -110,13 +143,16 @@ export default function CashierDashboard({ stats, recentTransactions, farmersWit
                             <div className="flex items-center justify-between border-b border-sidebar-border/30 px-5 py-4">
                                 <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 text-muted-foreground" />
-                                    <h2 className="font-semibold text-foreground">Transaksi Terbaru</h2>
+                                    <h2 className="font-semibold text-foreground">
+                                        Transaksi Terbaru
+                                    </h2>
                                 </div>
                                 <Link
                                     href={weighingRoute.index()}
                                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                                 >
-                                    Lihat Semua <ArrowRight className="h-3 w-3" />
+                                    Lihat Semua{' '}
+                                    <ArrowRight className="h-3 w-3" />
                                 </Link>
                             </div>
                             <div className="divide-y divide-sidebar-border/20">
@@ -126,19 +162,32 @@ export default function CashierDashboard({ stats, recentTransactions, farmersWit
                                     </div>
                                 ) : (
                                     recentTransactions.map((tx) => (
-                                        <div key={tx.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors">
+                                        <div
+                                            key={tx.id}
+                                            className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/30"
+                                        >
                                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-bold text-muted-foreground">
-                                                {tx.farmer_name_snapshot.charAt(0)}
+                                                {tx.farmer_name_snapshot.charAt(
+                                                    0,
+                                                )}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-semibold text-foreground">{tx.farmer_name_snapshot}</p>
-                                                <p className="text-xs text-muted-foreground font-mono">{tx.nota_number}</p>
-                                            </div>
-                                            <div className="text-right shrink-0">
-                                                <p className="text-sm font-bold font-mono text-emerald-600">
-                                                    {formatRupiah(tx.final_paid_amount_rounded)}
+                                                <p className="truncate text-sm font-semibold text-foreground">
+                                                    {tx.farmer_name_snapshot}
                                                 </p>
-                                                <p className="text-xs text-muted-foreground">{formatKg(tx.net_weight)}</p>
+                                                <p className="font-mono text-xs text-muted-foreground">
+                                                    {tx.nota_number}
+                                                </p>
+                                            </div>
+                                            <div className="shrink-0 text-right">
+                                                <p className="font-mono text-sm font-bold text-emerald-600">
+                                                    {formatRupiah(
+                                                        tx.final_paid_amount_rounded,
+                                                    )}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatKg(tx.net_weight)}
+                                                </p>
                                             </div>
                                         </div>
                                     ))
@@ -153,7 +202,9 @@ export default function CashierDashboard({ stats, recentTransactions, farmersWit
                             <div className="flex items-center justify-between border-b border-sidebar-border/30 px-5 py-4">
                                 <div className="flex items-center gap-2">
                                     <CreditCard className="h-4 w-4 text-red-500" />
-                                    <h2 className="font-semibold text-foreground">Petani Berhutang</h2>
+                                    <h2 className="font-semibold text-foreground">
+                                        Petani Berhutang
+                                    </h2>
                                 </div>
                                 <Link
                                     href={debtsRoute.index()}
@@ -169,14 +220,21 @@ export default function CashierDashboard({ stats, recentTransactions, farmersWit
                                     </div>
                                 ) : (
                                     farmersWithDebt.map((farmer) => (
-                                        <div key={farmer.id} className="flex items-center justify-between px-5 py-3">
+                                        <div
+                                            key={farmer.id}
+                                            className="flex items-center justify-between px-5 py-3"
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-bold text-red-600 dark:bg-red-900/30">
                                                     {farmer.name.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-medium text-foreground">{farmer.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{farmer.address ?? '-'}</p>
+                                                    <p className="text-sm font-medium text-foreground">
+                                                        {farmer.name}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {farmer.address ?? '-'}
+                                                    </p>
                                                 </div>
                                             </div>
                                             <p className="font-mono text-sm font-bold text-red-600">
@@ -190,25 +248,27 @@ export default function CashierDashboard({ stats, recentTransactions, farmersWit
 
                         {/* Quick Actions */}
                         <div className="mt-4 rounded-xl border border-sidebar-border/50 bg-card p-4">
-                            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">Aksi Cepat</p>
+                            <p className="mb-3 text-xs font-bold tracking-widest text-muted-foreground uppercase">
+                                Aksi Cepat
+                            </p>
                             <div className="space-y-2">
                                 <Link
                                     href={weighingRoute.create()}
-                                    className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border/50 px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors"
+                                    className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border/50 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted/50"
                                 >
                                     <Scale className="h-4 w-4 text-blue-500" />
                                     Input Timbangan Baru
                                 </Link>
                                 <Link
                                     href={farmersRoute.index()}
-                                    className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border/50 px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors"
+                                    className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border/50 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted/50"
                                 >
                                     <Users className="h-4 w-4 text-emerald-500" />
                                     Kelola Petani
                                 </Link>
                                 <Link
                                     href={debtsRoute.index()}
-                                    className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border/50 px-3 py-2 text-sm font-medium hover:bg-muted/50 transition-colors"
+                                    className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border/50 px-3 py-2 text-sm font-medium transition-colors hover:bg-muted/50"
                                 >
                                     <CreditCard className="h-4 w-4 text-red-500" />
                                     Manajemen Hutang

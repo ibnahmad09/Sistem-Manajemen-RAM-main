@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { printerService   } from '@/services/printer-service';
-import type {PairedPrinter, PrinterStatus} from '@/services/printer-service';
+import { printerService } from '@/services/printer-service';
+import type { PairedPrinter, PrinterStatus } from '@/services/printer-service';
 import type { WeighingTransaction } from '@/types';
 
 interface UsePrinterReturn {
@@ -13,14 +13,19 @@ interface UsePrinterReturn {
     autoReconnect: () => Promise<boolean>;
     setActivePrinter: (id: string) => void;
     forgetPrinter: (id: string) => void;
-    print: (transaction: import('@/types').WeighingTransaction) => Promise<void>;
+    print: (transaction: WeighingTransaction) => Promise<void>;
     isConnecting: boolean;
 }
 
 export function usePrinter(): UsePrinterReturn {
-    const [status, setStatus] = useState<PrinterStatus>(printerService.currentStatus);
-    const [activePrinter, setActivePrinterState] = useState<PairedPrinter | null>(printerService.currentPrinter);
-    const [pairedDevices, setPairedDevices] = useState<PairedPrinter[]>(printerService.pairedDevices);
+    const [status, setStatus] = useState<PrinterStatus>(
+        printerService.currentStatus,
+    );
+    const [activePrinter, setActivePrinterState] =
+        useState<PairedPrinter | null>(printerService.currentPrinter);
+    const [pairedDevices, setPairedDevices] = useState<PairedPrinter[]>(
+        printerService.pairedDevices,
+    );
     const [isConnecting, setIsConnecting] = useState(false);
 
     useEffect(() => {
@@ -30,8 +35,6 @@ export function usePrinter(): UsePrinterReturn {
             setPairedDevices(printerService.pairedDevices);
             setIsConnecting(newStatus === 'connecting');
         });
-
-        setPairedDevices(printerService.pairedDevices);
 
         return unsubscribe;
     }, []);

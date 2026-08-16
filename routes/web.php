@@ -55,7 +55,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('weighing.success');
 
         Route::resource('weighing', WeighingTransactionController::class)
-            ->except(['edit', 'update', 'destroy']);
+            ->except(['edit', 'destroy']);
+
+        Route::post('weighing/{weighing}/finalize', [WeighingTransactionController::class, 'finalize'])
+            ->name('weighing.finalize');
+
+        Route::post('weighing/{weighing}/cancel', [WeighingTransactionController::class, 'cancel'])
+            ->name('weighing.cancel');
 
         Route::get('farmers/{farmer}/debt', [WeighingTransactionController::class, 'getFarmerDebt'])
             ->name('farmers.debt');

@@ -1,10 +1,11 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { DollarSign, Minus, Plus, X } from 'lucide-react';
 import { useState } from 'react';
+import CurrencyInput from '@/components/currency-input';
 import AppLayout from '@/layouts/app-layout';
 import { cn, formatRupiah } from '@/lib/utils';
 import * as cashFlowRoute from '@/routes/cash-flow';
-import type {BreadcrumbItem, CashierCashEntry, PaginatedData} from '@/types';
+import type { BreadcrumbItem, CashierCashEntry, PaginatedData } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Arus Kas', href: '/cash-flow' },
@@ -24,14 +25,18 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 interface Props {
-    entries: PaginatedData<CashierCashEntry & { cashier: { id: number; name: string } }>;
+    entries: PaginatedData<
+        CashierCashEntry & { cashier: { id: number; name: string } }
+    >;
     balance: { cash_in: number; cash_out: number; balance: number };
     filters: Record<string, string>;
 }
 
-export default function CashFlowIndex({ entries, balance, filters }: Props) {
+export default function CashFlowIndex({ entries, balance }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [entryType, setEntryType] = useState<'cash_in' | 'expense'>('cash_in');
+    const [entryType, setEntryType] = useState<'cash_in' | 'expense'>(
+        'cash_in',
+    );
 
     const { data, setData, post, processing, reset, errors } = useForm({
         type: 'cash_in' as 'cash_in' | 'expense',
@@ -57,10 +62,11 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(cashFlowRoute.store(), {
+        post(cashFlowRoute.store().url, {
             onSuccess: () => {
- setIsModalOpen(false); reset(); 
-},
+                setIsModalOpen(false);
+                reset();
+            },
         });
     };
 
@@ -72,8 +78,12 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Arus Kas Kasir</h1>
-                        <p className="text-sm text-muted-foreground">Monitoring saldo dan transaksi kas</p>
+                        <h1 className="text-2xl font-bold text-foreground">
+                            Arus Kas Kasir
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Monitoring saldo dan transaksi kas
+                        </p>
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -96,23 +106,47 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                 {/* Balance Cards */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/40 dark:bg-emerald-900/10">
-                        <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Total Kas Masuk</p>
-                        <p className="mt-1 font-mono text-2xl font-black text-emerald-800 dark:text-emerald-300">{formatRupiah(balance.cash_in)}</p>
+                        <p className="text-xs font-bold tracking-widest text-emerald-700 uppercase dark:text-emerald-400">
+                            Total Kas Masuk
+                        </p>
+                        <p className="mt-1 font-mono text-2xl font-black text-emerald-800 dark:text-emerald-300">
+                            {formatRupiah(balance.cash_in)}
+                        </p>
                     </div>
                     <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/10">
-                        <p className="text-xs font-bold uppercase tracking-widest text-red-700 dark:text-red-400">Total Kas Keluar</p>
-                        <p className="mt-1 font-mono text-2xl font-black text-red-800 dark:text-red-300">{formatRupiah(balance.cash_out)}</p>
+                        <p className="text-xs font-bold tracking-widest text-red-700 uppercase dark:text-red-400">
+                            Total Kas Keluar
+                        </p>
+                        <p className="mt-1 font-mono text-2xl font-black text-red-800 dark:text-red-300">
+                            {formatRupiah(balance.cash_out)}
+                        </p>
                     </div>
-                    <div className={cn(
-                        'rounded-xl border p-4',
-                        balance.balance >= 0
-                            ? 'border-blue-200 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10'
-                            : 'border-red-300 bg-red-100 dark:border-red-900/40 dark:bg-red-900/20',
-                    )}>
-                        <p className={cn('text-xs font-bold uppercase tracking-widest', balance.balance >= 0 ? 'text-blue-700 dark:text-blue-400' : 'text-red-700 dark:text-red-400')}>
+                    <div
+                        className={cn(
+                            'rounded-xl border p-4',
+                            balance.balance >= 0
+                                ? 'border-blue-200 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10'
+                                : 'border-red-300 bg-red-100 dark:border-red-900/40 dark:bg-red-900/20',
+                        )}
+                    >
+                        <p
+                            className={cn(
+                                'text-xs font-bold tracking-widest uppercase',
+                                balance.balance >= 0
+                                    ? 'text-blue-700 dark:text-blue-400'
+                                    : 'text-red-700 dark:text-red-400',
+                            )}
+                        >
                             Saldo Bersih
                         </p>
-                        <p className={cn('mt-1 font-mono text-2xl font-black', balance.balance >= 0 ? 'text-blue-800 dark:text-blue-300' : 'text-red-800 dark:text-red-300')}>
+                        <p
+                            className={cn(
+                                'mt-1 font-mono text-2xl font-black',
+                                balance.balance >= 0
+                                    ? 'text-blue-800 dark:text-blue-300'
+                                    : 'text-red-800 dark:text-red-300',
+                            )}
+                        >
                             {formatRupiah(balance.balance)}
                         </p>
                     </div>
@@ -124,17 +158,30 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                         <table className="w-full text-sm">
                             <thead className="border-b border-sidebar-border/30 bg-muted/30">
                                 <tr>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Tanggal</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Tipe</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Keterangan</th>
-                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Kasir</th>
-                                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-widest text-muted-foreground">Nominal</th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Tanggal
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Tipe
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Keterangan
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Kasir
+                                    </th>
+                                    <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Nominal
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-sidebar-border/20">
                                 {entries.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="py-12 text-center text-sm italic text-muted-foreground">
+                                        <td
+                                            colSpan={5}
+                                            className="py-12 text-center text-sm text-muted-foreground italic"
+                                        >
                                             Belum ada entri kas.
                                         </td>
                                     </tr>
@@ -143,33 +190,57 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                                         const isIn = entry.type === 'cash_in';
 
                                         return (
-                                            <tr key={entry.id} className="hover:bg-muted/20 transition-colors">
+                                            <tr
+                                                key={entry.id}
+                                                className="transition-colors hover:bg-muted/20"
+                                            >
                                                 <td className="px-5 py-3 text-muted-foreground">
                                                     <span className="text-xs">
-                                                        {new Date(entry.entry_date).toLocaleDateString('id-ID', {
-                                                            day: '2-digit', month: 'short', year: 'numeric',
-                                                        })}
+                                                        {new Date(
+                                                            entry.entry_date,
+                                                        ).toLocaleDateString(
+                                                            'id-ID',
+                                                            {
+                                                                day: '2-digit',
+                                                                month: 'short',
+                                                                year: 'numeric',
+                                                            },
+                                                        )}
                                                     </span>
                                                 </td>
                                                 <td className="px-5 py-3">
-                                                    <span className={cn(
-                                                        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
-                                                        isIn
-                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-                                                    )}>
-                                                        {isIn ? '↑' : '↓'} {TYPE_LABEL[entry.type]}
+                                                    <span
+                                                        className={cn(
+                                                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                                                            isIn
+                                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                                        )}
+                                                    >
+                                                        {isIn ? '↑' : '↓'}{' '}
+                                                        {TYPE_LABEL[entry.type]}
                                                     </span>
                                                 </td>
                                                 <td className="px-5 py-3 text-muted-foreground">
                                                     {entry.description ?? '—'}
                                                 </td>
                                                 <td className="px-5 py-3 text-muted-foreground">
-                                                    {entry.cashier?.name ?? entry.cashier_name_snapshot}
+                                                    {entry.cashier?.name ??
+                                                        entry.cashier_name_snapshot}
                                                 </td>
                                                 <td className="px-5 py-3 text-right">
-                                                    <span className={cn('font-mono font-bold', isIn ? 'text-emerald-600' : 'text-red-600')}>
-                                                        {isIn ? '+' : '-'}{formatRupiah(entry.amount)}
+                                                    <span
+                                                        className={cn(
+                                                            'font-mono font-bold',
+                                                            isIn
+                                                                ? 'text-emerald-600'
+                                                                : 'text-red-600',
+                                                        )}
+                                                    >
+                                                        {isIn ? '+' : '-'}
+                                                        {formatRupiah(
+                                                            entry.amount,
+                                                        )}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -188,7 +259,9 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                             <button
                                 key={i}
                                 disabled={!link.url}
-                                onClick={() => link.url && router.visit(link.url)}
+                                onClick={() =>
+                                    link.url && router.visit(link.url)
+                                }
                                 className={cn(
                                     'h-9 min-w-[2.25rem] rounded-lg border px-3 text-sm transition',
                                     link.active
@@ -208,14 +281,23 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                     <div className="w-full max-w-md rounded-2xl bg-card shadow-2xl">
                         <div className="flex items-center justify-between border-b border-sidebar-border/30 px-6 py-4">
                             <div className="flex items-center gap-2">
-                                <DollarSign className={cn('h-5 w-5', entryType === 'cash_in' ? 'text-emerald-500' : 'text-red-500')} />
+                                <DollarSign
+                                    className={cn(
+                                        'h-5 w-5',
+                                        entryType === 'cash_in'
+                                            ? 'text-emerald-500'
+                                            : 'text-red-500',
+                                    )}
+                                />
                                 <h2 className="font-bold text-foreground">
-                                    {entryType === 'cash_in' ? 'Tambah Kas Masuk' : 'Catat Pengeluaran'}
+                                    {entryType === 'cash_in'
+                                        ? 'Tambah Kas Masuk'
+                                        : 'Catat Pengeluaran'}
                                 </h2>
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground hover:text-foreground transition-colors"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:text-foreground"
                             >
                                 <X className="h-4 w-4" />
                             </button>
@@ -223,56 +305,81 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
 
                         <form onSubmit={handleSubmit} className="space-y-4 p-6">
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold">Nominal (Rp) <span className="text-red-500">*</span></label>
-                                <input
-                                    type="number"
+                                <label className="text-sm font-semibold">
+                                    Nominal (Rp){' '}
+                                    <span className="text-red-500">*</span>
+                                </label>
+                                <CurrencyInput
                                     value={data.amount}
-                                    onChange={(e) => setData('amount', e.target.value)}
-                                    required min="0" step="1000" placeholder="0"
-                                    className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 font-mono text-sm outline-none focus:ring-2 focus:ring-primary"
+                                    onChange={(raw) => setData('amount', raw)}
+                                    required
+                                    placeholder="0"
                                 />
-                                {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
+                                {errors.amount && (
+                                    <p className="text-xs text-red-500">
+                                        {errors.amount}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold">Kategori</label>
+                                <label className="text-sm font-semibold">
+                                    Kategori
+                                </label>
                                 <select
                                     value={data.category}
-                                    onChange={(e) => setData('category', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('category', e.target.value)
+                                    }
                                     className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                                 >
                                     {CATEGORIES.map((c) => (
-                                        <option key={c.value} value={c.value}>{c.label}</option>
+                                        <option key={c.value} value={c.value}>
+                                            {c.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold">Metode Pembayaran</label>
+                                <label className="text-sm font-semibold">
+                                    Metode Pembayaran
+                                </label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {(['cash', 'transfer'] as const).map((m) => (
-                                        <button
-                                            key={m} type="button"
-                                            onClick={() => setData('payment_method', m)}
-                                            className={cn(
-                                                'rounded-lg border py-2.5 text-sm font-bold transition',
-                                                data.payment_method === m
-                                                    ? 'border-primary bg-primary text-primary-foreground'
-                                                    : 'border-sidebar-border/50 text-muted-foreground hover:bg-muted/30',
-                                            )}
-                                        >
-                                            {m === 'cash' ? '💵 Tunai' : '🏦 Transfer'}
-                                        </button>
-                                    ))}
+                                    {(['cash', 'transfer'] as const).map(
+                                        (m) => (
+                                            <button
+                                                key={m}
+                                                type="button"
+                                                onClick={() =>
+                                                    setData('payment_method', m)
+                                                }
+                                                className={cn(
+                                                    'rounded-lg border py-2.5 text-sm font-bold transition',
+                                                    data.payment_method === m
+                                                        ? 'border-primary bg-primary text-primary-foreground'
+                                                        : 'border-sidebar-border/50 text-muted-foreground hover:bg-muted/30',
+                                                )}
+                                            >
+                                                {m === 'cash'
+                                                    ? '💵 Tunai'
+                                                    : '🏦 Transfer'}
+                                            </button>
+                                        ),
+                                    )}
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-semibold">Keterangan</label>
+                                <label className="text-sm font-semibold">
+                                    Keterangan
+                                </label>
                                 <input
                                     type="text"
                                     value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('description', e.target.value)
+                                    }
                                     placeholder="Contoh: Modal awal shift pagi..."
                                     className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                                 />
@@ -282,7 +389,7 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 rounded-lg border border-sidebar-border/50 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/30 transition"
+                                    className="flex-1 rounded-lg border border-sidebar-border/50 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted/30"
                                 >
                                     Batal
                                 </button>
@@ -291,7 +398,9 @@ export default function CashFlowIndex({ entries, balance, filters }: Props) {
                                     disabled={processing}
                                     className={cn(
                                         'flex-1 rounded-lg py-2 text-sm font-bold text-white shadow transition disabled:opacity-60',
-                                        entryType === 'cash_in' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700',
+                                        entryType === 'cash_in'
+                                            ? 'bg-emerald-600 hover:bg-emerald-700'
+                                            : 'bg-red-600 hover:bg-red-700',
                                     )}
                                 >
                                     {processing ? 'Menyimpan...' : 'Simpan'}
