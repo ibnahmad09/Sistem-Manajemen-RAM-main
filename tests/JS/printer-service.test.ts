@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { detectColumns } from '@/lib/printer-models';
 import { buildReceipt } from '@/lib/receipt-builder';
 import type { WeighingTransaction } from '@/types';
 
@@ -181,5 +182,70 @@ describe('buildReceipt', () => {
         buildReceipt(encoder, tx);
         const rules = encoder.calls.filter((c) => c.method === 'rule');
         expect(rules.length).toBeGreaterThanOrEqual(3);
+    });
+});
+
+describe('detectColumns', () => {
+    it('should return 32 for Epson TM-P20II (58mm)', () => {
+        expect(detectColumns('TM-P20II')).toBe(32);
+    });
+
+    it('should return 32 for Star SM-L200 (58mm)', () => {
+        expect(detectColumns('SM-L200')).toBe(32);
+    });
+
+    it('should return 32 for Star mPOP (58mm)', () => {
+        expect(detectColumns('mPOP')).toBe(32);
+    });
+
+    it('should return 32 for Xprinter XP-N160II (58mm)', () => {
+        expect(detectColumns('XP-N160II')).toBe(32);
+    });
+
+    it('should return 32 for POS-5890 (58mm)', () => {
+        expect(detectColumns('POS-5890')).toBe(32);
+    });
+
+    it('should return 42 for Epson TM-T88VII (80mm, 180 DPI)', () => {
+        expect(detectColumns('TM-T88VII')).toBe(42);
+    });
+
+    it('should return 48 for Epson TM-T20III (80mm, 203 DPI)', () => {
+        expect(detectColumns('TM-T20III')).toBe(48);
+    });
+
+    it('should return 48 for Star TSP100III (80mm)', () => {
+        expect(detectColumns('TSP100III')).toBe(48);
+    });
+
+    it('should return 48 for Xprinter XP-80C (80mm)', () => {
+        expect(detectColumns('XP-80C')).toBe(48);
+    });
+
+    it('should return 48 for POS-8360 (80mm)', () => {
+        expect(detectColumns('POS-8360')).toBe(48);
+    });
+
+    it('should return 48 for generic BlueTooth Printer (fallback)', () => {
+        expect(detectColumns('BlueTooth Printer')).toBe(48);
+    });
+
+    it('should return 48 for generic Printer001 (fallback)', () => {
+        expect(detectColumns('Printer001')).toBe(48);
+    });
+
+    it('should return 48 for unknown printer (fallback)', () => {
+        expect(detectColumns('My Custom Printer')).toBe(48);
+    });
+
+    it('should be case insensitive', () => {
+        expect(detectColumns('tm-p20ii')).toBe(32);
+        expect(detectColumns('TM-P20II')).toBe(32);
+        expect(detectColumns('Tm-P20Ii')).toBe(32);
+    });
+
+    it('should handle partial name matches', () => {
+        expect(detectColumns('Epson TM-P20II Thermal Printer')).toBe(32);
+        expect(detectColumns('Star TSP100III ECO')).toBe(48);
     });
 });

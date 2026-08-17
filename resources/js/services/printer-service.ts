@@ -1,3 +1,4 @@
+import { detectColumns } from '@/lib/printer-models';
 import { buildReceipt as buildReceiptData } from '@/lib/receipt-builder';
 import type { WeighingTransaction } from '@/types';
 
@@ -6,6 +7,7 @@ export interface PairedPrinter {
     name: string;
     language: string;
     codepageMapping: string;
+    columns: number;
 }
 
 export type PrinterStatus = 'disconnected' | 'connecting' | 'connected';
@@ -22,6 +24,7 @@ const MOCK_PRINTER: PairedPrinter = {
     name: 'Mock Thermal Printer',
     language: 'esc-pos',
     codepageMapping: 'epson',
+    columns: 48,
 };
 
 class PrinterService {
@@ -64,7 +67,12 @@ class PrinterService {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
 
-            return raw ? JSON.parse(raw) : [];
+            return raw
+                ? JSON.parse(raw).map((d: Partial<PairedPrinter>) => ({
+                      ...d,
+                      columns: d.columns ?? 48,
+                  }))
+                : [];
         } catch {
             return [];
         }
@@ -182,6 +190,7 @@ class PrinterService {
                         name: device.name,
                         language: device.language,
                         codepageMapping: device.codepageMapping,
+                        columns: detectColumns(device.name),
                     };
                     this.savePairedDevice(paired);
                     this.setStatus('connected', paired);
@@ -262,6 +271,7 @@ class PrinterService {
                         name: d.name,
                         language: d.language,
                         codepageMapping: d.codepageMapping,
+                        columns: detectColumns(d.name),
                     });
                     resolve();
                 };
@@ -351,7 +361,7 @@ class PrinterService {
             const encoder = new ReceiptPrinterEncoder({
                 language: 'esc-pos',
                 codepageMapping: 'epson',
-                width: 48,
+                columns: 48,
             });
             const data = buildReceiptData(encoder, transaction);
 
@@ -405,7 +415,7 @@ class PrinterService {
                 | 'mpt'
                 | 'default'
                 | 'star',
-            width: 48,
+            columns: active.columns,
         });
 
         const data = buildReceiptData(encoder, transaction);
