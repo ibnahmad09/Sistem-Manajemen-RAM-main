@@ -326,3 +326,39 @@ test('reports page renders empty state without filters', function () {
             ->where('transactions', [])
             ->whereNull('summary'));
 });
+
+test('reports export pdf returns valid PDF', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData(createTestFarmer(), [
+        'loads' => [
+            ['gross_weight' => 500, 'tare_weight' => 100, 'has_sorting' => false, 'sorting_weight' => 0],
+        ],
+    ]) + ['action' => 'finalize']);
+
+    $response = $this->actingAs($cashier)->get(route('reports.export.pdf', [
+        'date_start' => now()->format('Y-m-d'),
+        'date_end' => now()->format('Y-m-d'),
+    ]));
+
+    $response->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+});
+
+test('reports export excel returns valid XLSX', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData(createTestFarmer(), [
+        'loads' => [
+            ['gross_weight' => 500, 'tare_weight' => 100, 'has_sorting' => false, 'sorting_weight' => 0],
+        ],
+    ]) + ['action' => 'finalize']);
+
+    $response = $this->actingAs($cashier)->get(route('reports.export.excel', [
+        'date_start' => now()->format('Y-m-d'),
+        'date_end' => now()->format('Y-m-d'),
+    ]));
+
+    $response->assertOk()
+        ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+});
