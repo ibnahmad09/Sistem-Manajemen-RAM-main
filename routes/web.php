@@ -95,6 +95,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Reports - Accessible by all roles
     Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
+    Route::get('reports/export/pdf', [ReportsController::class, 'exportPdf'])->name('reports.export.pdf');
+    Route::get('reports/export/excel', [ReportsController::class, 'exportExcel'])->name('reports.export.excel');
 });
 
 require __DIR__.'/settings.php';
