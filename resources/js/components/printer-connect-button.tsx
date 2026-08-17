@@ -2,6 +2,7 @@ import {
     Bluetooth,
     BluetoothConnected,
     BluetoothSearching,
+    Bug,
     Check,
     Plus,
     Trash2,
@@ -36,6 +37,8 @@ export function PrinterConnectButton() {
         setActivePrinter,
         forgetPrinter,
         isConnecting,
+        isDebugMode,
+        toggleDebug,
     } = usePrinter();
     const { state } = useSidebar();
     const isMobile = useIsMobile();
@@ -174,6 +177,27 @@ export function PrinterConnectButton() {
                                     Putuskan Koneksi
                                 </DropdownMenuItem>
                             </>
+                        )}
+
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => toggleDebug()}
+                            className="cursor-pointer"
+                        >
+                            <Bug className="mr-2 size-4" />
+                            {isDebugMode
+                                ? 'Nonaktifkan Debug'
+                                : 'Aktifkan Debug'}
+                        </DropdownMenuItem>
+                        {isDebugMode && (
+                            <div className="px-2 py-1.5">
+                                <div className="flex items-center gap-2 rounded-md bg-amber-50 px-2 py-1.5 text-xs dark:bg-amber-900/20">
+                                    <Bug className="size-3 shrink-0 text-amber-600" />
+                                    <span className="font-medium text-amber-700 dark:text-amber-400">
+                                        Debug Mode Aktif
+                                    </span>
+                                </div>
+                            </div>
                         )}
                     </DropdownMenuContent>
                 </DropdownMenu>

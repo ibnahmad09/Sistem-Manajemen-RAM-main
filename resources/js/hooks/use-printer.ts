@@ -15,6 +15,8 @@ interface UsePrinterReturn {
     forgetPrinter: (id: string) => void;
     print: (transaction: WeighingTransaction) => Promise<void>;
     isConnecting: boolean;
+    isDebugMode: boolean;
+    toggleDebug: () => boolean;
 }
 
 export function usePrinter(): UsePrinterReturn {
@@ -27,6 +29,7 @@ export function usePrinter(): UsePrinterReturn {
         printerService.pairedDevices,
     );
     const [isConnecting, setIsConnecting] = useState(false);
+    const [isDebugMode, setIsDebugMode] = useState(printerService.isDebugMode);
 
     useEffect(() => {
         const unsubscribe = printerService.on((newStatus, printer) => {
@@ -34,6 +37,7 @@ export function usePrinter(): UsePrinterReturn {
             setActivePrinterState(printer ?? null);
             setPairedDevices(printerService.pairedDevices);
             setIsConnecting(newStatus === 'connecting');
+            setIsDebugMode(printerService.isDebugMode);
         });
 
         return unsubscribe;
@@ -73,6 +77,13 @@ export function usePrinter(): UsePrinterReturn {
         setPairedDevices(printerService.pairedDevices);
     }, []);
 
+    const toggleDebug = useCallback(() => {
+        const next = printerService.toggleDebug();
+        setIsDebugMode(next);
+
+        return next;
+    }, []);
+
     return {
         status,
         isSupported: printerService.isSupported,
@@ -85,5 +96,7 @@ export function usePrinter(): UsePrinterReturn {
         forgetPrinter: forgetPrinterFn,
         print,
         isConnecting,
+        isDebugMode,
+        toggleDebug,
     };
 }

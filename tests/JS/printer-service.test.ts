@@ -20,7 +20,7 @@ function createMockEncoder() {
         size: record('size'),
         text: record('text'),
         newline: record('newline'),
-        drawLine: record('drawLine'),
+        rule: record('rule'),
         cut: record('cut'),
         encode: vi.fn(() => new Uint8Array([0x1d, 0x56, 0x41, 0x00])),
     };
@@ -172,14 +172,14 @@ describe('buildReceipt', () => {
         const aligns = encoder.calls
             .filter((c) => c.method === 'align')
             .map((c) => c.args[0]);
-        expect(aligns).toEqual(['center', 'left', 'center']);
+        expect(aligns).toEqual(['center', 'left', 'center', 'left']);
     });
 
     it('should draw lines for visual separation', () => {
         const encoder = createMockEncoder();
         const tx = createSampleTransaction();
         buildReceipt(encoder, tx);
-        const draws = encoder.calls.filter((c) => c.method === 'drawLine');
-        expect(draws.length).toBeGreaterThanOrEqual(3);
+        const rules = encoder.calls.filter((c) => c.method === 'rule');
+        expect(rules.length).toBeGreaterThanOrEqual(3);
     });
 });

@@ -12,7 +12,7 @@ export function buildReceipt(
     });
     const loads = tx.loads ?? [];
 
-    return encoder
+    encoder
         .initialize()
 
         .align('center')
@@ -20,12 +20,12 @@ export function buildReceipt(
         .size(2)
         .text('RAM SAWIT HND JAYA')
         .bold(false)
-        .size(0)
+        .size(1)
         .text('Jl. Perkebunan Sawit No. 1')
         .text('Telp: 0812-xxxx-xxxx')
         .newline()
 
-        .drawLine()
+        .rule()
 
         .bold(true)
         .text('NOTA TIMBANGAN SAWIT')
@@ -33,7 +33,7 @@ export function buildReceipt(
         .text(tx.nota_number)
         .newline()
 
-        .drawLine()
+        .rule()
 
         .align('left')
 
@@ -45,9 +45,7 @@ export function buildReceipt(
         .bold(false)
         .newline()
 
-        .drawLine()
-
-        .align('left');
+        .rule();
 
     if (loads.length) {
         encoder.bold(true).text('RINCIAN MUATAN').bold(false);
@@ -85,12 +83,11 @@ export function buildReceipt(
         );
     }
 
-    encoder
+    return encoder
         .bold(true)
         .text(`NETTO BERSIH: ${formatKg(tx.net_weight)}`)
-        .bold(false);
+        .bold(false)
 
-    encoder
         .newline()
 
         .text(
@@ -104,7 +101,7 @@ export function buildReceipt(
 
         .newline()
 
-        .drawLine()
+        .rule()
 
         .align('center')
         .bold(true)
@@ -112,7 +109,7 @@ export function buildReceipt(
         .text('TOTAL DITERIMA')
         .text(formatRupiah(tx.final_paid_amount_rounded))
         .bold(false)
-        .size(0)
+        .size(1)
         .text(
             `METODE: ${tx.payment_method === 'cash' ? 'TUNAI' : 'TRANSFER BANK'}`,
         )

@@ -70,12 +70,12 @@ export default function ReportsIndex({
         const params = new URLSearchParams();
 
         if (dateStart) {
-params.set('date_start', dateStart);
-}
+            params.set('date_start', dateStart);
+        }
 
         if (dateEnd) {
-params.set('date_end', dateEnd);
-}
+            params.set('date_end', dateEnd);
+        }
 
         window.open(`/reports/export/${format}?${params.toString()}`, '_blank');
     };

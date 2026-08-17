@@ -16,6 +16,13 @@ export type PrinterEventListener = (
 
 const STORAGE_KEY = 'paired_printers';
 const ACTIVE_KEY = 'active_printer_id';
+const DEBUG_KEY = 'printer_debug';
+const MOCK_PRINTER: PairedPrinter = {
+    id: 'debug-mock-printer-001',
+    name: 'Mock Thermal Printer',
+    language: 'esc-pos',
+    codepageMapping: 'epson',
+};
 
 class PrinterService {
     private printer: any = null;
@@ -27,6 +34,18 @@ class PrinterService {
     constructor() {
         this.webBluetoothSupported =
             typeof navigator !== 'undefined' && 'bluetooth' in navigator;
+    }
+
+    get isDebugMode(): boolean {
+        return localStorage.getItem(DEBUG_KEY) === 'true';
+    }
+
+    toggleDebug(): boolean {
+        const next = !this.isDebugMode;
+        localStorage.setItem(DEBUG_KEY, String(next));
+        this.notify();
+
+        return next;
     }
 
     get isSupported(): boolean {
@@ -126,6 +145,19 @@ class PrinterService {
     }
 
     async connect(): Promise<void> {
+        if (this.isDebugMode) {
+            this.setStatus('connecting');
+            await new Promise((r) => setTimeout(r, 1500));
+            this.savePairedDevice(MOCK_PRINTER);
+            this.setStatus('connected', MOCK_PRINTER);
+            console.log(
+                '%c[PRINTER DEBUG] Connected to mock printer',
+                'color: #22c55e; font-weight: bold',
+            );
+
+            return;
+        }
+
         if (!this.webBluetoothSupported) {
             throw new Error('Web Bluetooth tidak didukung di browser ini.');
         }
@@ -188,6 +220,14 @@ class PrinterService {
     }
 
     async reconnect(deviceId: string): Promise<void> {
+        if (this.isDebugMode) {
+            this.setStatus('connecting');
+            await new Promise((r) => setTimeout(r, 800));
+            this.setStatus('connected', MOCK_PRINTER);
+
+            return;
+        }
+
         if (!this.webBluetoothSupported) {
             return;
         }
@@ -250,6 +290,13 @@ class PrinterService {
     }
 
     async disconnect(): Promise<void> {
+        if (this.isDebugMode) {
+            this.printer = null;
+            this.setStatus('disconnected');
+
+            return;
+        }
+
         if (this.printer) {
             try {
                 await this.printer.disconnect();
@@ -264,6 +311,20 @@ class PrinterService {
     }
 
     async autoReconnect(): Promise<boolean> {
+        if (this.isDebugMode) {
+            const active = this.getActivePrinter();
+
+            if (active) {
+                this.setStatus('connecting');
+                await new Promise((r) => setTimeout(r, 500));
+                this.setStatus('connected', MOCK_PRINTER);
+
+                return true;
+            }
+
+            return false;
+        }
+
         const active = this.getActivePrinter();
 
         if (
@@ -284,6 +345,42 @@ class PrinterService {
     }
 
     async printReceipt(transaction: WeighingTransaction): Promise<void> {
+        if (this.isDebugMode) {
+            const { default: ReceiptPrinterEncoder } =
+                await import('@point-of-sale/receipt-printer-encoder');
+            const encoder = new ReceiptPrinterEncoder({
+                language: 'esc-pos',
+                codepageMapping: 'epson',
+                width: 48,
+            });
+            const data = buildReceiptData(encoder, transaction);
+
+            const decoded = new TextDecoder()
+                .decode(data)
+                // eslint-disable-next-line no-control-regex
+                .replace(/[\x00-\x1f]/g, (ch) => {
+                    if (ch === '\n') {
+                        return '\n';
+                    }
+
+                    return '';
+                });
+
+            console.log(
+                '%c[PRINTER DEBUG] Receipt data (ESC/POS bytes: ' +
+                    data.length +
+                    ')',
+                'color: #3b82f6; font-weight: bold',
+            );
+            console.log(decoded);
+            console.log(
+                '%c[PRINTER DEBUG] Print completed (simulated)',
+                'color: #22c55e; font-weight: bold',
+            );
+
+            return;
+        }
+
         if (!this.printer || this.status !== 'connected') {
             throw new Error(
                 'Printer tidak terhubung. Hubungkan printer terlebih dahulu.',
