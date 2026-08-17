@@ -38,7 +38,7 @@ class DashboardController extends Controller
 
         // Monthly revenue chart data
         $monthlyRevenue = WeighingTransaction::select(
-            DB::raw('DATE_FORMAT(transaction_date, "%Y-%m") as month'),
+            DB::raw($this->monthExpression().' as month'),
             DB::raw('SUM(gross_total_amount) as total')
         )
             ->where('transaction_date', '>=', now()->subMonths(6))
@@ -128,7 +128,7 @@ class DashboardController extends Controller
     {
         // Monthly revenue
         $monthlyRevenue = WeighingTransaction::select(
-            DB::raw('DATE_FORMAT(transaction_date, "%Y-%m") as month'),
+            DB::raw($this->monthExpression().' as month'),
             DB::raw('SUM(gross_total_amount) as revenue'),
             DB::raw('SUM(final_paid_amount_rounded) as paid_out'),
             DB::raw('COUNT(*) as transactions')
@@ -171,5 +171,16 @@ class DashboardController extends Controller
             'monthlyRevenue' => $monthlyRevenue,
             'topFarmers' => $topFarmers,
         ]);
+    }
+
+    /**
+     * Ekspresi SQL untuk ekstrak bulan (YYYY-MM) dari transaction_date,
+     * kompatibel MySQL (DATE_FORMAT) dan SQLite (strftime).
+     */
+    private function monthExpression(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', transaction_date)"
+            : "DATE_FORMAT(transaction_date, '%Y-%m')";
     }
 }

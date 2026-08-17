@@ -25,7 +25,7 @@ class ReportsController extends Controller
             $query->whereDate('transaction_date', '<=', $request->date_end);
         }
 
-        $transactions = null;
+        $transactions = collect();
         $summary = null;
 
         if ($request->hasAny(['date_start', 'date_end'])) {

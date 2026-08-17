@@ -314,3 +314,15 @@ test('draft does not affect reports', function () {
         ->assertInertia(fn ($page) => $page
             ->has('transactions', 1));
 });
+
+test('reports page renders empty state without filters', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+
+    $this->actingAs($cashier)
+        ->get(route('reports.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Reports/Index')
+            ->where('transactions', [])
+            ->whereNull('summary'));
+});

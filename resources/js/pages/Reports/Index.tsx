@@ -29,16 +29,17 @@ interface ReportSummary {
 }
 
 interface Props {
-    transactions?: ReportTransaction[];
-    summary?: ReportSummary;
+    transactions?: ReportTransaction[] | null;
+    summary?: ReportSummary | null;
     filters?: { date_start?: string; date_end?: string };
 }
 
 export default function ReportsIndex({
-    transactions = [],
+    transactions,
     summary,
     filters = {},
 }: Props) {
+    const safeTransactions = transactions ?? [];
     const [dateStart, setDateStart] = useState(filters.date_start ?? '');
     const [dateEnd, setDateEnd] = useState(filters.date_end ?? '');
 
@@ -152,7 +153,7 @@ export default function ReportsIndex({
                 )}
 
                 {/* Transactions Table */}
-                {transactions.length > 0 ? (
+                {safeTransactions.length > 0 ? (
                     <div className="overflow-hidden rounded-xl border border-sidebar-border/50 bg-card">
                         {/* Print Header */}
                         <div className="hidden border-b border-sidebar-border/30 px-5 py-4 print:block">
@@ -194,7 +195,7 @@ export default function ReportsIndex({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-sidebar-border/20">
-                                    {transactions.map((tx) => (
+                                    {safeTransactions.map((tx) => (
                                         <tr
                                             key={tx.id}
                                             className="transition-colors hover:bg-muted/20"
