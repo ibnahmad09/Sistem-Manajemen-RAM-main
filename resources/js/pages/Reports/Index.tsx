@@ -1,6 +1,19 @@
 import { Head, router } from '@inertiajs/react';
-import { BarChart3, Download, Search } from 'lucide-react';
+import {
+    BarChart3,
+    Download,
+    FileSpreadsheet,
+    FileText,
+    Printer,
+    Search,
+} from 'lucide-react';
 import { useState } from 'react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
 import { formatKg, formatRupiah } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
@@ -53,6 +66,20 @@ export default function ReportsIndex({
 
     const handlePrint = () => window.print();
 
+    const handleExport = (format: 'pdf' | 'excel') => {
+        const params = new URLSearchParams();
+
+        if (dateStart) {
+params.set('date_start', dateStart);
+}
+
+        if (dateEnd) {
+params.set('date_end', dateEnd);
+}
+
+        window.open(`/reports/export/${format}?${params.toString()}`, '_blank');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Laporan Keuangan" />
@@ -69,13 +96,32 @@ export default function ReportsIndex({
                         </p>
                     </div>
                     {summary && (
-                        <button
-                            onClick={handlePrint}
-                            className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background shadow transition hover:opacity-80"
-                        >
-                            <Download className="h-4 w-4" />
-                            Cetak Laporan
-                        </button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background shadow transition hover:opacity-80">
+                                    <Download className="h-4 w-4" />
+                                    Ekspor
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handlePrint}>
+                                    <Printer className="h-4 w-4" />
+                                    Cetak (Print)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => handleExport('pdf')}
+                                >
+                                    <FileText className="h-4 w-4" />
+                                    Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => handleExport('excel')}
+                                >
+                                    <FileSpreadsheet className="h-4 w-4" />
+                                    Download Excel
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     )}
                 </div>
 
@@ -289,8 +335,12 @@ export default function ReportsIndex({
                         __html: `
                         @media print {
                             nav, aside, .print\\:hidden { display: none !important; }
-                            body { font-size: 11px; }
-                            table { font-size: 10px; }
+                            .print\\:block { display: block !important; }
+                            body { font-size: 11px; margin: 0; }
+                            table { font-size: 10px; border-collapse: collapse; width: 100%; }
+                            th, td { border: 1px solid #ccc; padding: 6px 8px; }
+                            th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            @page { size: A4 landscape; margin: 12mm; }
                         }
                     `,
                     }}
