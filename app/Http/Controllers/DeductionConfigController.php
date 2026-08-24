@@ -15,7 +15,7 @@ class DeductionConfigController extends Controller
     {
         $config = DeductionConfig::latest()->first();
 
-        return Inertia::render('Settings/DeductionConfig', [
+        return Inertia::render('settings/DeductionConfig', [
             'config' => $config,
         ]);
     }
