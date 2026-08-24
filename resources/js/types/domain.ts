@@ -128,6 +128,14 @@ export interface PaginatedData<T> {
     links: { url: string | null; label: string; active: boolean }[];
 }
 
+export interface DeductionConfig {
+    id: number;
+    percentage: number;
+    note: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 // Calculation result type
 export interface TransactionCalculation {
     initialWeight: number;

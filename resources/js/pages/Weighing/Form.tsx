@@ -22,6 +22,7 @@ import * as farmersRoute from '@/routes/farmers';
 import * as weighingRoute from '@/routes/weighing';
 import type {
     BreadcrumbItem,
+    DeductionConfig,
     Farmer,
     PalmPrice,
     WeighingTransaction,
@@ -35,6 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface Props {
     farmers: Farmer[];
     latestPrice: PalmPrice | null;
+    deductionConfig: DeductionConfig | null;
     roundingMode: string;
     draft?: WeighingTransaction | null;
     activeDrafts?: WeighingTransaction[];
@@ -90,6 +92,7 @@ function emptyLoad(): LoadInput {
 export default function WeighingForm({
     farmers,
     latestPrice,
+    deductionConfig,
     roundingMode,
     draft = null,
     activeDrafts = [],
@@ -112,7 +115,9 @@ export default function WeighingForm({
               }))
             : [emptyLoad()],
         has_deduction: draft ? draft.has_deduction : true,
-        deduction_percentage: draft ? Number(draft.deduction_percentage) : 3,
+        deduction_percentage: draft
+            ? Number(draft.deduction_percentage)
+            : (deductionConfig?.percentage ?? 3),
         palm_price_per_kg: draft
             ? Number(draft.palm_price_per_kg)
             : (latestPrice?.price_per_kg ?? 0),

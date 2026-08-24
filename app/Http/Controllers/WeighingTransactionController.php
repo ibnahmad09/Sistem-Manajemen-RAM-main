@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CashierCashEntry;
+use App\Models\DeductionConfig;
 use App\Models\Farmer;
 use App\Models\FarmerDebt;
 use App\Models\PalmPrice;
@@ -61,6 +62,7 @@ class WeighingTransactionController extends Controller
             ->get();
 
         $latestPrice = PalmPrice::getLatestPrice();
+        $deductionConfig = DeductionConfig::getActiveConfig();
 
         $draft = null;
         if ($request->has('draft')) {
@@ -77,6 +79,7 @@ class WeighingTransactionController extends Controller
         return Inertia::render('Weighing/Form', [
             'farmers' => $farmers,
             'latestPrice' => $latestPrice,
+            'deductionConfig' => $deductionConfig,
             'roundingMode' => 'none', // TODO: Get from settings
             'draft' => $draft,
             'activeDrafts' => $activeDrafts,

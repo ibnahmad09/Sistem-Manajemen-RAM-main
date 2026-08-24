@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CashFlowController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeductionConfigController;
 use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\FarmerDebtController;
 use App\Http\Controllers\PalmPriceController;
@@ -82,6 +83,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('palm-prices/latest/get', [PalmPriceController::class, 'getLatest'])
             ->name('palm-prices.latest');
+    });
+
+    // Deduction Config - Accessible by super_admin and cashier
+    Route::middleware(['role:super_admin,cashier'])->group(function () {
+        Route::get('deduction-config', [DeductionConfigController::class, 'index'])
+            ->name('deduction-config.index');
+
+        Route::post('deduction-config', [DeductionConfigController::class, 'store'])
+            ->name('deduction-config.store');
+
+        Route::get('deduction-config/active/get', [DeductionConfigController::class, 'getActive'])
+            ->name('deduction-config.active');
     });
 
     // Cash Flow - Accessible by super_admin and cashier
