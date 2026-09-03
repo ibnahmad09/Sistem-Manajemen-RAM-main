@@ -218,6 +218,30 @@ describe('detectColumns', () => {
         expect(detectColumns('TSP100III')).toBe(48);
     });
 
+    it('should return 32 for iWare C-58BT (58mm)', () => {
+        expect(detectColumns('C-58BT')).toBe(32);
+    });
+
+    it('should return 32 for iWare MP-58BB (58mm)', () => {
+        expect(detectColumns('MP-58BB')).toBe(32);
+    });
+
+    it('should return 32 for iWare X-58MPII (58mm)', () => {
+        expect(detectColumns('X-58MPII')).toBe(32);
+    });
+
+    it('should return 32 for iWare MP-58MPC (58mm)', () => {
+        expect(detectColumns('MP-58MPC')).toBe(32);
+    });
+
+    it('should return 48 for iWare C-80BT (80mm)', () => {
+        expect(detectColumns('C-80BT')).toBe(48);
+    });
+
+    it('should return 48 for iWare IW-80MPO (80mm)', () => {
+        expect(detectColumns('IW-80MPO')).toBe(48);
+    });
+
     it('should return 48 for Xprinter XP-80C (80mm)', () => {
         expect(detectColumns('XP-80C')).toBe(48);
     });

@@ -19,6 +19,15 @@ const PRINTER_COLUMNS_MAP: [pattern: string, columns: number][] = [
     ['mPOP', 32],
     ['mC-Print2', 32],
 
+    // iWare 58mm
+    ['C-58BT', 32],
+    ['C-5813', 32],
+    ['MP-58BB', 32],
+    ['MP-58X', 32],
+    ['MP-58MPC', 32],
+    ['X-58MPII', 32],
+    ['IW-58AC', 32],
+
     // Xprinter 58mm
     ['XP-N160', 32],
 
@@ -55,6 +64,11 @@ const PRINTER_COLUMNS_MAP: [pattern: string, columns: number][] = [
     // Citizen 80mm
     ['CT-S310', 48],
     ['CT-S801', 48],
+
+    // iWare 80mm
+    ['C-80BT', 48],
+    ['C-80MPO', 48],
+    ['IW-80MPO', 48],
 
     // Xprinter 80mm
     ['XP-80', 48],
