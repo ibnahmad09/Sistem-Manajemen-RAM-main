@@ -8,6 +8,10 @@
 const PRINTER_COLUMNS_MAP: [pattern: string, columns: number][] = [
     // ═══ 58mm PRINTERS (32 columns) ═══
 
+    // Paytren S85 (WEPOY OEM 58mm) — tampil sebagai "S85" atau "Paytren S85" di Bluetooth
+    ['S85', 32],
+    ['Paytren', 32],
+
     // Epson TM-P series (portable 58mm)
     ['TM-P20', 32],
     ['TM-P60', 32],
@@ -101,4 +105,51 @@ export function detectColumns(deviceName: string): number {
     }
 
     return 48;
+}
+
+/**
+ * Valid `codepageMapping` keys for `esc-pos` in `@point-of-sale/receipt-printer-encoder`.
+ * Anything outside this set makes the encoder throw "Unknown codepage mapping".
+ */
+const VALID_ESCPOS_CODEPAGE_MAPPINGS = new Set([
+    'bixolon/legacy',
+    'bixolon',
+    'citizen',
+    'epson/legacy',
+    'epson',
+    'fujitsu',
+    'hp',
+    'metapace',
+    'mpt',
+    'pos-5890',
+    'pos-8360',
+    'star',
+    'xprinter',
+    'youku',
+    'zijang', // the library's internal alias key (typo) for pos-5890
+]);
+
+/**
+ * Normalize a device-provided `codepageMapping` to one the encoder understands.
+ * Cheap Chinese OEM printers (e.g. Paytren S85) often report `'zjiang'`, which the
+ * library tables spell as `'zijang'`. Any unknown value falls back to `'epson'`.
+ */
+export function normalizeCodepageMapping(
+    language: string,
+    codepageMapping: string,
+): string {
+    if (language === 'esc-pos') {
+        if (VALID_ESCPOS_CODEPAGE_MAPPINGS.has(codepageMapping)) {
+            return codepageMapping;
+        }
+
+        // Common spelling (from device/libs) for the pos-5890 (58mm) mapping.
+        if (codepageMapping === 'zjiang') {
+            return 'pos-5890';
+        }
+
+        return 'epson';
+    }
+
+    return codepageMapping;
 }

@@ -1,4 +1,4 @@
-import { detectColumns } from '@/lib/printer-models';
+import { detectColumns, normalizeCodepageMapping } from '@/lib/printer-models';
 import { buildReceipt as buildReceiptData } from '@/lib/receipt-builder';
 import type { WeighingTransaction } from '@/types';
 
@@ -189,7 +189,10 @@ class PrinterService {
                         id: device.id,
                         name: device.name,
                         language: device.language,
-                        codepageMapping: device.codepageMapping,
+                        codepageMapping: normalizeCodepageMapping(
+                            device.language,
+                            device.codepageMapping,
+                        ),
                         columns: detectColumns(device.name),
                     };
                     this.savePairedDevice(paired);
@@ -270,7 +273,10 @@ class PrinterService {
                         id: d.id,
                         name: d.name,
                         language: d.language,
-                        codepageMapping: d.codepageMapping,
+                        codepageMapping: normalizeCodepageMapping(
+                            d.language,
+                            d.codepageMapping,
+                        ),
                         columns: detectColumns(d.name),
                     });
                     resolve();
@@ -408,7 +414,10 @@ class PrinterService {
 
         const encoder = new ReceiptPrinterEncoder({
             language: active.language as 'esc-pos' | 'star-prnt' | 'star-line',
-            codepageMapping: active.codepageMapping as
+            codepageMapping: normalizeCodepageMapping(
+                active.language,
+                active.codepageMapping,
+            ) as
                 | 'epson'
                 | 'zjiang'
                 | 'xprinter'

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { detectColumns } from '@/lib/printer-models';
+import { detectColumns, normalizeCodepageMapping } from '@/lib/printer-models';
 import { buildReceipt } from '@/lib/receipt-builder';
 import type { WeighingTransaction } from '@/types';
 
@@ -218,6 +218,14 @@ describe('detectColumns', () => {
         expect(detectColumns('TSP100III')).toBe(48);
     });
 
+    it('should return 32 for Paytren S85 (58mm)', () => {
+        expect(detectColumns('S85')).toBe(32);
+    });
+
+    it('should return 32 for Paytren-branded device (58mm)', () => {
+        expect(detectColumns('PayTren S85')).toBe(32);
+    });
+
     it('should return 32 for iWare C-58BT (58mm)', () => {
         expect(detectColumns('C-58BT')).toBe(32);
     });
@@ -271,5 +279,29 @@ describe('detectColumns', () => {
     it('should handle partial name matches', () => {
         expect(detectColumns('Epson TM-P20II Thermal Printer')).toBe(32);
         expect(detectColumns('Star TSP100III ECO')).toBe(48);
+    });
+});
+
+describe('normalizeCodepageMapping', () => {
+    it('should keep a valid esc-pos mapping unchanged', () => {
+        expect(normalizeCodepageMapping('esc-pos', 'epson')).toBe('epson');
+        expect(normalizeCodepageMapping('esc-pos', 'xprinter')).toBe(
+            'xprinter',
+        );
+        expect(normalizeCodepageMapping('esc-pos', 'pos-5890')).toBe('pos-5890');
+    });
+
+    it("should map 'zjiang' to 'pos-5890' for esc-pos", () => {
+        // Cheap Chinese printers (e.g. Paytren S85) often report 'zjiang'.
+        expect(normalizeCodepageMapping('esc-pos', 'zjiang')).toBe('pos-5890');
+    });
+
+    it('should fall back to epson for unknown esc-pos mapping', () => {
+        expect(normalizeCodepageMapping('esc-pos', 'whatever')).toBe('epson');
+        expect(normalizeCodepageMapping('esc-pos', '')).toBe('epson');
+    });
+
+    it('should keep non-esc-pos mappings unchanged', () => {
+        expect(normalizeCodepageMapping('star-prnt', 'star')).toBe('star');
     });
 });
