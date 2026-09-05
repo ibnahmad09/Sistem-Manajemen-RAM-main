@@ -21,7 +21,7 @@ export function buildReceipt(
         .text('RAM SAWIT HND JAYA')
         .bold(false)
         .size(1)
-        .text('Jl. Perkebunan Sawit No. 1')
+        .text('Jl. Parit 1 Siapi-api')
         .text('Telp: 0812-xxxx-xxxx')
         .newline()
 

@@ -13,7 +13,7 @@ interface Props {
 
 export default function DeductionConfigPage({ config }: Props) {
     const { data, setData, post, processing, errors } = useForm({
-        percentage: config?.percentage?.toString() ?? '3',
+        percentage: config?.percentage?.toString() ?? '5',
         note: config?.note ?? '',
     });
 

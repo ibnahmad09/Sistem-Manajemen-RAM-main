@@ -192,7 +192,7 @@ class WeighingTransaction extends Model
     public static function calculateLoads(array $loads, array $data, string $roundingMode = 'none'): array
     {
         $hasDeduction = $data['has_deduction'] ?? true;
-        $deductionPercentage = $data['deduction_percentage'] ?? 3;
+        $deductionPercentage = $data['deduction_percentage'] ?? 5;
         $palmPricePerKg = $data['palm_price_per_kg'];
 
         $loadResults = [];

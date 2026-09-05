@@ -189,7 +189,7 @@ export default function WeighingSuccess({ transaction }: Props) {
                         <h1 className="text-sm font-black tracking-tighter">
                             RAM SAWIT HND JAYA
                         </h1>
-                        <p className="text-[8px]">Jl. Perkebunan Sawit No. 1</p>
+                        <p className="text-[8px]">Jl. Parit 1 Siapi-api</p>
                         <p className="text-[8px]">Telp: 0812-xxxx-xxxx</p>
                         <Divider />
                         <h2 className="text-[9px] font-bold">

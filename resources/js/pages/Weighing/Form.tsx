@@ -117,7 +117,7 @@ export default function WeighingForm({
         has_deduction: draft ? draft.has_deduction : true,
         deduction_percentage: draft
             ? Number(draft.deduction_percentage)
-            : (deductionConfig?.percentage ?? 3),
+            : (deductionConfig?.percentage ?? 5),
         palm_price_per_kg: draft
             ? Number(draft.palm_price_per_kg)
             : (latestPrice?.price_per_kg ?? 0),
