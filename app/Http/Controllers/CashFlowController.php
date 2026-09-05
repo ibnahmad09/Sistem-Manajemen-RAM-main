@@ -110,6 +110,32 @@ class CashFlowController extends Controller
     }
 
     /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, CashierCashEntry $cashFlow)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:cash_in,expense,farmer_payment',
+            'amount' => 'required|numeric|min:0',
+            'payment_method' => 'required|in:cash,transfer',
+            'category' => 'required|string',
+            'description' => 'nullable|string',
+            'entry_date' => 'nullable|date',
+        ]);
+
+        $cashFlow->update([
+            'type' => $validated['type'],
+            'amount' => $validated['amount'],
+            'payment_method' => $validated['payment_method'],
+            'category' => $validated['category'],
+            'description' => $validated['description'],
+            'entry_date' => $validated['entry_date'] ?? $cashFlow->entry_date,
+        ]);
+
+        return back()->with('success', 'Entri kas berhasil diperbarui.');
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(CashierCashEntry $cashFlow)

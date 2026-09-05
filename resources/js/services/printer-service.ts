@@ -417,13 +417,7 @@ class PrinterService {
             codepageMapping: normalizeCodepageMapping(
                 active.language,
                 active.codepageMapping,
-            ) as
-                | 'epson'
-                | 'zjiang'
-                | 'xprinter'
-                | 'mpt'
-                | 'default'
-                | 'star',
+            ) as 'epson' | 'zjiang' | 'xprinter' | 'mpt' | 'default' | 'star',
             columns: active.columns,
         });
 

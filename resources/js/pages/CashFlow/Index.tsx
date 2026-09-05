@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { DollarSign, Minus, Plus, X } from 'lucide-react';
+import { DollarSign, Minus, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import CurrencyInput from '@/components/currency-input';
 import AppLayout from '@/layouts/app-layout';
@@ -34,12 +34,15 @@ interface Props {
 
 export default function CashFlowIndex({ entries, balance }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [entryType, setEntryType] = useState<'cash_in' | 'expense'>(
-        'cash_in',
+    const [entryType, setEntryType] = useState<
+        'cash_in' | 'expense' | 'farmer_payment'
+    >('cash_in');
+    const [editingEntry, setEditingEntry] = useState<CashierCashEntry | null>(
+        null,
     );
 
-    const { data, setData, post, processing, reset, errors } = useForm({
-        type: 'cash_in' as 'cash_in' | 'expense',
+    const { data, setData, post, put, processing, reset, errors } = useForm({
+        type: 'cash_in' as 'cash_in' | 'expense' | 'farmer_payment',
         amount: '',
         payment_method: 'cash' as 'cash' | 'transfer',
         category: 'modal_kasir',
@@ -49,6 +52,7 @@ export default function CashFlowIndex({ entries, balance }: Props) {
 
     const openModal = (type: 'cash_in' | 'expense') => {
         setEntryType(type);
+        setEditingEntry(null);
         setData({
             type,
             amount: '',
@@ -60,14 +64,48 @@ export default function CashFlowIndex({ entries, balance }: Props) {
         setIsModalOpen(true);
     };
 
+    const openEditModal = (entry: CashierCashEntry) => {
+        setEditingEntry(entry);
+        setEntryType(entry.type);
+        setData({
+            type: entry.type,
+            amount: String(entry.amount),
+            payment_method: entry.payment_method,
+            category: entry.category,
+            description: entry.description ?? '',
+            entry_date: String(entry.entry_date).slice(0, 10),
+        });
+        setIsModalOpen(true);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(cashFlowRoute.store().url, {
+
+        const options = {
             onSuccess: () => {
                 setIsModalOpen(false);
+                setEditingEntry(null);
                 reset();
             },
-        });
+        };
+
+        if (editingEntry) {
+            put(cashFlowRoute.update(editingEntry.id).url, options);
+        } else {
+            post(cashFlowRoute.store().url, options);
+        }
+    };
+
+    const handleDelete = (entry: CashierCashEntry) => {
+        if (
+            !confirm(
+                `Hapus entri kas "${entry.description ?? 'Tanpa keterangan'}"?`,
+            )
+        ) {
+            return;
+        }
+
+        router.delete(cashFlowRoute.destroy(entry.id).url);
     };
 
     return (
@@ -173,13 +211,16 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                                     <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                         Nominal
                                     </th>
+                                    <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Aksi
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-sidebar-border/20">
                                 {entries.data.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={5}
+                                            colSpan={6}
                                             className="py-12 text-center text-sm text-muted-foreground italic"
                                         >
                                             Belum ada entri kas.
@@ -243,6 +284,39 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                                                         )}
                                                     </span>
                                                 </td>
+                                                <td className="px-5 py-3 text-right">
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <button
+                                                            onClick={() =>
+                                                                openEditModal(
+                                                                    entry,
+                                                                )
+                                                            }
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                                                            title="Edit entri"
+                                                        >
+                                                            <Pencil className="h-3.5 w-3.5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    entry,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                !!entry.transaction_id
+                                                            }
+                                                            title={
+                                                                entry.transaction_id
+                                                                    ? 'Tidak dapat menghapus entri yang terkait transaksi'
+                                                                    : 'Hapus entri'
+                                                            }
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:border-red-500/50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-sidebar-border/50 disabled:hover:text-muted-foreground"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         );
                                     })
@@ -290,9 +364,11 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                                     )}
                                 />
                                 <h2 className="font-bold text-foreground">
-                                    {entryType === 'cash_in'
-                                        ? 'Tambah Kas Masuk'
-                                        : 'Catat Pengeluaran'}
+                                    {editingEntry
+                                        ? 'Edit Entri Kas'
+                                        : entryType === 'cash_in'
+                                          ? 'Tambah Kas Masuk'
+                                          : 'Catat Pengeluaran'}
                                 </h2>
                             </div>
                             <button
@@ -304,6 +380,40 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-4 p-6">
+                            {editingEntry && (
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold">
+                                        Tipe
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {(
+                                            [
+                                                'cash_in',
+                                                'expense',
+                                                'farmer_payment',
+                                            ] as const
+                                        ).map((t) => (
+                                            <button
+                                                key={t}
+                                                type="button"
+                                                onClick={() => {
+                                                    setEntryType(t);
+                                                    setData('type', t);
+                                                }}
+                                                className={cn(
+                                                    'rounded-lg border py-2.5 text-xs font-bold transition',
+                                                    data.type === t
+                                                        ? 'border-primary bg-primary text-primary-foreground'
+                                                        : 'border-sidebar-border/50 text-muted-foreground hover:bg-muted/30',
+                                                )}
+                                            >
+                                                {TYPE_LABEL[t]}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="space-y-1.5">
                                 <label className="text-sm font-semibold">
                                     Nominal (Rp){' '}
@@ -403,7 +513,11 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                                             : 'bg-red-600 hover:bg-red-700',
                                     )}
                                 >
-                                    {processing ? 'Menyimpan...' : 'Simpan'}
+                                    {processing
+                                        ? 'Menyimpan...'
+                                        : editingEntry
+                                          ? 'Perbarui'
+                                          : 'Simpan'}
                                 </button>
                             </div>
                         </form>

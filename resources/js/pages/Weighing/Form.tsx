@@ -13,7 +13,7 @@ import CurrencyInput from '@/components/currency-input';
 import AppLayout from '@/layouts/app-layout';
 import {
     calculateLoads,
-    formatKg,
+    formatKgTrimmed,
     formatRupiah,
     parseNumber,
 } from '@/lib/utils';
@@ -397,7 +397,7 @@ export default function WeighingForm({
                                                         <span className="text-xs text-muted-foreground">
                                                             Netto:{' '}
                                                             <b className="text-foreground">
-                                                                {formatKg(
+                                                                {formatKgTrimmed(
                                                                     perLoad?.netWeight ??
                                                                         0,
                                                                 )}
@@ -433,6 +433,7 @@ export default function WeighingForm({
                                                             })
                                                         }
                                                         required
+                                                        step="5"
                                                         className="text-lg font-bold"
                                                     />
                                                     <NumberInput
@@ -444,6 +445,7 @@ export default function WeighingForm({
                                                             })
                                                         }
                                                         required
+                                                        step="5"
                                                         className="text-lg font-bold"
                                                     />
                                                     <div className="space-y-2 md:col-span-2">
@@ -490,6 +492,7 @@ export default function WeighingForm({
                                                                         },
                                                                     )
                                                                 }
+                                                                step="5"
                                                             />
                                                         )}
                                                     </div>
@@ -696,7 +699,10 @@ export default function WeighingForm({
                                             >
                                                 <span className="text-muted-foreground italic">
                                                     Muatan #{pl.seqNo} (
-                                                    {pl.netWeight} kg)
+                                                    {formatKgTrimmed(
+                                                        pl.netWeight,
+                                                    )}
+                                                    )
                                                 </span>
                                                 <span className="font-bold">
                                                     {formatRupiah(
@@ -713,7 +719,9 @@ export default function WeighingForm({
                                             Netto Kotor (total)
                                         </span>
                                         <span className="font-bold">
-                                            {formatKg(calc.initialWeight)}
+                                            {formatKgTrimmed(
+                                                calc.initialWeight,
+                                            )}
                                         </span>
                                     </div>
                                     {data.has_deduction && (
@@ -724,7 +732,9 @@ export default function WeighingForm({
                                             </span>
                                             <span className="font-bold text-red-500">
                                                 -
-                                                {formatKg(calc.deductionWeight)}
+                                                {formatKgTrimmed(
+                                                    calc.deductionWeight,
+                                                )}
                                             </span>
                                         </div>
                                     )}
@@ -733,7 +743,7 @@ export default function WeighingForm({
                                             Netto Bersih
                                         </span>
                                         <span className="font-bold text-emerald-600">
-                                            {formatKg(calc.netWeight)}
+                                            {formatKgTrimmed(calc.netWeight)}
                                         </span>
                                     </div>
                                     <div className="flex justify-between border-b border-sidebar-border/30 pb-2">

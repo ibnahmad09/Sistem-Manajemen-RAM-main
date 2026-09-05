@@ -1,5 +1,5 @@
-import { Head, useForm } from '@inertiajs/react';
-import { Plus, Wheat, X } from 'lucide-react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { Pencil, Plus, Trash2, Wheat, X } from 'lucide-react';
 import { useState } from 'react';
 import CurrencyInput from '@/components/currency-input';
 import AppLayout from '@/layouts/app-layout';
@@ -17,22 +17,63 @@ interface Props {
 
 export default function PalmPricesIndex({ prices }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingPrice, setEditingPrice] = useState<PalmPrice | null>(null);
     const latestPrice = prices[0] ?? null;
 
-    const { data, setData, post, processing, reset, errors } = useForm({
+    const { data, setData, post, put, processing, reset, errors } = useForm({
         price_per_kg: '',
         effective_date: new Date().toISOString().split('T')[0],
         note: '',
     });
 
+    const openAddModal = () => {
+        setEditingPrice(null);
+        setData({
+            price_per_kg: '',
+            effective_date: new Date().toISOString().split('T')[0],
+            note: '',
+        });
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (price: PalmPrice) => {
+        setEditingPrice(price);
+        setData({
+            price_per_kg: String(price.price_per_kg),
+            effective_date: String(price.effective_date).slice(0, 10),
+            note: price.note ?? '',
+        });
+        setIsModalOpen(true);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(palmPricesRoute.store().url, {
+
+        const options = {
             onSuccess: () => {
                 setIsModalOpen(false);
+                setEditingPrice(null);
                 reset();
             },
-        });
+        };
+
+        if (editingPrice) {
+            put(palmPricesRoute.update(editingPrice.id).url, options);
+        } else {
+            post(palmPricesRoute.store().url, options);
+        }
+    };
+
+    const handleDelete = (price: PalmPrice) => {
+        if (
+            !confirm(
+                `Hapus harga ${formatRupiah(price.price_per_kg)}/kg (berlaku ${String(price.effective_date).slice(0, 10)})?`,
+            )
+        ) {
+            return;
+        }
+
+        router.delete(palmPricesRoute.destroy(price.id).url);
     };
 
     return (
@@ -51,7 +92,7 @@ export default function PalmPricesIndex({ prices }: Props) {
                         </p>
                     </div>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={openAddModal}
                         className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow transition hover:bg-primary/90"
                     >
                         <Plus className="h-4 w-4" />
@@ -113,13 +154,16 @@ export default function PalmPricesIndex({ prices }: Props) {
                                 <th className="px-5 py-3 text-center text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                     Status
                                 </th>
+                                <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                    Aksi
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-sidebar-border/20">
                             {prices.length === 0 ? (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="py-12 text-center text-sm text-muted-foreground italic"
                                     >
                                         Belum ada data harga sawit.
@@ -167,6 +211,28 @@ export default function PalmPricesIndex({ prices }: Props) {
                                                 </span>
                                             )}
                                         </td>
+                                        <td className="px-5 py-3 text-right">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <button
+                                                    onClick={() =>
+                                                        openEditModal(price)
+                                                    }
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                                                    title="Edit harga"
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleDelete(price)
+                                                    }
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:border-red-500/50 hover:text-red-600"
+                                                    title="Hapus harga"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))
                             )}
@@ -183,7 +249,9 @@ export default function PalmPricesIndex({ prices }: Props) {
                             <div className="flex items-center gap-2">
                                 <Wheat className="h-5 w-5 text-emerald-500" />
                                 <h2 className="font-bold text-foreground">
-                                    Tambah Harga Baru
+                                    {editingPrice
+                                        ? 'Edit Harga Sawit'
+                                        : 'Tambah Harga Baru'}
                                 </h2>
                             </div>
                             <button
@@ -264,7 +332,9 @@ export default function PalmPricesIndex({ prices }: Props) {
                                 >
                                     {processing
                                         ? 'Menyimpan...'
-                                        : 'Simpan Harga'}
+                                        : editingPrice
+                                          ? 'Perbarui Harga'
+                                          : 'Simpan Harga'}
                                 </button>
                             </div>
                         </form>

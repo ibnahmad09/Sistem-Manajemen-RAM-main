@@ -100,7 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Cash Flow - Accessible by super_admin and cashier
     Route::middleware(['role:super_admin,cashier'])->group(function () {
         Route::resource('cash-flow', CashFlowController::class)
-            ->except(['create', 'edit', 'update']);
+            ->except(['create', 'edit']);
 
         Route::get('cash-flow/balance/get', [CashFlowController::class, 'getBalance'])
             ->name('cash-flow.balance');

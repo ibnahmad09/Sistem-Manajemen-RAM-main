@@ -31,6 +31,16 @@ export function formatKg(weight: number): string {
     );
 }
 
+/** Format number as kilograms with thousands separators, dropping trailing zeros (e.g., "1.550,5 kg", "1.550 kg") */
+export function formatKgTrimmed(weight: number): string {
+    return (
+        new Intl.NumberFormat('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        }).format(weight) + ' kg'
+    );
+}
+
 /** Parse a string/number input to a float, returning 0 for invalid values */
 export function parseNumber(value: string | number): number {
     const parsed =
