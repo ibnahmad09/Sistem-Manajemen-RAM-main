@@ -33,7 +33,10 @@
                 <th style="width:10%">Tanggal</th>
                 <th style="width:16%">Petani</th>
                 <th style="width:14%">Kasir</th>
-                <th style="width:10%" class="text-right">Berat Bersih (kg)</th>
+                <th style="width:9%" class="text-right">Bruto (kg)</th>
+                <th style="width:9%" class="text-right">Tara (kg)</th>
+                <th style="width:9%" class="text-right">Neto (kg)</th>
+                <th style="width:12%" class="text-right">Bruto Sblm Potongan (kg)</th>
                 <th style="width:13%" class="text-right">Total Bruto (Rp)</th>
                 <th style="width:12%" class="text-right">Bayar Hutang (Rp)</th>
                 <th style="width:13%" class="text-right">Diterima (Rp)</th>
@@ -46,14 +49,17 @@
                     <td class="text-center">{{ $tx->transaction_date instanceof \Carbon\Carbon ? $tx->transaction_date->format('d/m/Y') : date('d/m/Y', strtotime($tx->transaction_date)) }}</td>
                     <td>{{ $tx->farmer_name_snapshot }}</td>
                     <td>{{ $tx->cashier_name_snapshot }}</td>
+                    <td class="text-right">{{ number_format($tx->gross_weight, 2, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($tx->tare_weight, 2, ',', '.') }}</td>
                     <td class="text-right">{{ number_format($tx->net_weight, 2, ',', '.') }}</td>
+                    <td class="text-right">{{ number_format($tx->initial_weight, 2, ',', '.') }}</td>
                     <td class="text-right">Rp {{ number_format($tx->gross_total_amount, 0, ',', '.') }}</td>
                     <td class="text-right">{{ $tx->debt_paid_amount > 0 ? 'Rp ' . number_format($tx->debt_paid_amount, 0, ',', '.') : '—' }}</td>
                     <td class="text-right">Rp {{ number_format($tx->final_paid_amount_rounded, 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="text-center">Tidak ada data transaksi untuk periode ini.</td>
+                    <td colspan="11" class="text-center">Tidak ada data transaksi untuk periode ini.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -61,7 +67,10 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="4">TOTAL</td>
+                <td class="text-right">{{ number_format($summary['total_gross'], 2, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($summary['total_tare'], 2, ',', '.') }}</td>
                 <td class="text-right">{{ number_format($summary['total_weight'], 2, ',', '.') }}</td>
+                <td class="text-right">{{ number_format($summary['total_initial'], 2, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($summary['total_revenue'], 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($summary['total_debt_paid'], 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($summary['total_paid_out'], 0, ',', '.') }}</td>

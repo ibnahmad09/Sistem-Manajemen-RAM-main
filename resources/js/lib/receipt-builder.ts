@@ -53,7 +53,7 @@ export function buildReceipt(
         .bold(false)
         .size(1)
         .text('Jl. Parit 1 Siapi-api')
-        .text('Telp: 0812-xxxx-xxxx')
+        .text('Telp: 0822-6429-0744')
         .newline()
 
         .rule()

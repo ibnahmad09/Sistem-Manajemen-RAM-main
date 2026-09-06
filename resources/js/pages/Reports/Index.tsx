@@ -26,7 +26,10 @@ interface ReportTransaction {
     farmer_name_snapshot: string;
     cashier_name_snapshot: string;
     transaction_date: string;
+    gross_weight: number;
+    tare_weight: number;
     net_weight: number;
+    initial_weight: number;
     gross_total_amount: number;
     debt_paid_amount: number;
     final_paid_amount_rounded: number;
@@ -36,6 +39,9 @@ interface ReportTransaction {
 interface ReportSummary {
     total_transactions: number;
     total_weight: number;
+    total_gross: number;
+    total_tare: number;
+    total_initial: number;
     total_revenue: number;
     total_paid_out: number;
     total_debt_paid: number;
@@ -160,7 +166,7 @@ export default function ReportsIndex({
 
                 {/* Summary Cards */}
                 {summary && (
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                         {[
                             {
                                 label: 'Total Transaksi',
@@ -172,6 +178,18 @@ export default function ReportsIndex({
                             },
                             {
                                 label: 'Total Bruto',
+                                value: formatKg(summary.total_gross),
+                            },
+                            {
+                                label: 'Total Tara',
+                                value: formatKg(summary.total_tare),
+                            },
+                            {
+                                label: 'Total Bruto (Sblm Potongan)',
+                                value: formatKg(summary.total_initial),
+                            },
+                            {
+                                label: 'Total Bruto(Rp)',
                                 value: formatRupiah(summary.total_revenue),
                             },
                             {
@@ -227,7 +245,16 @@ export default function ReportsIndex({
                                             Kasir
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                                            Berat Bersih
+                                            Bruto
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                            Tara
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                            Neto
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                            Bruto (Sblm Potongan Wajib)
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                             Total Bruto
@@ -261,7 +288,16 @@ export default function ReportsIndex({
                                                 {tx.cashier_name_snapshot}
                                             </td>
                                             <td className="px-4 py-2.5 text-right font-mono">
+                                                {formatKg(tx.gross_weight)}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right font-mono">
+                                                {formatKg(tx.tare_weight)}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right font-mono">
                                                 {formatKg(tx.net_weight)}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right font-mono">
+                                                {formatKg(tx.initial_weight)}
                                             </td>
                                             <td className="px-4 py-2.5 text-right font-mono">
                                                 {formatRupiah(
@@ -294,7 +330,18 @@ export default function ReportsIndex({
                                                 TOTAL
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono">
+                                                {formatKg(summary.total_gross)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-mono">
+                                                {formatKg(summary.total_tare)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-mono">
                                                 {formatKg(summary.total_weight)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-mono">
+                                                {formatKg(
+                                                    summary.total_initial,
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono">
                                                 {formatRupiah(
