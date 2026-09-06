@@ -29,7 +29,9 @@ function createMockEncoder() {
     return mock;
 }
 
-function createSampleTransaction(overrides: Partial<WeighingTransaction> = {}): WeighingTransaction {
+function createSampleTransaction(
+    overrides: Partial<WeighingTransaction> = {},
+): WeighingTransaction {
     return {
         id: 1,
         nota_number: 'HND-20260510-0001',
@@ -122,7 +124,12 @@ describe('buildReceipt', () => {
         const texts = encoder.calls
             .filter((c) => c.method === 'text')
             .map((c) => c.args[0]);
-        expect(texts).toContain(`PETANI: ${tx.farmer_name_snapshot}`);
+        const found = texts.find(
+            (t) =>
+                String(t).startsWith('PETANI:') &&
+                String(t).includes(tx.farmer_name_snapshot),
+        );
+        expect(found).toBeTruthy();
     });
 
     it('should include gross weight', () => {
@@ -182,6 +189,73 @@ describe('buildReceipt', () => {
         buildReceipt(encoder, tx);
         const rules = encoder.calls.filter((c) => c.method === 'rule');
         expect(rules.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should keep every text line within 32 columns on 58mm', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction();
+        buildReceipt(encoder, tx, 32);
+        const texts = encoder.calls
+            .filter((c) => c.method === 'text')
+            .map((c) => String(c.args[0]));
+        const overlong = texts.filter((t) => t.length > 0 && t.length > 32);
+        expect(overlong).toEqual([]);
+    });
+
+    it('should use single-size header on 32 columns', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction();
+        buildReceipt(encoder, tx, 32);
+        const firstSize = encoder.calls.find((c) => c.method === 'size');
+        expect(firstSize?.args[0]).toBe(1);
+    });
+
+    it('should use double-size header on 48 columns', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction();
+        buildReceipt(encoder, tx, 48);
+        const firstSize = encoder.calls.find((c) => c.method === 'size');
+        expect(firstSize?.args[0]).toBe(2);
+    });
+
+    it('should truncate a long farmer name within 32 columns', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            farmer_name_snapshot: 'PETERNAKAN MAJU JAYA ABADI SENTOSA BERKAH',
+        });
+        buildReceipt(encoder, tx, 32);
+        const texts = encoder.calls
+            .filter((c) => c.method === 'text')
+            .map((c) => String(c.args[0]));
+        const overlong = texts.filter((t) => t.length > 0 && t.length > 32);
+        expect(overlong).toEqual([]);
+        const petani = texts.find((t) => t.startsWith('PETANI:'));
+        expect(petani).toBeTruthy();
+    });
+
+    it('should include the updated NB wording', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction();
+        buildReceipt(encoder, tx);
+        const texts = encoder.calls
+            .filter((c) => c.method === 'text')
+            .map((c) => String(c.args[0]));
+        expect(texts.some((t) => t.includes('Harap hitung kembali uang'))).toBe(
+            true,
+        );
+        expect(texts.some((t) => t.includes('dari RAMP.'))).toBe(true);
+    });
+
+    it('should right-anchor the farmer name value on 32 columns', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction();
+        buildReceipt(encoder, tx, 32);
+        const texts = encoder.calls
+            .filter((c) => c.method === 'text')
+            .map((c) => String(c.args[0]));
+        const petani = texts.find((t) => t.startsWith('PETANI:'));
+        expect(petani).toBeTruthy();
+        expect(petani!.endsWith(tx.farmer_name_snapshot)).toBe(true);
     });
 });
 
@@ -288,7 +362,9 @@ describe('normalizeCodepageMapping', () => {
         expect(normalizeCodepageMapping('esc-pos', 'xprinter')).toBe(
             'xprinter',
         );
-        expect(normalizeCodepageMapping('esc-pos', 'pos-5890')).toBe('pos-5890');
+        expect(normalizeCodepageMapping('esc-pos', 'pos-5890')).toBe(
+            'pos-5890',
+        );
     });
 
     it("should map 'zjiang' to 'pos-5890' for esc-pos", () => {

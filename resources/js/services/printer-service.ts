@@ -369,7 +369,7 @@ class PrinterService {
                 codepageMapping: 'epson',
                 columns: 48,
             });
-            const data = buildReceiptData(encoder, transaction);
+            const data = buildReceiptData(encoder, transaction, 48);
 
             const decoded = new TextDecoder()
                 .decode(data)
@@ -421,7 +421,7 @@ class PrinterService {
             columns: active.columns,
         });
 
-        const data = buildReceiptData(encoder, transaction);
+        const data = buildReceiptData(encoder, transaction, active.columns);
 
         await this.printer.print(data);
     }

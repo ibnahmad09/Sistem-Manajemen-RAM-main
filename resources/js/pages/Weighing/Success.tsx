@@ -10,7 +10,7 @@ import {
 import { useState } from 'react';
 import { usePrinter } from '@/hooks/use-printer';
 import AppLayout from '@/layouts/app-layout';
-import { formatKg, formatRupiah } from '@/lib/utils';
+import { cn, formatKg, formatRupiah } from '@/lib/utils';
 import * as weighingRoute from '@/routes/weighing';
 import type { BreadcrumbItem, WeighingTransaction } from '@/types';
 
@@ -22,6 +22,37 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface Props {
     transaction: WeighingTransaction;
 }
+
+const PAPER_CLASSES = {
+    '80': {
+        wrap: 'w-[80mm] p-4 text-[10px]',
+        brand: 'text-sm',
+        sub: 'text-[8px]',
+        heading: 'text-[9px]',
+        row: 'text-[8px]',
+        totalBox: 'p-2',
+        totalAmount: 'text-sm',
+        totalLabel: 'text-[8px]',
+        metode: 'text-[7px]',
+        sigName: 'text-[8px]',
+        sigGap: 'mt-8',
+        note: 'text-[7px]',
+    },
+    '57': {
+        wrap: 'w-[57mm] p-2 text-[7px]',
+        brand: 'text-[10px]',
+        sub: 'text-[6px]',
+        heading: 'text-[7px]',
+        row: 'text-[6px]',
+        totalBox: 'p-1.5',
+        totalAmount: 'text-[11px]',
+        totalLabel: 'text-[7px]',
+        metode: 'text-[6px]',
+        sigName: 'text-[7px]',
+        sigGap: 'mt-6',
+        note: 'text-[6px]',
+    },
+} as const;
 
 function Row({
     label,
@@ -44,11 +75,276 @@ function Divider() {
     return <div className="my-2 border-b border-dashed border-black" />;
 }
 
+function NotaThermal({
+    id,
+    paper,
+    transaction,
+}: {
+    id: string;
+    paper: '80' | '57';
+    transaction: WeighingTransaction;
+}) {
+    const c = PAPER_CLASSES[paper];
+
+    return (
+        <div
+            id={id}
+            className={cn(
+                'border border-sidebar-border/50 bg-white font-mono leading-tight text-black uppercase shadow-sm print:border-none print:shadow-none',
+                c.wrap,
+            )}
+            style={{ fontFamily: "'Courier New', Courier, monospace" }}
+        >
+            {/* Header */}
+            <div className="mb-4 space-y-0.5 text-center">
+                <h1 className={cn('font-black tracking-tighter', c.brand)}>
+                    RAM SAWIT HND JAYA
+                </h1>
+                <p className={c.sub}>Jl. Parit 1 Siapi-api</p>
+                <p className={c.sub}>Telp: 0822-6429-0744</p>
+                <Divider />
+                <h2 className={cn('font-bold', c.heading)}>
+                    NOTA TIMBANGAN SAWIT
+                </h2>
+                <p className={c.sub}>{transaction.nota_number}</p>
+            </div>
+
+            {/* Info */}
+            <div className="mb-3 space-y-0.5">
+                <Row
+                    label="TANGGAL:"
+                    value={new Date(
+                        transaction.transaction_date,
+                    ).toLocaleDateString('id-ID')}
+                />
+                <Row
+                    label="JAM:"
+                    value={new Date(transaction.created_at).toLocaleTimeString(
+                        'id-ID',
+                        {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        },
+                    )}
+                />
+                <Row label="KASIR:" value={transaction.cashier_name_snapshot} />
+                <Row
+                    label="PETANI:"
+                    value={transaction.farmer_name_snapshot}
+                    bold
+                />
+            </div>
+
+            <Divider />
+
+            {/* Weights */}
+            {transaction.loads?.length ? (
+                <div className="mb-3 space-y-0.5">
+                    <p className={cn('font-bold', c.heading)}>
+                        RINCIAN MUATAN:
+                    </p>
+                    {transaction.loads.map((load, i) => (
+                        <div
+                            key={load.id}
+                            className={
+                                i > 0
+                                    ? 'mt-1 space-y-0.5 border-t border-dotted border-black pt-1'
+                                    : 'space-y-0.5'
+                            }
+                        >
+                            <p className={cn('font-bold', c.heading)}>
+                                MUATAN #{load.seq_no}
+                            </p>
+                            <Row
+                                label="BRUTO:"
+                                value={formatKg(load.gross_weight)}
+                            />
+                            <Row
+                                label="TARE:"
+                                value={formatKg(load.tare_weight)}
+                            />
+                            {load.has_sorting && (
+                                <Row
+                                    label="SORTIRAN:"
+                                    value={`-${formatKg(load.sorting_weight)}`}
+                                />
+                            )}
+                            <Row
+                                label="NETTO:"
+                                value={formatKg(load.net_weight)}
+                                bold
+                            />
+                        </div>
+                    ))}
+                    {transaction.has_deduction && (
+                        <Row
+                            label={`POTONGAN (${transaction.deduction_percentage}%):`}
+                            value={`-${formatKg(transaction.deduction_weight)}`}
+                        />
+                    )}
+                    <div className="border-t border-dotted border-black pt-1">
+                        <Row
+                            label="NETTO BERSIH:"
+                            value={formatKg(transaction.net_weight)}
+                            bold
+                        />
+                    </div>
+                </div>
+            ) : (
+                <div className="mb-3 space-y-0.5">
+                    <Row
+                        label="BRUTO:"
+                        value={formatKg(transaction.gross_weight)}
+                    />
+                    <Row
+                        label="TARE (MOBIL):"
+                        value={formatKg(transaction.tare_weight)}
+                    />
+                    <Row
+                        label="NETTO KOTOR:"
+                        value={formatKg(transaction.initial_weight)}
+                        bold
+                    />
+                    {transaction.has_deduction && (
+                        <Row
+                            label={`POTONGAN (${transaction.deduction_percentage}%):`}
+                            value={`-${formatKg(transaction.deduction_weight)}`}
+                        />
+                    )}
+                    <div className="border-t border-dotted border-black pt-1">
+                        <Row
+                            label="NETTO BERSIH:"
+                            value={formatKg(transaction.net_weight)}
+                            bold
+                        />
+                    </div>
+                </div>
+            )}
+
+            <Divider />
+
+            {/* Prices */}
+            <div className="mb-3 space-y-0.5">
+                <Row
+                    label="HARGA/KG:"
+                    value={new Intl.NumberFormat('id-ID').format(
+                        transaction.palm_price_per_kg,
+                    )}
+                />
+                <Row
+                    label="TOTAL SAWIT:"
+                    value={new Intl.NumberFormat('id-ID').format(
+                        transaction.palm_total_amount,
+                    )}
+                    bold
+                />
+                {transaction.has_sorting && (
+                    <Row
+                        label={`SORTIRAN (${formatKg(transaction.sorting_weight)}):`}
+                        value={new Intl.NumberFormat('id-ID').format(
+                            transaction.sorting_total_amount,
+                        )}
+                    />
+                )}
+                <div className="border-t border-dotted border-black pt-1">
+                    <Row
+                        label="TOTAL KOTOR:"
+                        value={new Intl.NumberFormat('id-ID').format(
+                            transaction.gross_total_amount,
+                        )}
+                        bold
+                    />
+                </div>
+            </div>
+
+            {/* Debt section - only if applicable */}
+            {transaction.debt_paid_amount > 0 && (
+                <>
+                    <Divider />
+                    <div className="mb-3 space-y-0.5">
+                        <Row
+                            label="HUTANG SEBELUMNYA:"
+                            value={new Intl.NumberFormat('id-ID').format(
+                                transaction.previous_debt_amount,
+                            )}
+                        />
+                        <Row
+                            label="BAYAR HUTANG (-):"
+                            value={new Intl.NumberFormat('id-ID').format(
+                                transaction.debt_paid_amount,
+                            )}
+                            bold
+                        />
+                        <Row
+                            label="SISA HUTANG:"
+                            value={new Intl.NumberFormat('id-ID').format(
+                                transaction.remaining_debt_amount,
+                            )}
+                        />
+                    </div>
+                </>
+            )}
+
+            {/* Final Amount */}
+            <div
+                className={cn(
+                    'my-3 border border-black text-center',
+                    c.totalBox,
+                )}
+            >
+                <p className={cn('font-bold', c.totalLabel)}>TOTAL DITERIMA</p>
+                <p className={cn('font-black', c.totalAmount)}>
+                    {formatRupiah(transaction.final_paid_amount_rounded)}
+                </p>
+                <p className={cn('mt-0.5', c.metode)}>
+                    METODE:{' '}
+                    {transaction.payment_method === 'cash'
+                        ? 'TUNAI'
+                        : 'TRANSFER BANK'}
+                </p>
+            </div>
+
+            {/* Signatures */}
+            <div className="mt-6 grid grid-cols-2 gap-4 text-center">
+                <div>
+                    <p className={c.sigName}>KASIR</p>
+                    <div className={cn('border-t border-black pt-1', c.sigGap)}>
+                        <p className={cn('font-bold', c.sigName)}>
+                            {transaction.cashier_name_snapshot}
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <p className={c.sigName}>PETANI</p>
+                    <div className={cn('border-t border-black pt-1', c.sigGap)}>
+                        <p className={cn('font-bold', c.sigName)}>
+                            {transaction.farmer_name_snapshot}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <Divider />
+            <p className={cn('mt-2 text-center font-bold normal-case', c.note)}>
+                NB: Harap hitung kembali uang anda, kami tidak menerima komplain
+                saat sudah keluar dari RAMP
+            </p>
+            <Divider />
+            <p className={cn('mt-2 text-center normal-case', c.note)}>
+                Terima kasih atas kepercayaannya
+            </p>
+        </div>
+    );
+}
+
 export default function WeighingSuccess({ transaction }: Props) {
     const { status, isSupported, activePrinter, connect, print, isConnecting } =
         usePrinter();
     const [printError, setPrintError] = useState<string | null>(null);
     const [printing, setPrinting] = useState(false);
+    const [paperSize, setPaperSize] = useState<'80' | '57'>(() =>
+        activePrinter?.columns === 32 ? '57' : '80',
+    );
 
     const handleBluetoothPrint = async () => {
         setPrintError(null);
@@ -151,7 +447,7 @@ export default function WeighingSuccess({ transaction }: Props) {
                             className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background shadow transition hover:opacity-80"
                         >
                             <Printer className="h-4 w-4" />
-                            Cetak Nota (80mm)
+                            Cetak Nota ({paperSize === '57' ? '57mm' : '80mm'})
                         </button>
                     )}
 
@@ -160,6 +456,35 @@ export default function WeighingSuccess({ transaction }: Props) {
                             Terhubung ke {activePrinter.name}
                         </p>
                     )}
+                </div>
+
+                {/* Paper size toggle */}
+                <div className="mb-4 flex items-center gap-2 print:hidden">
+                    <span className="text-xs font-medium text-muted-foreground">
+                        Ukuran Kertas:
+                    </span>
+                    <button
+                        onClick={() => setPaperSize('80')}
+                        className={cn(
+                            'rounded-lg border px-3 py-1.5 text-xs font-semibold',
+                            paperSize === '80'
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-sidebar-border/50 text-muted-foreground hover:bg-muted/30',
+                        )}
+                    >
+                        80mm
+                    </button>
+                    <button
+                        onClick={() => setPaperSize('57')}
+                        className={cn(
+                            'rounded-lg border px-3 py-1.5 text-xs font-semibold',
+                            paperSize === '57'
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-sidebar-border/50 text-muted-foreground hover:bg-muted/30',
+                        )}
+                    >
+                        57mm
+                    </button>
                 </div>
 
                 {/* Success Banner - hidden on print */}
@@ -178,256 +503,20 @@ export default function WeighingSuccess({ transaction }: Props) {
                     </div>
                 </div>
 
-                {/* ── NOTA THERMAL 80mm ── */}
-                <div
-                    id="nota-thermal"
-                    className="w-[80mm] border border-sidebar-border/50 bg-white p-4 font-mono text-[10px] leading-tight text-black uppercase shadow-sm print:border-none print:shadow-none"
-                    style={{ fontFamily: "'Courier New', Courier, monospace" }}
-                >
-                    {/* Header */}
-                    <div className="mb-4 space-y-0.5 text-center">
-                        <h1 className="text-sm font-black tracking-tighter">
-                            RAM SAWIT HND JAYA
-                        </h1>
-                        <p className="text-[8px]">Jl. Parit 1 Siapi-api</p>
-                        <p className="text-[8px]">Telp: 0812-xxxx-xxxx</p>
-                        <Divider />
-                        <h2 className="text-[9px] font-bold">
-                            NOTA TIMBANGAN SAWIT
-                        </h2>
-                        <p className="text-[8px]">{transaction.nota_number}</p>
-                    </div>
-
-                    {/* Info */}
-                    <div className="mb-3 space-y-0.5">
-                        <Row
-                            label="TANGGAL:"
-                            value={new Date(
-                                transaction.transaction_date,
-                            ).toLocaleDateString('id-ID')}
-                        />
-                        <Row
-                            label="JAM:"
-                            value={new Date(
-                                transaction.created_at,
-                            ).toLocaleTimeString('id-ID', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                            })}
-                        />
-                        <Row
-                            label="KASIR:"
-                            value={transaction.cashier_name_snapshot}
-                        />
-                        <Row
-                            label="PETANI:"
-                            value={transaction.farmer_name_snapshot}
-                            bold
-                        />
-                    </div>
-
-                    <Divider />
-
-                    {/* Weights */}
-                    {transaction.loads?.length ? (
-                        <div className="mb-3 space-y-0.5">
-                            <p className="text-[8px] font-bold">
-                                RINCIAN MUATAN:
-                            </p>
-                            {transaction.loads.map((load, i) => (
-                                <div
-                                    key={load.id}
-                                    className={
-                                        i > 0
-                                            ? 'mt-1 space-y-0.5 border-t border-dotted border-black pt-1'
-                                            : 'space-y-0.5'
-                                    }
-                                >
-                                    <p className="text-[8px] font-bold">
-                                        MUATAN #{load.seq_no}
-                                    </p>
-                                    <Row
-                                        label="BRUTO:"
-                                        value={formatKg(load.gross_weight)}
-                                    />
-                                    <Row
-                                        label="TARE:"
-                                        value={formatKg(load.tare_weight)}
-                                    />
-                                    {load.has_sorting && (
-                                        <Row
-                                            label="SORTIRAN:"
-                                            value={`-${formatKg(
-                                                load.sorting_weight,
-                                            )}`}
-                                        />
-                                    )}
-                                    <Row
-                                        label="NETTO:"
-                                        value={formatKg(load.net_weight)}
-                                        bold
-                                    />
-                                </div>
-                            ))}
-                            {transaction.has_deduction && (
-                                <Row
-                                    label={`POTONGAN (${transaction.deduction_percentage}%):`}
-                                    value={`-${formatKg(
-                                        transaction.deduction_weight,
-                                    )}`}
-                                />
-                            )}
-                            <div className="border-t border-dotted border-black pt-1">
-                                <Row
-                                    label="NETTO BERSIH:"
-                                    value={formatKg(transaction.net_weight)}
-                                    bold
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="mb-3 space-y-0.5">
-                            <Row
-                                label="BRUTO:"
-                                value={formatKg(transaction.gross_weight)}
-                            />
-                            <Row
-                                label="TARE (MOBIL):"
-                                value={formatKg(transaction.tare_weight)}
-                            />
-                            <Row
-                                label="NETTO KOTOR:"
-                                value={formatKg(transaction.initial_weight)}
-                                bold
-                            />
-                            {transaction.has_deduction && (
-                                <Row
-                                    label={`POTONGAN (${transaction.deduction_percentage}%):`}
-                                    value={`-${formatKg(
-                                        transaction.deduction_weight,
-                                    )}`}
-                                />
-                            )}
-                            <div className="border-t border-dotted border-black pt-1">
-                                <Row
-                                    label="NETTO BERSIH:"
-                                    value={formatKg(transaction.net_weight)}
-                                    bold
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    <Divider />
-
-                    {/* Prices */}
-                    <div className="mb-3 space-y-0.5">
-                        <Row
-                            label="HARGA/KG:"
-                            value={new Intl.NumberFormat('id-ID').format(
-                                transaction.palm_price_per_kg,
-                            )}
-                        />
-                        <Row
-                            label="TOTAL SAWIT:"
-                            value={new Intl.NumberFormat('id-ID').format(
-                                transaction.palm_total_amount,
-                            )}
-                            bold
-                        />
-                        {transaction.has_sorting && (
-                            <Row
-                                label={`SORTIRAN (${formatKg(transaction.sorting_weight)}):`}
-                                value={new Intl.NumberFormat('id-ID').format(
-                                    transaction.sorting_total_amount,
-                                )}
-                            />
-                        )}
-                        <div className="border-t border-dotted border-black pt-1">
-                            <Row
-                                label="TOTAL KOTOR:"
-                                value={new Intl.NumberFormat('id-ID').format(
-                                    transaction.gross_total_amount,
-                                )}
-                                bold
-                            />
-                        </div>
-                    </div>
-
-                    {/* Debt section - only if applicable */}
-                    {transaction.debt_paid_amount > 0 && (
-                        <>
-                            <Divider />
-                            <div className="mb-3 space-y-0.5">
-                                <Row
-                                    label="HUTANG SEBELUMNYA:"
-                                    value={new Intl.NumberFormat(
-                                        'id-ID',
-                                    ).format(transaction.previous_debt_amount)}
-                                />
-                                <Row
-                                    label="BAYAR HUTANG (-):"
-                                    value={new Intl.NumberFormat(
-                                        'id-ID',
-                                    ).format(transaction.debt_paid_amount)}
-                                    bold
-                                />
-                                <Row
-                                    label="SISA HUTANG:"
-                                    value={new Intl.NumberFormat(
-                                        'id-ID',
-                                    ).format(transaction.remaining_debt_amount)}
-                                />
-                            </div>
-                        </>
-                    )}
-
-                    {/* Final Amount */}
-                    <div className="my-3 border border-black p-2 text-center">
-                        <p className="text-[8px] font-bold">TOTAL DITERIMA</p>
-                        <p className="text-sm font-black">
-                            {formatRupiah(
-                                transaction.final_paid_amount_rounded,
-                            )}
-                        </p>
-                        <p className="mt-0.5 text-[7px]">
-                            METODE:{' '}
-                            {transaction.payment_method === 'cash'
-                                ? 'TUNAI'
-                                : 'TRANSFER BANK'}
-                        </p>
-                    </div>
-
-                    {/* Signatures */}
-                    <div className="mt-6 grid grid-cols-2 gap-4 text-center">
-                        <div>
-                            <p className="text-[8px]">KASIR</p>
-                            <div className="mt-8 border-t border-black pt-1">
-                                <p className="text-[8px] font-bold">
-                                    {transaction.cashier_name_snapshot}
-                                </p>
-                            </div>
-                        </div>
-                        <div>
-                            <p className="text-[8px]">PETANI</p>
-                            <div className="mt-8 border-t border-black pt-1">
-                                <p className="text-[8px] font-bold">
-                                    {transaction.farmer_name_snapshot}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <Divider />
-                    <p className="mt-2 text-center text-[7px] font-bold normal-case">
-                        NB: Harap hitung kembali Bang anda, kami tidak menerima
-                        komplain saat sudah keluar dari RAMP
-                    </p>
-                    <Divider />
-                    <p className="mt-2 text-center text-[7px] normal-case">
-                        Terima kasih atas kepercayaannya
-                    </p>
-                </div>
+                {/* ── NOTA THERMAL ── */}
+                {paperSize === '80' ? (
+                    <NotaThermal
+                        id="nota-thermal"
+                        paper="80"
+                        transaction={transaction}
+                    />
+                ) : (
+                    <NotaThermal
+                        id="nota-thermal-57"
+                        paper="57"
+                        transaction={transaction}
+                    />
+                )}
 
                 {/* Print Styles */}
                 <style
@@ -436,7 +525,7 @@ export default function WeighingSuccess({ transaction }: Props) {
                         @media print {
                             @page {
                                 margin: 0;
-                                size: 80mm auto;
+                                size: ${paperSize === '57' ? '57mm' : '80mm'} auto;
                             }
 
                             * {
@@ -444,23 +533,23 @@ export default function WeighingSuccess({ transaction }: Props) {
                                 -webkit-print-color-adjust: exact;
                             }
 
-                            body :not(#nota-thermal):not(#nota-thermal *) {
+                            body :not(#nota-thermal):not(#nota-thermal *):not(#nota-thermal-57):not(#nota-thermal-57 *) {
                                 visibility: hidden;
                             }
 
-                            #nota-thermal {
+                            #nota-thermal, #nota-thermal-57 {
                                 visibility: visible;
                                 position: fixed;
                                 left: 0;
                                 top: 0;
-                                width: 80mm;
-                                padding: 4mm;
+                                width: ${paperSize === '57' ? '57mm' : '80mm'};
+                                padding: ${paperSize === '57' ? '3mm' : '4mm'};
                                 margin: 0;
                                 border: none;
                                 box-shadow: none;
                             }
 
-                            #nota-thermal * {
+                            #nota-thermal *, #nota-thermal-57 * {
                                 visibility: visible;
                             }
                         }
