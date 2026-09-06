@@ -49,8 +49,11 @@ export function parseNumber(value: string | number): number {
     return isNaN(parsed) ? 0 : parsed;
 }
 
-/** Format a raw numeric string (digits + optional dot) with Indonesian grouping: 1000000 -> "1.000.000", "2580.5" -> "2.580,5" */
-export function formatCurrencyDisplay(raw: string): string {
+/** Format a raw numeric string (digits + optional dot) with Indonesian grouping: 1000000 -> "1.000.000", "2580.5" -> "2.580,5". When allowDecimals is false, the decimal part is dropped entirely: "1750.00" -> "1.750" */
+export function formatCurrencyDisplay(
+    raw: string,
+    allowDecimals = true,
+): string {
     if (!raw) {
         return '';
     }
@@ -59,7 +62,7 @@ export function formatCurrencyDisplay(raw: string): string {
     const integer = integerRaw.replace(/[^\d]/g, '');
     const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
-    if (decimalRaw === undefined) {
+    if (!allowDecimals || decimalRaw === undefined) {
         return grouped;
     }
 

@@ -9,6 +9,8 @@ interface CurrencyInputProps {
     className?: string;
     label?: string;
     error?: string;
+    /** When false, decimal values are dropped from display (e.g. "1750.00" -> "1.750"). Defaults to true. */
+    allowDecimals?: boolean;
 }
 
 export default function CurrencyInput({
@@ -19,6 +21,7 @@ export default function CurrencyInput({
     className = '',
     label,
     error,
+    allowDecimals = true,
 }: CurrencyInputProps) {
     const raw = useMemo(() => {
         if (typeof value === 'number') {
@@ -28,7 +31,10 @@ export default function CurrencyInput({
         return value;
     }, [value]);
 
-    const display = useMemo(() => formatCurrencyDisplay(raw), [raw]);
+    const display = useMemo(
+        () => formatCurrencyDisplay(raw, allowDecimals),
+        [raw, allowDecimals],
+    );
 
     return (
         <div className={label ? 'space-y-1.5' : undefined}>

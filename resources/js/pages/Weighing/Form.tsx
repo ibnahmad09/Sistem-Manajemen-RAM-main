@@ -13,9 +13,11 @@ import CurrencyInput from '@/components/currency-input';
 import AppLayout from '@/layouts/app-layout';
 import {
     calculateLoads,
+    formatCurrencyDisplay,
     formatKgTrimmed,
     formatRupiah,
     parseNumber,
+    sanitizeCurrencyInput,
 } from '@/lib/utils';
 import type { LoadInput } from '@/lib/utils';
 import * as farmersRoute from '@/routes/farmers';
@@ -47,7 +49,6 @@ function NumberInput({
     value,
     onChange,
     placeholder = '0',
-    step = '0.01',
     required = false,
     className = '',
     error,
@@ -56,7 +57,6 @@ function NumberInput({
     value: number;
     onChange: (value: number) => void;
     placeholder?: string;
-    step?: string;
     required?: boolean;
     className?: string;
     error?: string;
@@ -67,11 +67,13 @@ function NumberInput({
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
             <input
-                type="number"
-                step={step}
+                type="text"
+                inputMode="numeric"
                 min="0"
-                value={value || ''}
-                onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+                value={value ? formatCurrencyDisplay(String(value)) : ''}
+                onChange={(e) =>
+                    onChange(parseNumber(sanitizeCurrencyInput(e.target.value)))
+                }
                 placeholder={placeholder}
                 className={`h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 font-mono text-sm transition outline-none focus:ring-2 focus:ring-primary ${className}`}
             />
@@ -433,7 +435,6 @@ export default function WeighingForm({
                                                             })
                                                         }
                                                         required
-                                                        step="5"
                                                         className="text-lg font-bold"
                                                     />
                                                     <NumberInput
@@ -445,7 +446,6 @@ export default function WeighingForm({
                                                             })
                                                         }
                                                         required
-                                                        step="5"
                                                         className="text-lg font-bold"
                                                     />
                                                     <div className="space-y-2 md:col-span-2">
@@ -492,7 +492,6 @@ export default function WeighingForm({
                                                                         },
                                                                     )
                                                                 }
-                                                                step="5"
                                                             />
                                                         )}
                                                     </div>
@@ -569,6 +568,7 @@ export default function WeighingForm({
                                             }
                                             error={errors.palm_price_per_kg}
                                             required
+                                            allowDecimals={false}
                                         />
                                     </div>
 
@@ -583,6 +583,7 @@ export default function WeighingForm({
                                                 )
                                             }
                                             error={errors.sorting_price_per_kg}
+                                            allowDecimals={false}
                                         />
                                         <p className="text-xs text-muted-foreground">
                                             Harga sortiran berlaku untuk semua
