@@ -33,10 +33,9 @@ class ReportsController extends Controller
         return [
             'total_transactions' => $transactions->count(),
             'total_weight' => $transactions->sum('net_weight'),
-            'total_gross' => $transactions->sum('gross_weight'),
             'total_tare' => $transactions->sum('tare_weight'),
             'total_initial' => $transactions->sum('initial_weight'),
-            'total_revenue' => $transactions->sum('gross_total_amount'),
+            'total_sorting' => $transactions->sum('sorting_weight'),
             'total_paid_out' => $transactions->sum('final_paid_amount_rounded'),
             'total_debt_paid' => $transactions->sum('debt_paid_amount'),
         ];

@@ -19,8 +19,8 @@ interface Props {
     stats: {
         totalFarmers: number;
         totalTransactionsToday: number;
-        brutoWeightToday: number;
-        nettoWeightToday: number;
+        timbanganKotorToday: number;
+        timbanganBersihToday: number;
         totalRevenueToday: number;
         totalDebt: number;
     };
@@ -70,14 +70,14 @@ export default function SuperAdminDashboard({
                             color: 'bg-purple-500',
                         },
                         {
-                            label: 'Total Bruto Hari Ini',
-                            value: formatKg(stats.brutoWeightToday),
+                            label: 'Timbangan Kotor Hari Ini',
+                            value: formatKg(stats.timbanganKotorToday),
                             icon: TrendingUp,
                             color: 'bg-emerald-500',
                         },
                         {
-                            label: 'Total Neto Hari Ini',
-                            value: formatKg(stats.nettoWeightToday),
+                            label: 'Timbangan Bersih Hari Ini',
+                            value: formatKg(stats.timbanganBersihToday),
                             icon: Scale,
                             color: 'bg-violet-500',
                         },

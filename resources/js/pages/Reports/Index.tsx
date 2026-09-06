@@ -26,11 +26,11 @@ interface ReportTransaction {
     farmer_name_snapshot: string;
     cashier_name_snapshot: string;
     transaction_date: string;
-    gross_weight: number;
     tare_weight: number;
-    net_weight: number;
     initial_weight: number;
-    gross_total_amount: number;
+    net_weight: number;
+    has_sorting: boolean;
+    sorting_weight: number;
     debt_paid_amount: number;
     final_paid_amount_rounded: number;
     payment_method: string;
@@ -39,10 +39,9 @@ interface ReportTransaction {
 interface ReportSummary {
     total_transactions: number;
     total_weight: number;
-    total_gross: number;
     total_tare: number;
     total_initial: number;
-    total_revenue: number;
+    total_sorting: number;
     total_paid_out: number;
     total_debt_paid: number;
 }
@@ -173,24 +172,20 @@ export default function ReportsIndex({
                                 value: String(summary.total_transactions),
                             },
                             {
-                                label: 'Total Berat Bersih',
-                                value: formatKg(summary.total_weight),
+                                label: 'Total Timbangan Kotor',
+                                value: formatKg(summary.total_initial),
                             },
                             {
-                                label: 'Total Bruto',
-                                value: formatKg(summary.total_gross),
+                                label: 'Total Timbangan Bersih',
+                                value: formatKg(summary.total_weight),
                             },
                             {
                                 label: 'Total Tara',
                                 value: formatKg(summary.total_tare),
                             },
                             {
-                                label: 'Total Bruto (Sblm Potongan)',
-                                value: formatKg(summary.total_initial),
-                            },
-                            {
-                                label: 'Total Bruto(Rp)',
-                                value: formatRupiah(summary.total_revenue),
+                                label: 'Total Sortiran',
+                                value: formatKg(summary.total_sorting),
                             },
                             {
                                 label: 'Total Dibayarkan',
@@ -245,19 +240,16 @@ export default function ReportsIndex({
                                             Kasir
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                                            Bruto
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                             Tara
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                                            Neto
+                                            Timbangan Kotor
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                                            Bruto (Sblm Potongan Wajib)
+                                            Timbangan Bersih
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                                            Total Bruto
+                                            Berat Sortiran
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                             Bayar Hutang
@@ -288,21 +280,20 @@ export default function ReportsIndex({
                                                 {tx.cashier_name_snapshot}
                                             </td>
                                             <td className="px-4 py-2.5 text-right font-mono">
-                                                {formatKg(tx.gross_weight)}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right font-mono">
                                                 {formatKg(tx.tare_weight)}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right font-mono">
-                                                {formatKg(tx.net_weight)}
                                             </td>
                                             <td className="px-4 py-2.5 text-right font-mono">
                                                 {formatKg(tx.initial_weight)}
                                             </td>
                                             <td className="px-4 py-2.5 text-right font-mono">
-                                                {formatRupiah(
-                                                    tx.gross_total_amount,
-                                                )}
+                                                {formatKg(tx.net_weight)}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+                                                {tx.has_sorting
+                                                    ? formatKg(
+                                                          tx.sorting_weight,
+                                                      )
+                                                    : 'tidak ada sortiran'}
                                             </td>
                                             <td className="px-4 py-2.5 text-right font-mono text-red-600">
                                                 {tx.debt_paid_amount > 0
@@ -330,13 +321,7 @@ export default function ReportsIndex({
                                                 TOTAL
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono">
-                                                {formatKg(summary.total_gross)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-mono">
                                                 {formatKg(summary.total_tare)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-mono">
-                                                {formatKg(summary.total_weight)}
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono">
                                                 {formatKg(
@@ -344,8 +329,11 @@ export default function ReportsIndex({
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono">
-                                                {formatRupiah(
-                                                    summary.total_revenue,
+                                                {formatKg(summary.total_weight)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-mono">
+                                                {formatKg(
+                                                    summary.total_sorting,
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono text-red-600">

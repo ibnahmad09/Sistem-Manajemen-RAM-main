@@ -26,8 +26,8 @@ class DashboardController extends Controller
 
         $totalTransactionsToday = (clone $todayScope)->count();
         $totalRevenueToday = (clone $todayScope)->sum('gross_total_amount');
-        $brutoWeightToday = (clone $todayScope)->sum('gross_weight');
-        $nettoWeightToday = (clone $todayScope)->sum('initial_weight');
+        $timbanganKotorToday = (clone $todayScope)->sum('initial_weight');
+        $timbanganBersihToday = (clone $todayScope)->sum('net_weight');
         $totalDebt = Farmer::sum('balance');
 
         // Recent transactions
@@ -54,8 +54,8 @@ class DashboardController extends Controller
                 'totalFarmers' => $totalFarmers,
                 'totalTransactionsToday' => $totalTransactionsToday,
                 'totalRevenueToday' => $totalRevenueToday,
-                'brutoWeightToday' => (float) $brutoWeightToday,
-                'nettoWeightToday' => (float) $nettoWeightToday,
+                'timbanganKotorToday' => (float) $timbanganKotorToday,
+                'timbanganBersihToday' => (float) $timbanganBersihToday,
                 'totalDebt' => $totalDebt,
             ],
             'recentTransactions' => $recentTransactions,
@@ -76,8 +76,8 @@ class DashboardController extends Controller
             ->where('status', '!=', 'draft');
 
         $transactionsToday = (clone $todayScope)->count();
-        $brutoWeightToday = (clone $todayScope)->sum('gross_weight');
-        $nettoWeightToday = (clone $todayScope)->sum('initial_weight');
+        $timbanganKotorToday = (clone $todayScope)->sum('initial_weight');
+        $timbanganBersihToday = (clone $todayScope)->sum('net_weight');
         $cashOutToday = (clone $todayScope)->sum('final_paid_amount_rounded');
 
         // Cash balance
@@ -110,8 +110,8 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard/Cashier', [
             'stats' => [
                 'transactionsToday' => $transactionsToday,
-                'brutoWeightToday' => (float) $brutoWeightToday,
-                'nettoWeightToday' => (float) $nettoWeightToday,
+                'timbanganKotorToday' => (float) $timbanganKotorToday,
+                'timbanganBersihToday' => (float) $timbanganBersihToday,
                 'cashOutToday' => $cashOutToday,
                 'cashBalance' => $cashBalance,
             ],
@@ -143,8 +143,8 @@ class DashboardController extends Controller
 
         $totalRevenue = (clone $totalScope)->sum('gross_total_amount');
         $totalPaidOut = (clone $totalScope)->sum('final_paid_amount_rounded');
-        $totalBrutoWeight = (clone $totalScope)->sum('gross_weight');
-        $totalNettoWeight = (clone $totalScope)->sum('initial_weight');
+        $totalTimbanganKotor = (clone $totalScope)->sum('initial_weight');
+        $totalTimbanganBersih = (clone $totalScope)->sum('net_weight');
         $totalTransactions = (clone $totalScope)->where('is_latest_version', true)->count();
         $totalDebt = Farmer::sum('balance');
 
@@ -167,8 +167,8 @@ class DashboardController extends Controller
                 'totalRevenue' => $totalRevenue,
                 'totalPaidOut' => $totalPaidOut,
                 'totalTransactions' => $totalTransactions,
-                'totalBrutoWeight' => (float) $totalBrutoWeight,
-                'totalNettoWeight' => (float) $totalNettoWeight,
+                'totalTimbanganKotor' => (float) $totalTimbanganKotor,
+                'totalTimbanganBersih' => (float) $totalTimbanganBersih,
                 'totalDebt' => $totalDebt,
             ],
             'monthlyRevenue' => $monthlyRevenue,

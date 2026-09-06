@@ -22,8 +22,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface Props {
     stats: {
         transactionsToday: number;
-        brutoWeightToday: number;
-        nettoWeightToday: number;
+        timbanganKotorToday: number;
+        timbanganBersihToday: number;
         cashOutToday: number;
         cashBalance: number;
     };
@@ -110,18 +110,18 @@ export default function CashierDashboard({
                         subtitle="timbangan"
                     />
                     <StatCard
-                        title="Total Bruto Hari Ini"
-                        value={formatKg(stats.brutoWeightToday)}
+                        title="Timbangan Kotor Hari Ini"
+                        value={formatKg(stats.timbanganKotorToday)}
                         icon={TrendingUp}
                         color="bg-emerald-500"
-                        subtitle="input timbangan"
+                        subtitle="sebelum potongan"
                     />
                     <StatCard
-                        title="Total Neto Hari Ini"
-                        value={formatKg(stats.nettoWeightToday)}
+                        title="Timbangan Bersih Hari Ini"
+                        value={formatKg(stats.timbanganBersihToday)}
                         icon={Scale}
                         color="bg-violet-500"
-                        subtitle="netto kotor"
+                        subtitle="setelah potongan"
                     />
                     <StatCard
                         title="Total Dibayarkan"

@@ -27,8 +27,8 @@ interface Props {
         totalRevenue: number;
         totalPaidOut: number;
         totalTransactions: number;
-        totalBrutoWeight: number;
-        totalNettoWeight: number;
+        totalTimbanganKotor: number;
+        totalTimbanganBersih: number;
         totalDebt: number;
     };
     monthlyRevenue: MonthlyRevenue[];
@@ -84,15 +84,15 @@ export default function OwnerDashboard({
                             sub: 'timbangan',
                         },
                         {
-                            label: 'Total Bruto',
-                            value: formatKg(stats.totalBrutoWeight),
+                            label: 'Timbangan Kotor',
+                            value: formatKg(stats.totalTimbanganKotor),
                             icon: Scale,
                             color: 'bg-teal-500',
                             sub: 'semua waktu',
                         },
                         {
-                            label: 'Total Neto',
-                            value: formatKg(stats.totalNettoWeight),
+                            label: 'Timbangan Bersih',
+                            value: formatKg(stats.totalTimbanganBersih),
                             icon: Scale,
                             color: 'bg-violet-500',
                             sub: 'semua waktu',

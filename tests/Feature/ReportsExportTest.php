@@ -53,10 +53,15 @@ test('it includes weight columns in the report index page', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Reports/Index')
             ->has('transactions', 1)
-            ->where('summary.total_gross', 1000)
+            ->where('transactions.0.tare_weight', '150.00')
+            ->where('transactions.0.initial_weight', '850.00')
+            ->where('transactions.0.net_weight', '807.50')
+            ->where('transactions.0.has_sorting', false)
+            ->where('transactions.0.sorting_weight', '0.00')
             ->where('summary.total_tare', 150)
             ->where('summary.total_initial', 850)
-            ->where('summary.total_weight', 807.5));
+            ->where('summary.total_weight', 807.5)
+            ->where('summary.total_sorting', 0));
 });
 
 test('it maps weight columns in excel export', function () {
@@ -74,11 +79,12 @@ test('it maps weight columns in excel export', function () {
         function (ReportsExport $export) {
             $headings = $export->headings();
 
-            expect($headings)->toContain('Bruto (kg)')
-                ->toContain('Tara (kg)')
-                ->toContain('Neto (kg)')
-                ->toContain('Bruto Sblm Potongan (kg)')
-                ->not->toContain('Berat Bersih (kg)');
+            expect($headings)->toContain('Tara (kg)')
+                ->toContain('Timbangan Kotor (kg)')
+                ->toContain('Timbangan Bersih (kg)')
+                ->toContain('Berat Sortiran (kg)')
+                ->not->toContain('Bruto (kg)')
+                ->not->toContain('Total Bruto (Rp)');
 
             $rows = $export->collection();
 
@@ -86,10 +92,10 @@ test('it maps weight columns in excel export', function () {
 
             $mapped = $export->map($rows->first());
 
-            expect($mapped[4])->toBe('1000.00')
-                ->and($mapped[5])->toBe('150.00')
+            expect($mapped[4])->toBe('150.00')
+                ->and($mapped[5])->toBe('850.00')
                 ->and($mapped[6])->toBe('807.50')
-                ->and($mapped[7])->toBe('850.00');
+                ->and($mapped[7])->toBe('0.00');
 
             return true;
         }
