@@ -49,10 +49,10 @@
                     <td class="text-center">{{ $tx->transaction_date instanceof \Carbon\Carbon ? $tx->transaction_date->format('d/m/Y') : date('d/m/Y', strtotime($tx->transaction_date)) }}</td>
                     <td>{{ $tx->farmer_name_snapshot }}</td>
                     <td>{{ $tx->cashier_name_snapshot }}</td>
-                    <td class="text-right">{{ number_format($tx->gross_weight, 2, ',', '.') }}</td>
-                    <td class="text-right">{{ number_format($tx->tare_weight, 2, ',', '.') }}</td>
-                    <td class="text-right">{{ number_format($tx->net_weight, 2, ',', '.') }}</td>
-                    <td class="text-right">{{ number_format($tx->initial_weight, 2, ',', '.') }}</td>
+                    <td class="text-right">{{ formatNumberId($tx->gross_weight) }}</td>
+                    <td class="text-right">{{ formatNumberId($tx->tare_weight) }}</td>
+                    <td class="text-right">{{ formatNumberId($tx->net_weight) }}</td>
+                    <td class="text-right">{{ formatNumberId($tx->initial_weight) }}</td>
                     <td class="text-right">Rp {{ number_format($tx->gross_total_amount, 0, ',', '.') }}</td>
                     <td class="text-right">{{ $tx->debt_paid_amount > 0 ? 'Rp ' . number_format($tx->debt_paid_amount, 0, ',', '.') : '—' }}</td>
                     <td class="text-right">Rp {{ number_format($tx->final_paid_amount_rounded, 0, ',', '.') }}</td>
@@ -67,10 +67,10 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="4">TOTAL</td>
-                <td class="text-right">{{ number_format($summary['total_gross'], 2, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($summary['total_tare'], 2, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($summary['total_weight'], 2, ',', '.') }}</td>
-                <td class="text-right">{{ number_format($summary['total_initial'], 2, ',', '.') }}</td>
+                <td class="text-right">{{ formatNumberId($summary['total_gross']) }}</td>
+                <td class="text-right">{{ formatNumberId($summary['total_tare']) }}</td>
+                <td class="text-right">{{ formatNumberId($summary['total_weight']) }}</td>
+                <td class="text-right">{{ formatNumberId($summary['total_initial']) }}</td>
                 <td class="text-right">Rp {{ number_format($summary['total_revenue'], 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($summary['total_debt_paid'], 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($summary['total_paid_out'], 0, ',', '.') }}</td>

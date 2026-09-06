@@ -41,6 +41,14 @@ export function formatKgTrimmed(weight: number): string {
     );
 }
 
+/** Format a number with Indonesian grouping, trimming trailing zeros in the decimal part (e.g. 120 -> "120", 120.5 -> "120,5", 1500 -> "1.500") */
+export function formatIdNumber(value: number, maxFraction = 2): string {
+    return new Intl.NumberFormat('id-ID', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: maxFraction,
+    }).format(value);
+}
+
 /** Parse a string/number input to a float, returning 0 for invalid values */
 export function parseNumber(value: string | number): number {
     const parsed =

@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Percent, Save } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
+import { formatIdNumber } from '@/lib/utils';
 import type { BreadcrumbItem, DeductionConfig } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -50,7 +51,7 @@ export default function DeductionConfigPage({ config }: Props) {
                             Potongan Aktif Saat Ini
                         </p>
                         <p className="font-mono text-3xl font-black text-blue-800 dark:text-blue-300">
-                            {currentPercentage.toFixed(2)}
+                            {formatIdNumber(currentPercentage, 2)}
                             <span className="text-base font-normal">%</span>
                         </p>
                         {config?.note && (

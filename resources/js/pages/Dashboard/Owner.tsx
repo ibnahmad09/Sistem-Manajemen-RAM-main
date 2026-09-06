@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { BarChart3, DollarSign, Scale, TrendingDown } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import { formatKg, formatRupiah } from '@/lib/utils';
+import { formatIdNumber, formatKg, formatRupiah } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -42,12 +42,8 @@ export default function OwnerDashboard({
 }: Props) {
     const margin =
         stats.totalRevenue > 0
-            ? (
-                  ((stats.totalRevenue - stats.totalPaidOut) /
-                      stats.totalRevenue) *
-                  100
-              ).toFixed(1)
-            : '0';
+            ? (stats.totalRevenue - stats.totalPaidOut) / stats.totalRevenue
+            : 0;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -106,7 +102,7 @@ export default function OwnerDashboard({
                             value: formatRupiah(stats.totalDebt),
                             icon: BarChart3,
                             color: 'bg-red-500',
-                            sub: `margin ~${margin}%`,
+                            sub: `margin ~${formatIdNumber(margin * 100, 1)}%`,
                         },
                     ].map((s) => (
                         <div
