@@ -351,7 +351,10 @@ export default function WeighingSuccess({ transaction }: Props) {
         setPrinting(true);
 
         try {
-            await print(transaction);
+            const notaEl = document.getElementById(
+                paperSize === '57' ? 'nota-thermal-57' : 'nota-thermal',
+            );
+            await print(transaction, notaEl);
         } catch (err) {
             setPrintError(
                 err instanceof Error ? err.message : 'Gagal mencetak.',

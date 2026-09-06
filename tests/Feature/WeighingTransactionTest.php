@@ -294,6 +294,27 @@ test('weighing list excludes drafts and exposes active drafts', function () {
             ->where('activeDrafts.0.status', 'draft'));
 });
 
+test('weighing list summary stays correct on later pages', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+
+    foreach (range(1, 21) as $i) {
+        $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData(createTestFarmer(), [
+            'loads' => [
+                ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => false, 'sorting_weight' => 0],
+            ],
+        ]) + ['action' => 'finalize']);
+    }
+
+    $response = $this->actingAs($cashier)->get(route('weighing.index', ['page' => 2]));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Weighing/List')
+            ->has('transactions.data', 1)
+            ->where('summary.total_bruto', fn ($value) => $value == 21000.0)
+            ->where('summary.total_neto', fn ($value) => $value == 16800.0));
+});
+
 test('draft does not affect reports', function () {
     $cashier = User::factory()->create(['role' => 'cashier']);
     $farmer = createTestFarmer();
@@ -325,6 +346,51 @@ test('reports page renders empty state without filters', function () {
             ->component('Reports/Index')
             ->where('transactions', [])
             ->whereNull('summary'));
+});
+
+test('weighing list summary follows filters and excludes drafts', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+
+    // Finalized today: gross 1000, initial 800
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData(createTestFarmer(), [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => false, 'sorting_weight' => 0],
+        ],
+    ]) + ['action' => 'finalize']);
+
+    // Finalized 30 days ago: gross 500, initial 400
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData(createTestFarmer(), [
+        'transaction_date' => now()->subDays(30)->format('Y-m-d'),
+        'loads' => [
+            ['gross_weight' => 500, 'tare_weight' => 100, 'has_sorting' => false, 'sorting_weight' => 0],
+        ],
+    ]) + ['action' => 'finalize']);
+
+    // Draft with a different farmer to avoid active draft conflict
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData(createTestFarmer()) + ['action' => 'save_draft']);
+
+    // Without filters
+    $this->actingAs($cashier)
+        ->get(route('weighing.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Weighing/List')
+            ->has('transactions.data', 2)
+            ->where('summary.total_bruto', fn ($value) => $value == 1500.0)
+            ->where('summary.total_neto', fn ($value) => $value == 1200.0));
+
+    // Filtered to today only
+    $this->actingAs($cashier)
+        ->get(route('weighing.index', [
+            'date_start' => now()->format('Y-m-d'),
+            'date_end' => now()->format('Y-m-d'),
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Weighing/List')
+            ->has('transactions.data', 1)
+            ->where('summary.total_bruto', fn ($value) => $value == 1000.0)
+            ->where('summary.total_neto', fn ($value) => $value == 800.0));
 });
 
 test('reports export pdf returns valid PDF', function () {

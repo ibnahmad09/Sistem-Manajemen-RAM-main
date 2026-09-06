@@ -13,7 +13,10 @@ interface UsePrinterReturn {
     autoReconnect: () => Promise<boolean>;
     setActivePrinter: (id: string) => void;
     forgetPrinter: (id: string) => void;
-    print: (transaction: WeighingTransaction) => Promise<void>;
+    print: (
+        transaction: WeighingTransaction,
+        element?: HTMLElement | null,
+    ) => Promise<void>;
     isConnecting: boolean;
     isDebugMode: boolean;
     toggleDebug: () => boolean;
@@ -67,9 +70,15 @@ export function usePrinter(): UsePrinterReturn {
         setPairedDevices(printerService.pairedDevices);
     }, []);
 
-    const print = useCallback(async (transaction: WeighingTransaction) => {
-        await printerService.printReceipt(transaction);
-    }, []);
+    const print = useCallback(
+        async (
+            transaction: WeighingTransaction,
+            element?: HTMLElement | null,
+        ) => {
+            await printerService.printReceipt(transaction, element);
+        },
+        [],
+    );
 
     const forgetPrinterFn = useCallback((id: string) => {
         printerService.forgetPrinter(id);

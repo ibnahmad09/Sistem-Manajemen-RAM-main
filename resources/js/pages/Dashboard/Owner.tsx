@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { BarChart3, DollarSign, Scale, TrendingDown } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import { formatRupiah } from '@/lib/utils';
+import { formatKg, formatRupiah } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -27,6 +27,8 @@ interface Props {
         totalRevenue: number;
         totalPaidOut: number;
         totalTransactions: number;
+        totalBrutoWeight: number;
+        totalNettoWeight: number;
         totalDebt: number;
     };
     monthlyRevenue: MonthlyRevenue[];
@@ -62,7 +64,7 @@ export default function OwnerDashboard({
                 </div>
 
                 {/* Key Metrics */}
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
                     {[
                         {
                             label: 'Total Revenue',
@@ -84,6 +86,20 @@ export default function OwnerDashboard({
                             icon: Scale,
                             color: 'bg-blue-500',
                             sub: 'timbangan',
+                        },
+                        {
+                            label: 'Total Bruto',
+                            value: formatKg(stats.totalBrutoWeight),
+                            icon: Scale,
+                            color: 'bg-teal-500',
+                            sub: 'semua waktu',
+                        },
+                        {
+                            label: 'Total Neto',
+                            value: formatKg(stats.totalNettoWeight),
+                            icon: Scale,
+                            color: 'bg-violet-500',
+                            sub: 'semua waktu',
                         },
                         {
                             label: 'Total Piutang',

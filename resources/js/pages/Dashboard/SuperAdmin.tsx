@@ -19,6 +19,8 @@ interface Props {
     stats: {
         totalFarmers: number;
         totalTransactionsToday: number;
+        brutoWeightToday: number;
+        nettoWeightToday: number;
         totalRevenueToday: number;
         totalDebt: number;
     };
@@ -53,7 +55,7 @@ export default function SuperAdminDashboard({
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
                     {[
                         {
                             label: 'Total Petani',
@@ -66,6 +68,18 @@ export default function SuperAdminDashboard({
                             value: String(stats.totalTransactionsToday),
                             icon: Scale,
                             color: 'bg-purple-500',
+                        },
+                        {
+                            label: 'Total Bruto Hari Ini',
+                            value: formatKg(stats.brutoWeightToday),
+                            icon: TrendingUp,
+                            color: 'bg-emerald-500',
+                        },
+                        {
+                            label: 'Total Neto Hari Ini',
+                            value: formatKg(stats.nettoWeightToday),
+                            icon: Scale,
+                            color: 'bg-violet-500',
                         },
                         {
                             label: 'Revenue Hari Ini',

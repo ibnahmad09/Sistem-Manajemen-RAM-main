@@ -20,12 +20,14 @@ class DashboardController extends Controller
 
         // Statistics
         $totalFarmers = Farmer::where('status', 'active')->count();
-        $totalTransactionsToday = WeighingTransaction::whereDate('transaction_date', today())
-            ->where('status', '!=', 'draft')
-            ->count();
-        $totalRevenueToday = WeighingTransaction::whereDate('transaction_date', today())
-            ->where('status', '!=', 'draft')
-            ->sum('gross_total_amount');
+
+        $todayScope = WeighingTransaction::whereDate('transaction_date', today())
+            ->where('status', '!=', 'draft');
+
+        $totalTransactionsToday = (clone $todayScope)->count();
+        $totalRevenueToday = (clone $todayScope)->sum('gross_total_amount');
+        $brutoWeightToday = (clone $todayScope)->sum('gross_weight');
+        $nettoWeightToday = (clone $todayScope)->sum('initial_weight');
         $totalDebt = Farmer::sum('balance');
 
         // Recent transactions
@@ -52,6 +54,8 @@ class DashboardController extends Controller
                 'totalFarmers' => $totalFarmers,
                 'totalTransactionsToday' => $totalTransactionsToday,
                 'totalRevenueToday' => $totalRevenueToday,
+                'brutoWeightToday' => (float) $brutoWeightToday,
+                'nettoWeightToday' => (float) $nettoWeightToday,
                 'totalDebt' => $totalDebt,
             ],
             'recentTransactions' => $recentTransactions,
@@ -67,20 +71,14 @@ class DashboardController extends Controller
         $user = $request->user();
 
         // Today's statistics
-        $transactionsToday = WeighingTransaction::where('cashier_id', $user->id)
+        $todayScope = WeighingTransaction::where('cashier_id', $user->id)
             ->whereDate('transaction_date', today())
-            ->where('status', '!=', 'draft')
-            ->count();
+            ->where('status', '!=', 'draft');
 
-        $revenueToday = WeighingTransaction::where('cashier_id', $user->id)
-            ->whereDate('transaction_date', today())
-            ->where('status', '!=', 'draft')
-            ->sum('gross_total_amount');
-
-        $cashOutToday = WeighingTransaction::where('cashier_id', $user->id)
-            ->whereDate('transaction_date', today())
-            ->where('status', '!=', 'draft')
-            ->sum('final_paid_amount_rounded');
+        $transactionsToday = (clone $todayScope)->count();
+        $brutoWeightToday = (clone $todayScope)->sum('gross_weight');
+        $nettoWeightToday = (clone $todayScope)->sum('initial_weight');
+        $cashOutToday = (clone $todayScope)->sum('final_paid_amount_rounded');
 
         // Cash balance
         $cashIn = CashierCashEntry::where('cashier_id', $user->id)
@@ -112,7 +110,8 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard/Cashier', [
             'stats' => [
                 'transactionsToday' => $transactionsToday,
-                'revenueToday' => $revenueToday,
+                'brutoWeightToday' => (float) $brutoWeightToday,
+                'nettoWeightToday' => (float) $nettoWeightToday,
                 'cashOutToday' => $cashOutToday,
                 'cashBalance' => $cashBalance,
             ],
@@ -140,11 +139,13 @@ class DashboardController extends Controller
             ->get();
 
         // Total statistics
-        $totalRevenue = WeighingTransaction::where('status', '!=', 'draft')->sum('gross_total_amount');
-        $totalPaidOut = WeighingTransaction::where('status', '!=', 'draft')->sum('final_paid_amount_rounded');
-        $totalTransactions = WeighingTransaction::where('is_latest_version', true)
-            ->where('status', '!=', 'draft')
-            ->count();
+        $totalScope = WeighingTransaction::where('status', '!=', 'draft');
+
+        $totalRevenue = (clone $totalScope)->sum('gross_total_amount');
+        $totalPaidOut = (clone $totalScope)->sum('final_paid_amount_rounded');
+        $totalBrutoWeight = (clone $totalScope)->sum('gross_weight');
+        $totalNettoWeight = (clone $totalScope)->sum('initial_weight');
+        $totalTransactions = (clone $totalScope)->where('is_latest_version', true)->count();
         $totalDebt = Farmer::sum('balance');
 
         // Top farmers by transaction volume
@@ -166,6 +167,8 @@ class DashboardController extends Controller
                 'totalRevenue' => $totalRevenue,
                 'totalPaidOut' => $totalPaidOut,
                 'totalTransactions' => $totalTransactions,
+                'totalBrutoWeight' => (float) $totalBrutoWeight,
+                'totalNettoWeight' => (float) $totalNettoWeight,
                 'totalDebt' => $totalDebt,
             ],
             'monthlyRevenue' => $monthlyRevenue,

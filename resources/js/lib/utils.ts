@@ -21,11 +21,11 @@ export function formatRupiah(amount: number): string {
     }).format(amount);
 }
 
-/** Format number as kilograms (e.g., "1.234,50 kg") */
+/** Format number as kilograms, dropping trailing ",00" but keeping nonzero decimals (e.g., "1.234,5 kg", "1.234 kg") */
 export function formatKg(weight: number): string {
     return (
         new Intl.NumberFormat('id-ID', {
-            minimumFractionDigits: 2,
+            minimumFractionDigits: 0,
             maximumFractionDigits: 2,
         }).format(weight) + ' kg'
     );

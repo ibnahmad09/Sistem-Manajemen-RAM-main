@@ -1,5 +1,6 @@
 import { detectColumns, normalizeCodepageMapping } from '@/lib/printer-models';
 import { buildReceipt as buildReceiptData } from '@/lib/receipt-builder';
+import { captureNotaBitmap, dotWidthForColumns } from '@/lib/receipt-raster';
 import type { WeighingTransaction } from '@/types';
 
 export interface PairedPrinter {
@@ -360,7 +361,10 @@ class PrinterService {
         }
     }
 
-    async printReceipt(transaction: WeighingTransaction): Promise<void> {
+    async printReceipt(
+        transaction: WeighingTransaction,
+        element?: HTMLElement | null,
+    ): Promise<void> {
         if (this.isDebugMode) {
             const { default: ReceiptPrinterEncoder } =
                 await import('@point-of-sale/receipt-printer-encoder');
@@ -419,7 +423,31 @@ class PrinterService {
                 active.codepageMapping,
             ) as 'epson' | 'zjiang' | 'xprinter' | 'mpt' | 'default' | 'star',
             columns: active.columns,
+            // Default is "column" (for text); bitmap nota needs GS v 0 raster.
+            imageMode: 'raster',
         });
+
+        if (element && active.language === 'esc-pos') {
+            try {
+                const dotWidth = dotWidthForColumns(active.columns);
+                const bitmap = await captureNotaBitmap(element, dotWidth);
+                // Encoder needs the raw object {data, width, height} (plain
+                // object), not a bare Uint8ClampedArray — a bare array throws
+                // "Could not determine the type of image input".
+                const data = encoder
+                    .image(bitmap, bitmap.width, bitmap.height)
+                    .newline()
+                    .newline()
+                    .cut()
+                    .encode();
+
+                await this.printer.print(data);
+
+                return;
+            } catch {
+                // fall back to text mode below
+            }
+        }
 
         const data = buildReceiptData(encoder, transaction, active.columns);
 

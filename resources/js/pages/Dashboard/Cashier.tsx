@@ -22,7 +22,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface Props {
     stats: {
         transactionsToday: number;
-        revenueToday: number;
+        brutoWeightToday: number;
+        nettoWeightToday: number;
         cashOutToday: number;
         cashBalance: number;
     };
@@ -100,7 +101,7 @@ export default function CashierDashboard({
                 </div>
 
                 {/* Stat Cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <StatCard
                         title="Transaksi Hari Ini"
                         value={String(stats.transactionsToday)}
@@ -110,9 +111,17 @@ export default function CashierDashboard({
                     />
                     <StatCard
                         title="Total Bruto Hari Ini"
-                        value={formatRupiah(stats.revenueToday)}
+                        value={formatKg(stats.brutoWeightToday)}
                         icon={TrendingUp}
                         color="bg-emerald-500"
+                        subtitle="input timbangan"
+                    />
+                    <StatCard
+                        title="Total Neto Hari Ini"
+                        value={formatKg(stats.nettoWeightToday)}
+                        icon={Scale}
+                        color="bg-violet-500"
+                        subtitle="netto kotor"
                     />
                     <StatCard
                         title="Total Dibayarkan"

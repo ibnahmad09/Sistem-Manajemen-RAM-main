@@ -19,6 +19,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface Props {
     transactions: PaginatedData<WeighingTransaction & { farmer: Farmer }>;
     filters: { farmer_id?: string; date_start?: string; date_end?: string };
+    summary: { total_bruto: number; total_neto: number };
     activeDrafts: (WeighingTransaction & {
         farmer?: Farmer;
         loads?: WeighingLoad[];
@@ -43,6 +44,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default function WeighingList({
     transactions,
     filters,
+    summary,
     activeDrafts,
 }: Props) {
     const [dateStart, setDateStart] = useState(filters.date_start ?? '');
@@ -201,6 +203,26 @@ export default function WeighingList({
                     )}
                 </div>
 
+                {/* Ringkasan */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-xl border border-sidebar-border/50 bg-card p-4 shadow-sm">
+                        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                            Total Bruto
+                        </p>
+                        <p className="mt-1 font-mono text-xl font-bold text-foreground">
+                            {formatKg(summary.total_bruto)}
+                        </p>
+                    </div>
+                    <div className="rounded-xl border border-sidebar-border/50 bg-card p-4 shadow-sm">
+                        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                            Total Neto
+                        </p>
+                        <p className="mt-1 font-mono text-xl font-bold text-foreground">
+                            {formatKg(summary.total_neto)}
+                        </p>
+                    </div>
+                </div>
+
                 {/* Table */}
                 <div className="overflow-hidden rounded-xl border border-sidebar-border/50 bg-card">
                     <div className="overflow-x-auto">
@@ -215,6 +237,12 @@ export default function WeighingList({
                                     </th>
                                     <th className="px-5 py-3 text-left text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                         Tanggal
+                                    </th>
+                                    <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Bruto
+                                    </th>
+                                    <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                        Neto
                                     </th>
                                     <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                         Berat Bersih
@@ -234,7 +262,7 @@ export default function WeighingList({
                                 {transactions.data.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={9}
                                             className="py-12 text-center text-sm text-muted-foreground italic"
                                         >
                                             Belum ada transaksi timbangan.
@@ -281,6 +309,18 @@ export default function WeighingList({
                                                         )}
                                                     </span>
                                                 </div>
+                                            </td>
+                                            <td className="px-5 py-3 text-right">
+                                                <span className="font-mono text-sm">
+                                                    {formatKg(tx.gross_weight)}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-3 text-right">
+                                                <span className="font-mono text-sm">
+                                                    {formatKg(
+                                                        tx.initial_weight,
+                                                    )}
+                                                </span>
                                             </td>
                                             <td className="px-5 py-3 text-right">
                                                 <span className="font-mono text-sm font-semibold">

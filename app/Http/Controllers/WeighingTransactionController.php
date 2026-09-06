@@ -38,6 +38,14 @@ class WeighingTransactionController extends Controller
             $query->whereDate('transaction_date', '<=', $request->date_end);
         }
 
+        // Hitung summary SEBELUM paginate: paginate() menerapkan limit/offset ke builder
+        // (via forPage), dan agregat Laravel tidak membersihkan limit/offset — jika
+        // dihitung setelahnya, total di halaman 2+ akan salah (0).
+        $summary = [
+            'total_bruto' => (float) (clone $query)->sum('gross_weight'),
+            'total_neto' => (float) (clone $query)->sum('initial_weight'),
+        ];
+
         $transactions = $query->paginate(20);
 
         $activeDrafts = WeighingTransaction::activeDraft()
@@ -47,6 +55,7 @@ class WeighingTransactionController extends Controller
 
         return Inertia::render('Weighing/List', [
             'transactions' => $transactions,
+            'summary' => $summary,
             'activeDrafts' => $activeDrafts,
             'filters' => $request->only(['farmer_id', 'date_start', 'date_end']),
         ]);
