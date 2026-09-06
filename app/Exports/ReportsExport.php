@@ -33,6 +33,7 @@ class ReportsExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'Timbangan Kotor (kg)',
             'Timbangan Bersih (kg)',
             'Berat Sortiran (kg)',
+            'Pinjaman (Rp)',
             'Bayar Hutang (Rp)',
             'Diterima (Rp)',
         ];
@@ -40,20 +41,52 @@ class ReportsExport implements FromCollection, WithHeadings, WithMapping, WithSt
 
     public function map($tx): array
     {
+        if (($tx['type'] ?? null) === 'debt') {
+            return $this->mapDebtRow($tx);
+        }
+
         return [
-            $tx->nota_number,
-            $tx->transaction_date instanceof Carbon
-                ? $tx->transaction_date->format('d/m/Y')
-                : date('d/m/Y', strtotime($tx->transaction_date)),
-            $tx->farmer_name_snapshot,
-            $tx->cashier_name_snapshot,
-            $tx->tare_weight,
-            $tx->initial_weight,
-            $tx->net_weight,
-            $tx->sorting_weight,
-            $tx->debt_paid_amount > 0 ? $tx->debt_paid_amount : 0,
-            $tx->final_paid_amount_rounded,
+            $tx['nota_number'] ?? null,
+            $this->formatDate($tx['transaction_date']),
+            $tx['farmer_name_snapshot'] ?? null,
+            $tx['kasir_name'] ?? null,
+            $tx['tare_weight'] ?? '',
+            $tx['initial_weight'] ?? '',
+            $tx['net_weight'] ?? '',
+            empty($tx['sorting_weight']) ? '0' : $tx['sorting_weight'],
+            '',
+            ($tx['debt_paid_amount'] ?? 0) > 0 ? $tx['debt_paid_amount'] : '0',
+            $tx['final_paid_amount_rounded'] ?? 0,
         ];
+    }
+
+    private function mapDebtRow(array $tx): array
+    {
+        $loanAmount = $tx['loan_amount'] ?? 0;
+        $debtPaid = $tx['debt_paid_amount'] ?? 0;
+
+        return [
+            '—',
+            $this->formatDate($tx['transaction_date']),
+            $tx['farmer_name_snapshot'] ?? null,
+            $tx['kasir_name'] ?? null,
+            '',
+            '',
+            '',
+            '',
+            $loanAmount > 0 ? $loanAmount : '',
+            $debtPaid > 0 ? $debtPaid : '',
+            '',
+        ];
+    }
+
+    private function formatDate($date): string
+    {
+        if ($date instanceof Carbon) {
+            return $date->format('d/m/Y');
+        }
+
+        return date('d/m/Y', strtotime($date));
     }
 
     public function styles(Worksheet $sheet): array

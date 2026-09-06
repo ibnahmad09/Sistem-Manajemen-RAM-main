@@ -100,7 +100,7 @@ function NotaThermal({
                 <h1 className={cn('font-black tracking-tighter', c.brand)}>
                     RAM SAWIT HND JAYA
                 </h1>
-                <p className={c.sub}>Jl. Parit 1 Siapi-api</p>
+                <p className={c.sub}>Jl. Parit 1 Api-Api</p>
                 <p className={c.sub}>Telp: 0822-6429-0744</p>
                 <Divider />
                 <h2 className={cn('font-bold', c.heading)}>

@@ -52,7 +52,7 @@ export function buildReceipt(
         .text('RAM SAWIT HND JAYA')
         .bold(false)
         .size(1)
-        .text('Jl. Parit 1 Siapi-api')
+        .text('Jl. Parit 1 Api-Api')
         .text('Telp: 0822-6429-0744')
         .newline()
 

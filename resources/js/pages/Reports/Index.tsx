@@ -20,20 +20,21 @@ import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Laporan', href: '/reports' }];
 
-interface ReportTransaction {
-    id: number;
-    nota_number: string;
+interface ReportRow {
+    type: 'weighing' | 'debt';
+    debt_type: 'loan' | 'payment' | 'adjustment' | null;
+    nota_number: string | null;
     farmer_name_snapshot: string;
-    cashier_name_snapshot: string;
+    kasir_name: string;
     transaction_date: string;
-    tare_weight: number;
-    initial_weight: number;
-    net_weight: number;
+    tare_weight: number | null;
+    initial_weight: number | null;
+    net_weight: number | null;
     has_sorting: boolean;
     sorting_weight: number;
+    loan_amount: number;
     debt_paid_amount: number;
     final_paid_amount_rounded: number;
-    payment_method: string;
 }
 
 interface ReportSummary {
@@ -44,10 +45,11 @@ interface ReportSummary {
     total_sorting: number;
     total_paid_out: number;
     total_debt_paid: number;
+    total_loan: number;
 }
 
 interface Props {
-    transactions?: ReportTransaction[] | null;
+    transactions?: ReportRow[] | null;
     summary?: ReportSummary | null;
     filters?: { date_start?: string; date_end?: string };
 }
@@ -195,6 +197,10 @@ export default function ReportsIndex({
                                 label: 'Hutang Terbayar',
                                 value: formatRupiah(summary.total_debt_paid),
                             },
+                            {
+                                label: 'Pinjaman Hutang',
+                                value: formatRupiah(summary.total_loan),
+                            },
                         ].map((s) => (
                             <div
                                 key={s.label}
@@ -252,6 +258,9 @@ export default function ReportsIndex({
                                             Berat Sortiran
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                                            Pinjaman
+                                        </th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                             Bayar Hutang
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
@@ -260,13 +269,18 @@ export default function ReportsIndex({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-sidebar-border/20">
-                                    {safeTransactions.map((tx) => (
+                                    {safeTransactions.map((tx, index) => (
                                         <tr
-                                            key={tx.id}
+                                            key={
+                                                tx.nota_number ??
+                                                `${tx.type}-${index}`
+                                            }
                                             className="transition-colors hover:bg-muted/20"
                                         >
                                             <td className="px-4 py-2.5 font-mono text-xs font-bold text-primary">
-                                                {tx.nota_number}
+                                                {tx.type === 'weighing'
+                                                    ? tx.nota_number
+                                                    : 'Hutang'}
                                             </td>
                                             <td className="px-4 py-2.5 text-xs text-muted-foreground">
                                                 {new Date(
@@ -277,23 +291,56 @@ export default function ReportsIndex({
                                                 {tx.farmer_name_snapshot}
                                             </td>
                                             <td className="px-4 py-2.5 text-muted-foreground">
-                                                {tx.cashier_name_snapshot}
+                                                {tx.kasir_name}
                                             </td>
-                                            <td className="px-4 py-2.5 text-right font-mono">
-                                                {formatKg(tx.tare_weight)}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right font-mono">
-                                                {formatKg(tx.initial_weight)}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right font-mono">
-                                                {formatKg(tx.net_weight)}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
-                                                {tx.has_sorting
-                                                    ? formatKg(
-                                                          tx.sorting_weight,
+                                            {tx.type === 'weighing' ? (
+                                                <>
+                                                    <td className="px-4 py-2.5 text-right font-mono">
+                                                        {formatKg(
+                                                            tx.tare_weight ?? 0,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-right font-mono">
+                                                        {formatKg(
+                                                            tx.initial_weight ??
+                                                                0,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-right font-mono">
+                                                        {formatKg(
+                                                            tx.net_weight ?? 0,
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+                                                        {tx.has_sorting
+                                                            ? formatKg(
+                                                                  tx.sorting_weight,
+                                                              )
+                                                            : 'tidak ada sortiran'}
+                                                    </td>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+                                                        —
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+                                                        —
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+                                                        —
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+                                                        —
+                                                    </td>
+                                                </>
+                                            )}
+                                            <td className="px-4 py-2.5 text-right font-mono text-amber-600">
+                                                {tx.loan_amount > 0
+                                                    ? formatRupiah(
+                                                          tx.loan_amount,
                                                       )
-                                                    : 'tidak ada sortiran'}
+                                                    : '—'}
                                             </td>
                                             <td className="px-4 py-2.5 text-right font-mono text-red-600">
                                                 {tx.debt_paid_amount > 0
@@ -303,9 +350,11 @@ export default function ReportsIndex({
                                                     : '—'}
                                             </td>
                                             <td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-600">
-                                                {formatRupiah(
-                                                    tx.final_paid_amount_rounded,
-                                                )}
+                                                {tx.type === 'weighing'
+                                                    ? formatRupiah(
+                                                          tx.final_paid_amount_rounded,
+                                                      )
+                                                    : '—'}
                                             </td>
                                         </tr>
                                     ))}
@@ -334,6 +383,11 @@ export default function ReportsIndex({
                                             <td className="px-4 py-3 text-right font-mono">
                                                 {formatKg(
                                                     summary.total_sorting,
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-mono text-amber-600">
+                                                {formatRupiah(
+                                                    summary.total_loan,
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono text-red-600">
