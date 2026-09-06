@@ -32,6 +32,12 @@ const PRINTER_COLUMNS_MAP: [pattern: string, columns: number][] = [
     ['X-58MPII', 32],
     ['IW-58AC', 32],
 
+    // Rongta RPP02N portable 58mm (384 dots/line) — sering tampil sebagai
+    // "RPP02N", "RPP-02N", atau "RPPO2N" di daftar Bluetooth
+    ['RPP02N', 32],
+    ['RPP-02N', 32],
+    ['RPPO2N', 32],
+
     // Xprinter 58mm
     ['XP-N160', 32],
 

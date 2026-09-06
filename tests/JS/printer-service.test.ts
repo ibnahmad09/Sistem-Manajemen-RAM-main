@@ -316,6 +316,22 @@ describe('detectColumns', () => {
         expect(detectColumns('MP-58MPC')).toBe(32);
     });
 
+    it('should return 32 for Rongta RPP02N (58mm, 384 dots)', () => {
+        expect(detectColumns('RPP02N')).toBe(32);
+    });
+
+    it('should return 32 for RPP-02N variant (58mm)', () => {
+        expect(detectColumns('RPP-02N')).toBe(32);
+    });
+
+    it('should return 32 for RPPO2N variant (58mm)', () => {
+        expect(detectColumns('RPPO2N')).toBe(32);
+    });
+
+    it('should return 32 for iWare-branded RPP02N', () => {
+        expect(detectColumns('iWare RPP02N')).toBe(32);
+    });
+
     it('should return 48 for iWare C-80BT (80mm)', () => {
         expect(detectColumns('C-80BT')).toBe(48);
     });
