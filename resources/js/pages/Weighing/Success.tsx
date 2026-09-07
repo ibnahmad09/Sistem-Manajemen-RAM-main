@@ -40,17 +40,17 @@ const PAPER_CLASSES = {
     },
     '57': {
         wrap: 'w-[57mm] p-2 text-[9px]',
-        brand: 'text-[12px]',
-        sub: 'text-[8px]',
-        heading: 'text-[9px]',
-        row: 'text-[8px]',
+        brand: 'text-[16px]',
+        sub: 'text-[11px]',
+        heading: 'text-[12px]',
+        row: 'text-[10px]',
         totalBox: 'p-1.5',
-        totalAmount: 'text-[13px]',
+        totalAmount: 'text-[14px]',
         totalLabel: 'text-[9px]',
         metode: 'text-[8px]',
         sigName: 'text-[9px]',
         sigGap: 'mt-6',
-        note: 'text-[8px]',
+        note: 'text-[10px]',
     },
 } as const;
 
