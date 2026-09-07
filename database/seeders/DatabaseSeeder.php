@@ -39,11 +39,5 @@ class DatabaseSeeder extends Seeder
             'role' => 'owner',
             'status' => 'active',
         ]);
-
-        // Call other seeders
-        $this->call([
-            FarmerSeeder::class,
-            PalmPriceSeeder::class,
-        ]);
     }
 }
