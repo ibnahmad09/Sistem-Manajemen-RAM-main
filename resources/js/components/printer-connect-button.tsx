@@ -34,6 +34,7 @@ export function PrinterConnectButton() {
         pairedDevices,
         connect,
         disconnect,
+        reconnect,
         setActivePrinter,
         forgetPrinter,
         isConnecting,
@@ -116,7 +117,7 @@ export function PrinterConnectButton() {
                                     <DropdownMenuItem
                                         key={device.id}
                                         className="flex cursor-pointer items-center justify-between"
-                                        onClick={() => {
+                                        onClick={async () => {
                                             if (
                                                 device.id ===
                                                     activePrinter?.id &&
@@ -125,6 +126,7 @@ export function PrinterConnectButton() {
                                                 disconnect();
                                             } else {
                                                 setActivePrinter(device.id);
+                                                await reconnect(device.id);
                                             }
                                         }}
                                     >
