@@ -11,6 +11,7 @@ interface UsePrinterReturn {
     connect: () => Promise<void>;
     disconnect: () => Promise<void>;
     autoReconnect: () => Promise<boolean>;
+    reconnect: (deviceId: string) => Promise<void>;
     setActivePrinter: (id: string) => void;
     forgetPrinter: (id: string) => void;
     print: (
@@ -64,6 +65,10 @@ export function usePrinter(): UsePrinterReturn {
         return printerService.autoReconnect();
     }, []);
 
+    const reconnect = useCallback(async (deviceId: string) => {
+        await printerService.reconnect(deviceId);
+    }, []);
+
     const setActivePrinterFn = useCallback((id: string) => {
         printerService.setActivePrinter(id);
         setActivePrinterState(printerService.currentPrinter);
@@ -101,6 +106,7 @@ export function usePrinter(): UsePrinterReturn {
         connect,
         disconnect,
         autoReconnect,
+        reconnect,
         setActivePrinter: setActivePrinterFn,
         forgetPrinter: forgetPrinterFn,
         print,
