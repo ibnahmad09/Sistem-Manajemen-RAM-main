@@ -34,6 +34,7 @@ class PrinterService {
     private activePrinter: PairedPrinter | null = null;
     private listeners: PrinterEventListener[] = [];
     private webBluetoothSupported: boolean = false;
+    private reconnectPromise: Promise<void> | null = null;
 
     constructor() {
         this.webBluetoothSupported =
@@ -171,6 +172,18 @@ class PrinterService {
             throw new Error('Web Bluetooth tidak didukung di browser ini.');
         }
 
+        // Tunggu reconnect yang sedang berjalan selesai sebelum connect baru,
+        // supaya tidak ada dua alur koneksi yang berjalan bersamaan.
+        if (this.reconnectPromise) {
+            const pending = this.reconnectPromise;
+
+            try {
+                await pending;
+            } catch {
+                // Reconnect gagal; lanjutkan dengan connect baru.
+            }
+        }
+
         this.setStatus('connecting');
 
         try {
@@ -255,54 +268,87 @@ class PrinterService {
             throw new Error('Printer tidak ditemukan.');
         }
 
-        this.setStatus('connecting');
+        // Dedupe: panggilan konkuren berbagi satu promise in-flight yang sama,
+        // sehingga hanya satu instance dibuat dan satu timer 15s dijadwalkan.
+        if (this.reconnectPromise) {
+            return this.reconnectPromise;
+        }
+
+        this.reconnectPromise = (async () => {
+            // Teardown-first: putuskan instance lama sebelum memasang yang baru,
+            // supaya tidak ada dua instance yang hidup bersamaan.
+            const old = this.printer;
+
+            if (old) {
+                try {
+                    await old.disconnect();
+                } catch {
+                    // Abaikan error teardown; lanjut dengan instance baru.
+                }
+
+                this.printer = null;
+            }
+
+            this.setStatus('connecting');
+
+            try {
+                const { default: WebBluetoothReceiptPrinter } =
+                    await import('@point-of-sale/webbluetooth-receipt-printer');
+                const instance = new WebBluetoothReceiptPrinter();
+                this.printer = instance;
+
+                return new Promise<void>((resolve, reject) => {
+                    const onConnected = (d: {
+                        type: string;
+                        name: string;
+                        id: string;
+                        language: string;
+                        codepageMapping: string;
+                    }) => {
+                        this.setStatus('connected', {
+                            id: d.id,
+                            name: d.name,
+                            language: d.language,
+                            codepageMapping: normalizeCodepageMapping(
+                                d.language,
+                                d.codepageMapping,
+                            ),
+                            columns: detectColumns(d.name),
+                        });
+                        resolve();
+                    };
+
+                    const onDisconnected = () => {
+                        // Guard identitas: event async dari instance lama tidak
+                        // boleh menimpa status instance baru.
+                        if (this.printer === instance) {
+                            this.setStatus('disconnected');
+                        }
+                    };
+
+                    instance.addEventListener('connected', onConnected);
+                    instance.addEventListener('disconnected', onDisconnected);
+
+                    instance.reconnect({ id: deviceId });
+
+                    setTimeout(() => {
+                        if (this.status === 'connecting') {
+                            this.setStatus('disconnected');
+                            reject(new Error('Gagal reconnect ke printer.'));
+                        }
+                    }, 15000);
+                });
+            } catch (err) {
+                this.setStatus('disconnected');
+
+                throw err;
+            }
+        })();
 
         try {
-            const { default: WebBluetoothReceiptPrinter } =
-                await import('@point-of-sale/webbluetooth-receipt-printer');
-            this.printer = new WebBluetoothReceiptPrinter();
-
-            return new Promise((resolve, reject) => {
-                const onConnected = (d: {
-                    type: string;
-                    name: string;
-                    id: string;
-                    language: string;
-                    codepageMapping: string;
-                }) => {
-                    this.setStatus('connected', {
-                        id: d.id,
-                        name: d.name,
-                        language: d.language,
-                        codepageMapping: normalizeCodepageMapping(
-                            d.language,
-                            d.codepageMapping,
-                        ),
-                        columns: detectColumns(d.name),
-                    });
-                    resolve();
-                };
-
-                const onDisconnected = () => {
-                    this.setStatus('disconnected');
-                };
-
-                this.printer!.addEventListener('connected', onConnected);
-                this.printer!.addEventListener('disconnected', onDisconnected);
-
-                this.printer!.reconnect({ id: deviceId });
-
-                setTimeout(() => {
-                    if (this.status === 'connecting') {
-                        this.setStatus('disconnected');
-                        reject(new Error('Gagal reconnect ke printer.'));
-                    }
-                }, 15000);
-            });
-        } catch (err) {
-            this.setStatus('disconnected');
-
-            throw err;
+            await this.reconnectPromise;
+        } finally {
+            this.reconnectPromise = null;
         }
     }
 

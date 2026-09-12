@@ -652,3 +652,146 @@ describe('PrinterService printReceipt auto-reconnect', () => {
         expect(vi.getTimerCount()).toBe(0);
     });
 });
+
+describe('PrinterService reconnect dedupe & teardown', () => {
+    const paired = [
+        {
+            id: 'printer-1',
+            name: 'TM-P20II',
+            language: 'esc-pos',
+            codepageMapping: 'epson',
+            columns: 32,
+        },
+    ];
+
+    const connectedDevice = {
+        type: 'bluetooth',
+        name: 'TM-P20II',
+        id: 'printer-1',
+        language: 'esc-pos',
+        codepageMapping: 'epson',
+    };
+
+    beforeEach(() => {
+        mockPrinterInstances.length = 0;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+        delete (globalThis as any).localStorage;
+        Object.defineProperty(globalThis, 'navigator', {
+            value: originalNavigator,
+            configurable: true,
+            writable: true,
+        });
+    });
+
+    it('should dedupe concurrent reconnect calls into a single in-flight promise', async () => {
+        (globalThis as any).localStorage = createLocalStorageStub({
+            paired_printers: JSON.stringify(paired),
+            active_printer_id: 'printer-1',
+        });
+        setupNavigator();
+
+        const service = await importService();
+
+        // Two concurrent calls without awaiting between them — the guard must
+        // return the same in-flight promise, so only one instance is created.
+        const p1 = service.reconnect('printer-1');
+        const p2 = service.reconnect('printer-1');
+
+        await flushAsync();
+
+        expect(mockPrinterInstances).toHaveLength(1);
+
+        const instance = mockPrinterInstances[0];
+        instance.emit('connected', connectedDevice);
+
+        await p1;
+        await p2;
+
+        expect(service.currentStatus).toBe('connected');
+        expect(mockPrinterInstances).toHaveLength(1);
+    });
+
+    it('should teardown the old instance and ignore stale disconnected events', async () => {
+        (globalThis as any).localStorage = createLocalStorageStub({
+            paired_printers: JSON.stringify(paired),
+            active_printer_id: 'printer-1',
+        });
+        setupNavigator();
+
+        const service = await importService();
+
+        // First reconnect → instance A connected.
+        const p1 = service.reconnect('printer-1');
+        await flushAsync();
+        const instanceA = mockPrinterInstances.at(-1)!;
+        instanceA.emit('connected', connectedDevice);
+        await p1;
+        expect(service.currentStatus).toBe('connected');
+
+        // Old instance emits 'disconnected' synchronously during disconnect.
+        instanceA.disconnect.mockImplementation(() => {
+            instanceA.emit('disconnected');
+
+            return Promise.resolve();
+        });
+
+        // Second reconnect → teardown A, install B.
+        const p2 = service.reconnect('printer-1');
+        await flushAsync();
+        const instanceB = mockPrinterInstances.at(-1)!;
+
+        expect(instanceB).not.toBe(instanceA);
+        expect(instanceA.disconnect).toHaveBeenCalledOnce();
+
+        // Teardown's own 'disconnected' did not win: status is 'connecting'.
+        expect(service.currentStatus).toBe('connecting');
+
+        // A late 'disconnected' from the OLD instance must not overwrite B.
+        instanceA.emit('disconnected');
+        expect(service.currentStatus).toBe('connecting');
+
+        // B connects fine.
+        instanceB.emit('connected', connectedDevice);
+        await p2;
+        expect(service.currentStatus).toBe('connected');
+    });
+
+    it('should reject after 15s timeout and clear the in-flight promise (finally)', async () => {
+        (globalThis as any).localStorage = createLocalStorageStub({
+            paired_printers: JSON.stringify(paired),
+            active_printer_id: 'printer-1',
+        });
+        setupNavigator();
+
+        const service = await importService();
+
+        vi.useFakeTimers();
+        const p1 = service.reconnect('printer-1');
+        const assertion1 = expect(p1).rejects.toThrow(
+            'Gagal reconnect ke printer.',
+        );
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(15000);
+        await assertion1;
+
+        expect(service.currentStatus).toBe('disconnected');
+        // The in-flight promise must be cleared in finally (no leaked promise).
+        expect((service as any).reconnectPromise).toBeNull();
+
+        // reconnectPromise must be null after failure: a second reconnect
+        // starts fresh instead of returning the stale rejected promise.
+        const p2 = service.reconnect('printer-1');
+        const assertion2 = expect(p2).rejects.toThrow(
+            'Gagal reconnect ke printer.',
+        );
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(15000);
+        await assertion2;
+
+        expect(mockPrinterInstances).toHaveLength(2);
+    });
+});
