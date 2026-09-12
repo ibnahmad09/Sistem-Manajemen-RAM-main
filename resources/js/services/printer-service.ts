@@ -402,9 +402,13 @@ class PrinterService {
         }
 
         if (!this.printer || this.status !== 'connected') {
-            throw new Error(
-                'Printer tidak terhubung. Hubungkan printer terlebih dahulu.',
-            );
+            const reconnected = await this.autoReconnect();
+
+            if (!reconnected) {
+                throw new Error(
+                    'Printer tidak terhubung. Hubungkan printer terlebih dahulu.',
+                );
+            }
         }
 
         const active = this.activePrinter;

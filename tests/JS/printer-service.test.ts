@@ -1,7 +1,54 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { detectColumns, normalizeCodepageMapping } from '@/lib/printer-models';
 import { buildReceipt } from '@/lib/receipt-builder';
 import type { WeighingTransaction } from '@/types';
+
+// --- Mocks for PrinterService tests (hoisted by Vitest) ---
+
+const mockPrinterInstances: any[] = [];
+
+vi.mock('@point-of-sale/webbluetooth-receipt-printer', () => ({
+    default: vi.fn().mockImplementation(function () {
+        const instance: any = {
+            listeners: {} as Record<string, Array<(data?: any) => void>>,
+            addEventListener: vi.fn(
+                (event: string, handler: (data?: any) => void) => {
+                    instance.listeners[event] ??= [];
+                    instance.listeners[event].push(handler);
+                },
+            ),
+            emit: (event: string, data?: any) => {
+                (instance.listeners[event] ?? []).forEach(
+                    (handler: (data?: any) => void) => handler(data),
+                );
+            },
+            reconnect: vi.fn(),
+            connect: vi.fn(),
+            print: vi.fn(),
+            disconnect: vi.fn(),
+        };
+        mockPrinterInstances.push(instance);
+
+        return instance;
+    }),
+}));
+
+vi.mock('@point-of-sale/receipt-printer-encoder', () => ({
+    default: vi.fn().mockImplementation(function () {
+        return {
+            initialize: vi.fn().mockReturnThis(),
+            align: vi.fn().mockReturnThis(),
+            bold: vi.fn().mockReturnThis(),
+            size: vi.fn().mockReturnThis(),
+            text: vi.fn().mockReturnThis(),
+            newline: vi.fn().mockReturnThis(),
+            rule: vi.fn().mockReturnThis(),
+            cut: vi.fn().mockReturnThis(),
+            image: vi.fn().mockReturnThis(),
+            encode: vi.fn(() => new Uint8Array([0x1d, 0x56, 0x41, 0x00])),
+        };
+    }),
+}));
 
 function createMockEncoder() {
     const calls: { method: string; args: unknown[] }[] = [];
@@ -75,6 +122,56 @@ function createSampleTransaction(
         updated_at: '2026-05-10T08:35:00.000Z',
         ...overrides,
     };
+}
+
+// --- Helpers for PrinterService tests ---
+
+const originalNavigator = globalThis.navigator;
+
+function createLocalStorageStub(seed: Record<string, string> = {}) {
+    const store = new Map(Object.entries(seed));
+
+    return {
+        getItem: vi.fn((key: string) => store.get(key) ?? null),
+        setItem: vi.fn((key: string, value: string) => {
+            store.set(key, value);
+        }),
+        removeItem: vi.fn((key: string) => {
+            store.delete(key);
+        }),
+        clear: vi.fn(() => {
+            store.clear();
+        }),
+        key: vi.fn((index: number) => Array.from(store.keys())[index] ?? null),
+        get length() {
+            return store.size;
+        },
+    };
+}
+
+function setupNavigator(getDevices?: (() => Promise<unknown[]>) | null) {
+    const bluetooth: Record<string, unknown> = {};
+
+    if (getDevices !== null) {
+        bluetooth.getDevices = getDevices ?? vi.fn(async () => []);
+    }
+
+    Object.defineProperty(globalThis, 'navigator', {
+        value: { ...originalNavigator, bluetooth },
+        configurable: true,
+        writable: true,
+    });
+}
+
+async function importService() {
+    vi.resetModules();
+    const mod = await import('@/services/printer-service');
+
+    return mod.printerService;
+}
+
+async function flushAsync() {
+    await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe('buildReceipt', () => {
@@ -433,5 +530,125 @@ describe('normalizeCodepageMapping', () => {
 
     it('should keep non-esc-pos mappings unchanged', () => {
         expect(normalizeCodepageMapping('star-prnt', 'star')).toBe('star');
+    });
+});
+
+describe('PrinterService printReceipt auto-reconnect', () => {
+    beforeEach(() => {
+        mockPrinterInstances.length = 0;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+        delete (globalThis as any).localStorage;
+        Object.defineProperty(globalThis, 'navigator', {
+            value: originalNavigator,
+            configurable: true,
+            writable: true,
+        });
+    });
+
+    it('should print directly when already connected without calling autoReconnect', async () => {
+        const paired = [
+            {
+                id: 'printer-1',
+                name: 'TM-P20II',
+                language: 'esc-pos',
+                codepageMapping: 'epson',
+                columns: 32,
+            },
+        ];
+        (globalThis as any).localStorage = createLocalStorageStub({
+            paired_printers: JSON.stringify(paired),
+            active_printer_id: 'printer-1',
+        });
+        setupNavigator();
+
+        const service = await importService();
+        const autoReconnectSpy = vi.spyOn(service, 'autoReconnect');
+
+        // Establish a connection via reconnect() (mock emits 'connected').
+        const reconnectPromise = service.reconnect('printer-1');
+        await flushAsync();
+        const instance = mockPrinterInstances.at(-1)!;
+        instance.emit('connected', {
+            type: 'bluetooth',
+            name: 'TM-P20II',
+            id: 'printer-1',
+            language: 'esc-pos',
+            codepageMapping: 'epson',
+        });
+        await reconnectPromise;
+
+        expect(service.currentStatus).toBe('connected');
+
+        await service.printReceipt(createSampleTransaction());
+
+        expect(instance.print).toHaveBeenCalledOnce();
+        expect(autoReconnectSpy).not.toHaveBeenCalled();
+    });
+
+    it('should auto-reconnect then throw the UI error when reconnect stays silent for 15s', async () => {
+        const paired = [
+            {
+                id: 'printer-1',
+                name: 'TM-P20II',
+                language: 'esc-pos',
+                codepageMapping: 'epson',
+                columns: 32,
+            },
+        ];
+        (globalThis as any).localStorage = createLocalStorageStub({
+            paired_printers: JSON.stringify(paired),
+            active_printer_id: 'printer-1',
+        });
+        setupNavigator();
+
+        const service = await importService();
+        const tx = createSampleTransaction();
+
+        vi.useFakeTimers();
+        const printPromise = service.printReceipt(tx);
+        // Attach the rejection handler immediately so the eventual rejection
+        // is never unhandled, then flush microtasks so the dynamic import
+        // resolves and reconnect() schedules its 15s timeout, then fire it.
+        const assertion = expect(printPromise).rejects.toThrow(
+            'Printer tidak terhubung. Hubungkan printer terlebih dahulu.',
+        );
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(15000);
+        await assertion;
+
+        const instance = mockPrinterInstances.at(-1)!;
+        expect(instance.print).not.toHaveBeenCalled();
+    });
+
+    it('should throw immediately when getDevices is unavailable (no 15s wait)', async () => {
+        const paired = [
+            {
+                id: 'printer-1',
+                name: 'TM-P20II',
+                language: 'esc-pos',
+                codepageMapping: 'epson',
+                columns: 32,
+            },
+        ];
+        (globalThis as any).localStorage = createLocalStorageStub({
+            paired_printers: JSON.stringify(paired),
+            active_printer_id: 'printer-1',
+        });
+        setupNavigator(null);
+
+        const service = await importService();
+        const tx = createSampleTransaction();
+
+        vi.useFakeTimers();
+        const printPromise = service.printReceipt(tx);
+        const assertion = expect(printPromise).rejects.toThrow(
+            'Printer tidak terhubung. Hubungkan printer terlebih dahulu.',
+        );
+        await assertion;
+        expect(vi.getTimerCount()).toBe(0);
     });
 });
