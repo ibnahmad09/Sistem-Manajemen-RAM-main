@@ -888,6 +888,12 @@ export default function WeighingForm({
                                         </div>
                                     )}
 
+                                    {(errors as Record<string, string | undefined>).error && (
+                                        <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-900/40 dark:bg-red-900/10 dark:text-red-400">
+                                            {(errors as Record<string, string | undefined>).error}
+                                        </p>
+                                    )}
+
                                     <button
                                         type="button"
                                         onClick={() => submit('finalize')}

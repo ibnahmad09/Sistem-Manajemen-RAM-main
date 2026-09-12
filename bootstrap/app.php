@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        // TODO: Set trusted proxies saat deploy (Laravel Cloud / nginx reverse proxy)
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 

@@ -121,24 +121,24 @@ class FarmerDebtController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(FarmerDebt $farmerDebt)
+    public function show(FarmerDebt $debt)
     {
-        $farmerDebt->load(['farmer', 'creator', 'transaction']);
+        $debt->load(['farmer', 'creator', 'transaction']);
 
-        return response()->json($farmerDebt);
+        return response()->json($debt);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(FarmerDebt $farmerDebt)
+    public function destroy(FarmerDebt $debt)
     {
         DB::beginTransaction();
 
         try {
-            $farmer = $farmerDebt->farmer;
+            $farmer = $debt->farmer;
 
-            $farmerDebt->delete();
+            $debt->delete();
 
             // Sync farmer balance after deletion
             $farmer->syncBalance();

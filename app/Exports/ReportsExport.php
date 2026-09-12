@@ -48,8 +48,8 @@ class ReportsExport implements FromCollection, WithHeadings, WithMapping, WithSt
         return [
             $tx['nota_number'] ?? null,
             $this->formatDate($tx['transaction_date']),
-            $tx['farmer_name_snapshot'] ?? null,
-            $tx['kasir_name'] ?? null,
+            $this->sanitizeFormula($tx['farmer_name_snapshot'] ?? null),
+            $this->sanitizeFormula($tx['kasir_name'] ?? null),
             $tx['tare_weight'] ?? '',
             $tx['initial_weight'] ?? '',
             $tx['net_weight'] ?? '',
@@ -68,8 +68,8 @@ class ReportsExport implements FromCollection, WithHeadings, WithMapping, WithSt
         return [
             '—',
             $this->formatDate($tx['transaction_date']),
-            $tx['farmer_name_snapshot'] ?? null,
-            $tx['kasir_name'] ?? null,
+            $this->sanitizeFormula($tx['farmer_name_snapshot'] ?? null),
+            $this->sanitizeFormula($tx['kasir_name'] ?? null),
             '',
             '',
             '',
@@ -87,6 +87,24 @@ class ReportsExport implements FromCollection, WithHeadings, WithMapping, WithSt
         }
 
         return date('d/m/Y', strtotime($date));
+    }
+
+    /**
+     * Cegah formula injection di Excel: nilai yang diawali karakter
+     * formula (=, +, -, @) di-prepend apostrof agar ditampilkan
+     * sebagai teks, bukan dieksekusi sebagai formula.
+     */
+    private function sanitizeFormula(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+
+        if (in_array($value[0], ['=', '+', '-', '@'], true)) {
+            return "'".$value;
+        }
+
+        return $value;
     }
 
     public function styles(Worksheet $sheet): array

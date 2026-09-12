@@ -1,39 +1,10 @@
 <?php
 
 use App\Models\CashierCashEntry;
-use App\Models\Farmer;
 use App\Models\FarmerDebt;
 use App\Models\User;
 use App\Models\WeighingLoad;
 use App\Models\WeighingTransaction;
-
-function weighingFormData(Farmer $farmer, array $overrides = []): array
-{
-    return array_merge([
-        'farmer_id' => $farmer->id,
-        'transaction_date' => now()->format('Y-m-d'),
-        'loads' => [
-            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => false, 'sorting_weight' => 0],
-        ],
-        'has_deduction' => true,
-        'deduction_percentage' => 3,
-        'palm_price_per_kg' => 2580,
-        'sorting_price_per_kg' => 500,
-        'debt_paid_amount' => 0,
-        'payment_method' => 'cash',
-    ], $overrides);
-}
-
-function createTestFarmer(): Farmer
-{
-    return Farmer::create([
-        'name' => 'Petani Test',
-        'phone' => null,
-        'address' => null,
-        'balance' => 0,
-        'status' => 'active',
-    ]);
-}
 
 test('single load can be finalized (backward compatible)', function () {
     $cashier = User::factory()->create(['role' => 'cashier']);

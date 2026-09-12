@@ -122,6 +122,10 @@ class WeighingTransactionController extends Controller
             $currentDebt = $farmer->calculateDebtBalance();
             $calculation = $this->calculate($validated, $loads, $currentDebt, $action);
 
+            if (($validated['debt_paid_amount'] ?? 0) > $calculation['gross_total_amount']) {
+                throw new \InvalidArgumentException('Pembayaran hutang tidak boleh melebihi total bruto.');
+            }
+
             $transaction = new WeighingTransaction;
             $this->fillTransactionData($transaction, $farmer, $user, $validated, $loads, $calculation, $currentDebt, $action);
 
@@ -161,8 +165,6 @@ class WeighingTransactionController extends Controller
      */
     public function update(Request $request, WeighingTransaction $weighing)
     {
-        abort_unless($weighing->status === 'draft', 422, 'Hanya transaksi draft yang bisa diubah.');
-
         $validated = $this->validatedData($request);
         $action = $request->input('action', 'finalize');
 
@@ -178,8 +180,20 @@ class WeighingTransactionController extends Controller
         DB::beginTransaction();
 
         try {
+            $weighing = WeighingTransaction::query()->whereKey($weighing->id)->lockForUpdate()->firstOrFail();
+
+            if ($weighing->status !== 'draft') {
+                DB::rollBack();
+
+                return back()->withErrors(['error' => 'Hanya transaksi draft yang bisa diubah.']);
+            }
+
             $currentDebt = $farmer->calculateDebtBalance();
             $calculation = $this->calculate($validated, $loads, $currentDebt, $action);
+
+            if (($validated['debt_paid_amount'] ?? 0) > $calculation['gross_total_amount']) {
+                throw new \InvalidArgumentException('Pembayaran hutang tidak boleh melebihi total bruto.');
+            }
 
             $this->fillTransactionData($weighing, $farmer, $user, $validated, $loads, $calculation, $currentDebt, $action);
             $weighing->save();
@@ -213,39 +227,50 @@ class WeighingTransactionController extends Controller
      */
     public function finalize(Request $request, WeighingTransaction $weighing)
     {
-        abort_unless($weighing->status === 'draft', 422, 'Hanya transaksi draft yang bisa difinalisasi.');
-
-        $farmer = $weighing->farmer;
         $user = $request->user();
-
-        $loads = $weighing->loads
-            ->map(fn ($load) => [
-                'gross_weight' => $load->gross_weight,
-                'tare_weight' => $load->tare_weight,
-                'has_sorting' => $load->has_sorting,
-                'sorting_weight' => $load->sorting_weight,
-                'sorting_price_per_kg' => $load->sorting_price_per_kg,
-            ])
-            ->values()
-            ->toArray();
-
-        $validated = [
-            'farmer_id' => $weighing->farmer_id,
-            'transaction_date' => $weighing->transaction_date->format('Y-m-d'),
-            'has_deduction' => $weighing->has_deduction,
-            'deduction_percentage' => $weighing->deduction_percentage,
-            'palm_price_per_kg' => $weighing->palm_price_per_kg,
-            'sorting_price_per_kg' => $weighing->sorting_price_per_kg,
-            'sorting_deduction_percentage' => $weighing->sorting_deduction_percentage,
-            'debt_paid_amount' => $weighing->debt_paid_amount,
-            'payment_method' => $weighing->payment_method,
-        ];
 
         DB::beginTransaction();
 
         try {
+            $weighing = WeighingTransaction::query()->with('loads')->whereKey($weighing->id)->lockForUpdate()->firstOrFail();
+
+            if ($weighing->status !== 'draft') {
+                DB::rollBack();
+
+                return back()->withErrors(['error' => 'Hanya transaksi draft yang bisa difinalisasi.']);
+            }
+
+            $farmer = $weighing->farmer;
+
+            $loads = $weighing->loads
+                ->map(fn ($load) => [
+                    'gross_weight' => $load->gross_weight,
+                    'tare_weight' => $load->tare_weight,
+                    'has_sorting' => $load->has_sorting,
+                    'sorting_weight' => $load->sorting_weight,
+                    'sorting_price_per_kg' => $load->sorting_price_per_kg,
+                ])
+                ->values()
+                ->toArray();
+
+            $validated = [
+                'farmer_id' => $weighing->farmer_id,
+                'transaction_date' => $weighing->transaction_date->format('Y-m-d'),
+                'has_deduction' => $weighing->has_deduction,
+                'deduction_percentage' => $weighing->deduction_percentage,
+                'palm_price_per_kg' => $weighing->palm_price_per_kg,
+                'sorting_price_per_kg' => $weighing->sorting_price_per_kg,
+                'sorting_deduction_percentage' => $weighing->sorting_deduction_percentage,
+                'debt_paid_amount' => $weighing->debt_paid_amount,
+                'payment_method' => $weighing->payment_method,
+            ];
+
             $currentDebt = $farmer->calculateDebtBalance();
             $calculation = $this->calculate($validated, $loads, $currentDebt, 'finalize');
+
+            if (($validated['debt_paid_amount'] ?? 0) > $calculation['gross_total_amount']) {
+                throw new \InvalidArgumentException('Pembayaran hutang tidak boleh melebihi total bruto.');
+            }
 
             $this->fillTransactionData($weighing, $farmer, $user, $validated, $loads, $calculation, $currentDebt, 'finalize');
             $weighing->save();
@@ -410,7 +435,7 @@ class WeighingTransactionController extends Controller
             'palm_price_per_kg' => $validated['palm_price_per_kg'],
             'sorting_deduction_percentage' => $validated['sorting_deduction_percentage'] ?? 0,
             'previous_debt_amount' => $currentDebt,
-            'debt_paid_amount' => $action === 'save_draft' ? 0 : ($validated['debt_paid_amount'] ?? 0),
+            'debt_paid_amount' => $validated['debt_paid_amount'] ?? 0,
         ], 'none'); // TODO: Get rounding mode from settings
     }
 
@@ -451,7 +476,7 @@ class WeighingTransactionController extends Controller
             'sorting_total_amount' => $calculation['sorting_total_amount'],
             'gross_total_amount' => $calculation['gross_total_amount'],
             'previous_debt_amount' => $currentDebt,
-            'debt_paid_amount' => $action === 'save_draft' ? 0 : ($validated['debt_paid_amount'] ?? 0),
+            'debt_paid_amount' => $validated['debt_paid_amount'] ?? 0,
             'remaining_debt_amount' => $calculation['remaining_debt_amount'],
             'final_paid_amount' => $calculation['final_paid_amount'],
             'final_paid_amount_rounded' => $calculation['final_paid_amount_rounded'],

@@ -19,6 +19,11 @@ class ReportsController extends Controller
      */
     private function applyReportFilters(Request $request)
     {
+        $request->validate([
+            'date_start' => ['nullable', 'date'],
+            'date_end' => ['nullable', 'date'],
+        ]);
+
         $transactions = WeighingTransaction::where('is_latest_version', true)
             ->where('status', '!=', 'draft');
 

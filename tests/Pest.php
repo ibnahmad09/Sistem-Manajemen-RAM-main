@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Farmer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +45,30 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function weighingFormData(Farmer $farmer, array $overrides = []): array
 {
-    // ..
+    return array_merge([
+        'farmer_id' => $farmer->id,
+        'transaction_date' => now()->format('Y-m-d'),
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => false, 'sorting_weight' => 0],
+        ],
+        'has_deduction' => true,
+        'deduction_percentage' => 3,
+        'palm_price_per_kg' => 2580,
+        'sorting_price_per_kg' => 500,
+        'debt_paid_amount' => 0,
+        'payment_method' => 'cash',
+    ], $overrides);
+}
+
+function createTestFarmer(): Farmer
+{
+    return Farmer::create([
+        'name' => 'Petani Test',
+        'phone' => null,
+        'address' => null,
+        'balance' => 0,
+        'status' => 'active',
+    ]);
 }

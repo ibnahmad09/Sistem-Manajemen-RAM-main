@@ -114,6 +114,12 @@ class CashFlowController extends Controller
      */
     public function update(Request $request, CashierCashEntry $cashFlow)
     {
+        abort_if(
+            $cashFlow->cashier_id !== $request->user()->id && $request->user()->role !== 'super_admin',
+            403,
+            'Anda tidak memiliki akses ke entri kas ini.'
+        );
+
         $validated = $request->validate([
             'type' => 'required|in:cash_in,expense,farmer_payment',
             'amount' => 'required|numeric|min:0',
@@ -138,8 +144,14 @@ class CashFlowController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(CashierCashEntry $cashFlow)
+    public function show(Request $request, CashierCashEntry $cashFlow)
     {
+        abort_if(
+            $cashFlow->cashier_id !== $request->user()->id && $request->user()->role !== 'super_admin',
+            403,
+            'Anda tidak memiliki akses ke entri kas ini.'
+        );
+
         $cashFlow->load(['cashier', 'transaction', 'creator']);
 
         return response()->json($cashFlow);
@@ -148,8 +160,14 @@ class CashFlowController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CashierCashEntry $cashFlow)
+    public function destroy(Request $request, CashierCashEntry $cashFlow)
     {
+        abort_if(
+            $cashFlow->cashier_id !== $request->user()->id && $request->user()->role !== 'super_admin',
+            403,
+            'Anda tidak memiliki akses ke entri kas ini.'
+        );
+
         // Only allow deletion if not linked to transaction
         if ($cashFlow->transaction_id) {
             return back()->withErrors(['error' => 'Tidak dapat menghapus entri yang terkait dengan transaksi.']);
