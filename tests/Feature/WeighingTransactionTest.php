@@ -428,3 +428,121 @@ test('reports export excel returns valid XLSX', function () {
     $response->assertOk()
         ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 });
+
+test('sorting deduction percentage applied to sorting total', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_deduction_percentage' => 5,
+    ]) + ['action' => 'finalize']);
+
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('weighing_transactions', [
+        'sorting_deduction_percentage' => '5.00',
+        'sorting_deduction_weight' => '5.00',
+        'sorting_net_weight' => '95.00',
+        'sorting_total_amount' => '47500.00',
+    ]);
+
+    $this->assertDatabaseHas('weighing_loads', [
+        'sorting_deduction_weight' => '5.00',
+        'sorting_net_weight' => '95.00',
+        'sorting_total_amount' => '47500.00',
+    ]);
+});
+
+test('sorting deduction survives draft save and finalize', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_deduction_percentage' => 5,
+    ]) + ['action' => 'save_draft']);
+
+    $draft = WeighingTransaction::first();
+
+    expect($draft->sorting_deduction_percentage)->toBe('5.00')
+        ->and($draft->sorting_net_weight)->toBe('95.00');
+
+    $response = $this->actingAs($cashier)->post(route('weighing.finalize', $draft));
+
+    $response->assertRedirect();
+
+    $draft->refresh();
+
+    expect($draft->sorting_deduction_percentage)->toBe('5.00')
+        ->and($draft->sorting_net_weight)->toBe('95.00')
+        ->and($draft->sorting_total_amount)->toBe('47500.00');
+});
+
+test('sorting deduction zero keeps legacy behavior', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_deduction_percentage' => 0,
+    ]) + ['action' => 'finalize']);
+
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('weighing_transactions', [
+        'sorting_deduction_weight' => '0.00',
+        'sorting_net_weight' => '100.00',
+        'sorting_total_amount' => '50000.00',
+    ]);
+});
+
+test('sorting deduction at 100 percent zeroes the sorting total', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_deduction_percentage' => 100,
+    ]) + ['action' => 'finalize']);
+
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('weighing_transactions', [
+        'sorting_net_weight' => '0.00',
+        'sorting_total_amount' => '0.00',
+    ]);
+});
+
+test('sorting deduction rejects negative and over-100 percentages', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_deduction_percentage' => -1,
+    ]) + ['action' => 'finalize']);
+
+    $response->assertSessionHasErrors('sorting_deduction_percentage');
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_deduction_percentage' => 101,
+    ]) + ['action' => 'finalize']);
+
+    $response->assertSessionHasErrors('sorting_deduction_percentage');
+
+    expect(WeighingTransaction::count())->toBe(0);
+});

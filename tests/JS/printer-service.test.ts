@@ -52,6 +52,9 @@ function createSampleTransaction(
         has_sorting: false,
         sorting_weight: 0,
         sorting_price_per_kg: 0,
+        sorting_deduction_percentage: 5,
+        sorting_deduction_weight: 5,
+        sorting_net_weight: 95,
         sorting_total_amount: 0,
         gross_total_amount: 2206750,
         previous_debt_amount: 0,
@@ -256,6 +259,41 @@ describe('buildReceipt', () => {
         const petani = texts.find((t) => t.startsWith('PETANI:'));
         expect(petani).toBeTruthy();
         expect(petani!.endsWith(tx.farmer_name_snapshot)).toBe(true);
+    });
+
+    it('should include net sorting weight on SORTIRAN line', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            has_sorting: true,
+            sorting_weight: 100,
+            loads: [
+                {
+                    id: 1,
+                    weighing_transaction_id: 1,
+                    seq_no: 1,
+                    gross_weight: 1000,
+                    tare_weight: 200,
+                    initial_weight: 800,
+                    deduction_weight: 24,
+                    net_weight: 776,
+                    has_sorting: true,
+                    sorting_weight: 100,
+                    sorting_price_per_kg: 500,
+                    sorting_deduction_weight: 5,
+                    sorting_net_weight: 95,
+                    sorting_total_amount: 47500,
+                    created_at: '2026-05-10T08:35:00.000Z',
+                    updated_at: '2026-05-10T08:35:00.000Z',
+                },
+            ],
+        });
+        buildReceipt(encoder, tx);
+        const texts = encoder.calls
+            .filter((c) => c.method === 'text')
+            .map((c) => String(c.args[0]));
+        const sortiran = texts.find((t) => t.startsWith('#1 SORTIRAN:'));
+        expect(sortiran).toBeTruthy();
+        expect(sortiran).toContain('-95 kg');
     });
 });
 

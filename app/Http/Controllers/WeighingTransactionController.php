@@ -236,6 +236,7 @@ class WeighingTransactionController extends Controller
             'deduction_percentage' => $weighing->deduction_percentage,
             'palm_price_per_kg' => $weighing->palm_price_per_kg,
             'sorting_price_per_kg' => $weighing->sorting_price_per_kg,
+            'sorting_deduction_percentage' => $weighing->sorting_deduction_percentage,
             'debt_paid_amount' => $weighing->debt_paid_amount,
             'payment_method' => $weighing->payment_method,
         ];
@@ -332,6 +333,7 @@ class WeighingTransactionController extends Controller
             'deduction_percentage' => 'required|numeric|min:0|max:100',
             'palm_price_per_kg' => 'required|numeric|min:0',
             'sorting_price_per_kg' => 'nullable|numeric|min:0',
+            'sorting_deduction_percentage' => 'nullable|numeric|min:0|max:100',
             'debt_paid_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'required|in:cash,transfer',
         ]);
@@ -406,6 +408,7 @@ class WeighingTransactionController extends Controller
             'has_deduction' => $validated['has_deduction'],
             'deduction_percentage' => $validated['deduction_percentage'],
             'palm_price_per_kg' => $validated['palm_price_per_kg'],
+            'sorting_deduction_percentage' => $validated['sorting_deduction_percentage'] ?? 0,
             'previous_debt_amount' => $currentDebt,
             'debt_paid_amount' => $action === 'save_draft' ? 0 : ($validated['debt_paid_amount'] ?? 0),
         ], 'none'); // TODO: Get rounding mode from settings
@@ -442,6 +445,9 @@ class WeighingTransactionController extends Controller
             'has_sorting' => $calculation['has_sorting'],
             'sorting_weight' => $calculation['sorting_weight'],
             'sorting_price_per_kg' => $validated['sorting_price_per_kg'] ?? 0,
+            'sorting_deduction_percentage' => $validated['sorting_deduction_percentage'] ?? 0,
+            'sorting_deduction_weight' => $calculation['sorting_deduction_weight'],
+            'sorting_net_weight' => $calculation['sorting_net_weight'],
             'sorting_total_amount' => $calculation['sorting_total_amount'],
             'gross_total_amount' => $calculation['gross_total_amount'],
             'previous_debt_amount' => $currentDebt,
@@ -473,6 +479,8 @@ class WeighingTransactionController extends Controller
                 'has_sorting' => $load['has_sorting'],
                 'sorting_weight' => $load['sorting_weight'],
                 'sorting_price_per_kg' => $load['sorting_price_per_kg'],
+                'sorting_deduction_weight' => $perLoad['sorting_deduction_weight'],
+                'sorting_net_weight' => $perLoad['sorting_net_weight'],
                 'sorting_total_amount' => $perLoad['sorting_total_amount'],
             ]);
         }

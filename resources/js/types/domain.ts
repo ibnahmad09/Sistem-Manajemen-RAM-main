@@ -34,6 +34,8 @@ export interface WeighingLoad {
     has_sorting: boolean;
     sorting_weight: number;
     sorting_price_per_kg: number;
+    sorting_deduction_weight: number;
+    sorting_net_weight: number;
     sorting_total_amount: number;
     created_at: string;
     updated_at: string;
@@ -59,6 +61,9 @@ export interface WeighingTransaction {
     has_sorting: boolean;
     sorting_weight: number;
     sorting_price_per_kg: number;
+    sorting_deduction_percentage: number;
+    sorting_deduction_weight: number;
+    sorting_net_weight: number;
     sorting_total_amount: number;
     gross_total_amount: number;
     previous_debt_amount: number;

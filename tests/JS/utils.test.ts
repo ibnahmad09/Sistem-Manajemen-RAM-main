@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    calculateLoads,
     formatCurrencyDisplay,
     formatIdNumber,
     formatKg,
@@ -58,5 +59,59 @@ describe('formatIdNumber', () => {
     it('respects a custom max fraction digits', () => {
         expect(formatIdNumber(7.0, 1)).toBe('7');
         expect(formatIdNumber(7.5, 1)).toBe('7,5');
+    });
+});
+
+describe('calculateLoads', () => {
+    const loads = [
+        {
+            gross_weight: 1000,
+            tare_weight: 200,
+            has_sorting: true,
+            sorting_weight: 100,
+        },
+    ];
+
+    const baseData = {
+        hasDeduction: true,
+        deductionPercentage: 3,
+        palmPricePerKg: 2580,
+        sortingPricePerKg: 500,
+        previousDebtAmount: 0,
+        debtPaidAmount: 0,
+    };
+
+    it('applies sorting deduction percentage to sorting total', () => {
+        const result = calculateLoads(loads, {
+            ...baseData,
+            sortingDeductionPercentage: 5,
+        });
+
+        expect(result.perLoad[0].sortingDeductionWeight).toBe(5);
+        expect(result.perLoad[0].sortingNetWeight).toBe(95);
+        expect(result.perLoad[0].sortingTotalAmount).toBe(47500);
+        expect(result.sortingDeductionWeight).toBe(5);
+        expect(result.sortingNetWeight).toBe(95);
+        expect(result.sortingTotalAmount).toBe(47500);
+        expect(result.grossTotalAmount).toBe(2049580);
+    });
+
+    it('keeps legacy behavior when sorting deduction percentage is zero', () => {
+        const result = calculateLoads(loads, {
+            ...baseData,
+            sortingDeductionPercentage: 0,
+        });
+
+        expect(result.perLoad[0].sortingDeductionWeight).toBe(0);
+        expect(result.perLoad[0].sortingNetWeight).toBe(100);
+        expect(result.perLoad[0].sortingTotalAmount).toBe(50000);
+    });
+
+    it('defaults to zero when sortingDeductionPercentage is missing', () => {
+        const result = calculateLoads(loads, baseData);
+
+        expect(result.perLoad[0].sortingDeductionWeight).toBe(0);
+        expect(result.perLoad[0].sortingNetWeight).toBe(100);
+        expect(result.perLoad[0].sortingTotalAmount).toBe(50000);
     });
 });

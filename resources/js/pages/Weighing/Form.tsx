@@ -124,6 +124,9 @@ export default function WeighingForm({
             ? Number(draft.palm_price_per_kg)
             : (latestPrice?.price_per_kg ?? 0),
         sorting_price_per_kg: draft ? Number(draft.sorting_price_per_kg) : 0,
+        sorting_deduction_percentage: draft
+            ? Number(draft.sorting_deduction_percentage)
+            : 5,
         debt_paid_amount: 0,
         payment_method: (draft ? draft.payment_method : 'cash') as
             | 'cash'
@@ -173,6 +176,7 @@ export default function WeighingForm({
                 deductionPercentage: data.deduction_percentage,
                 palmPricePerKg: data.palm_price_per_kg,
                 sortingPricePerKg: data.sorting_price_per_kg,
+                sortingDeductionPercentage: data.sorting_deduction_percentage,
                 previousDebtAmount: currentDebt,
                 debtPaidAmount: data.debt_paid_amount,
                 roundingMode,
@@ -494,6 +498,15 @@ export default function WeighingForm({
                                                                 }
                                                             />
                                                         )}
+                                                        {load.has_sorting && (
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Bersih:{' '}
+                                                                {formatKgTrimmed(
+                                                                    perLoad?.sortingNetWeight ??
+                                                                        0,
+                                                                )}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -585,9 +598,40 @@ export default function WeighingForm({
                                             error={errors.sorting_price_per_kg}
                                             allowDecimals={false}
                                         />
+                                        <div className="flex items-center justify-between rounded-lg border border-sidebar-border/50 p-3">
+                                            <label
+                                                htmlFor="sorting_deduction_percentage"
+                                                className="cursor-pointer text-sm font-medium"
+                                            >
+                                                Potongan Sortiran (%)
+                                            </label>
+                                            <div className="flex items-center gap-1.5">
+                                                <input
+                                                    type="number"
+                                                    id="sorting_deduction_percentage"
+                                                    value={
+                                                        data.sorting_deduction_percentage
+                                                    }
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'sorting_deduction_percentage',
+                                                            parseFloat(
+                                                                e.target.value,
+                                                            ) || 0,
+                                                        )
+                                                    }
+                                                    className="h-8 w-14 rounded border border-sidebar-border/50 bg-background text-center text-sm font-bold outline-none focus:ring-2 focus:ring-primary"
+                                                    min="0"
+                                                    max="100"
+                                                    step="0.5"
+                                                />
+                                                <span className="text-sm text-muted-foreground">
+                                                    %
+                                                </span>
+                                            </div>
+                                        </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Harga sortiran berlaku untuk semua
-                                            muatan.
+                                            Potongan berlaku untuk semua muatan.
                                         </p>
                                     </div>
                                 </div>
@@ -755,6 +799,25 @@ export default function WeighingForm({
                                             {formatRupiah(calc.palmTotalAmount)}
                                         </span>
                                     </div>
+                                    {calc.hasSorting &&
+                                        data.sorting_deduction_percentage >
+                                            0 && (
+                                            <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
+                                                <span className="text-red-500 italic">
+                                                    Potongan Sortiran (
+                                                    {
+                                                        data.sorting_deduction_percentage
+                                                    }
+                                                    %)
+                                                </span>
+                                                <span className="font-bold text-red-500">
+                                                    -
+                                                    {formatKgTrimmed(
+                                                        calc.sortingDeductionWeight,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
                                     {calc.hasSorting && (
                                         <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
                                             <span className="text-muted-foreground italic">

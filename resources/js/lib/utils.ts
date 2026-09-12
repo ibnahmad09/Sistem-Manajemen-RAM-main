@@ -129,11 +129,14 @@ export function calculateLoads(
         deductionPercentage: number;
         palmPricePerKg: number;
         sortingPricePerKg: number;
+        sortingDeductionPercentage?: number;
         previousDebtAmount: number;
         debtPaidAmount: number;
         roundingMode?: string;
     },
 ) {
+    const sortingDeductionPercentage = data.sortingDeductionPercentage ?? 0;
+
     const perLoad = loads.map((load, i) => {
         const gross = load.gross_weight || 0;
         const tare = load.tare_weight || 0;
@@ -142,8 +145,15 @@ export function calculateLoads(
             ? initial * (data.deductionPercentage / 100)
             : 0;
         const net = initial - deductionWeight;
-        const sortingTotal = load.has_sorting
-            ? (load.sorting_weight || 0) * data.sortingPricePerKg
+        const loadHasSorting = load.has_sorting;
+        const sortingWeight = load.sorting_weight || 0;
+        const sortingPricePerKg = data.sortingPricePerKg;
+        const sortingDeductionWeight = loadHasSorting
+            ? sortingWeight * (sortingDeductionPercentage / 100)
+            : 0;
+        const sortingNetWeight = sortingWeight - sortingDeductionWeight;
+        const sortingTotal = loadHasSorting
+            ? sortingNetWeight * sortingPricePerKg
             : 0;
 
         return {
@@ -153,8 +163,11 @@ export function calculateLoads(
             initialWeight: Math.round(initial * 100) / 100,
             deductionWeight: Math.round(deductionWeight * 100) / 100,
             netWeight: Math.round(net * 100) / 100,
-            hasSorting: load.has_sorting,
-            sortingWeight: load.has_sorting ? load.sorting_weight || 0 : 0,
+            hasSorting: loadHasSorting,
+            sortingWeight: loadHasSorting ? sortingWeight : 0,
+            sortingDeductionWeight:
+                Math.round(sortingDeductionWeight * 100) / 100,
+            sortingNetWeight: Math.round(sortingNetWeight * 100) / 100,
             sortingTotalAmount: Math.round(sortingTotal * 100) / 100,
         };
     });
@@ -165,6 +178,14 @@ export function calculateLoads(
     const deductionWeight = perLoad.reduce((s, l) => s + l.deductionWeight, 0);
     const netWeight = perLoad.reduce((s, l) => s + l.netWeight, 0);
     const sortingWeight = perLoad.reduce((s, l) => s + l.sortingWeight, 0);
+    const sortingDeductionWeight = perLoad.reduce(
+        (s, l) => s + l.sortingDeductionWeight,
+        0,
+    );
+    const sortingNetWeight = perLoad.reduce(
+        (s, l) => s + l.sortingNetWeight,
+        0,
+    );
     const sortingTotalAmount = perLoad.reduce(
         (s, l) => s + l.sortingTotalAmount,
         0,
@@ -193,6 +214,8 @@ export function calculateLoads(
         netWeight: Math.round(netWeight * 100) / 100,
         hasSorting: perLoad.some((l) => l.hasSorting),
         sortingWeight: Math.round(sortingWeight * 100) / 100,
+        sortingDeductionWeight: Math.round(sortingDeductionWeight * 100) / 100,
+        sortingNetWeight: Math.round(sortingNetWeight * 100) / 100,
         sortingTotalAmount: Math.round(sortingTotalAmount * 100) / 100,
         palmTotalAmount: Math.round(palmTotalAmount * 100) / 100,
         grossTotalAmount: Math.round(grossTotalAmount * 100) / 100,

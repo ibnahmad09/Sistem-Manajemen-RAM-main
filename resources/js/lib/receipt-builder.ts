@@ -109,10 +109,16 @@ export function buildReceipt(
             );
 
             if (load.has_sorting) {
+                const pct = tx.sorting_deduction_percentage ?? 0;
+                const sortingWeight =
+                    pct > 0 ? load.sorting_net_weight : load.sorting_weight;
+
                 encoder.text(
                     justify(
                         `#${load.seq_no} SORTIRAN: `,
-                        `-${fmtKg(load.sorting_weight)} kg`,
+                        `-${fmtKg(sortingWeight)} kg${
+                            pct > 0 ? ` (${pct}%)` : ''
+                        }`,
                         columns,
                     ),
                 );

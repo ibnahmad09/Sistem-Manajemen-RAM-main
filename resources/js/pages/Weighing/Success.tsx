@@ -57,7 +57,7 @@ const PAPER_CLASSES = {
 function Row({
     label,
     value,
-    bold = false,
+    bold = true,
 }: {
     label: string;
     value: string;
@@ -85,6 +85,7 @@ function NotaThermal({
     transaction: WeighingTransaction;
 }) {
     const c = PAPER_CLASSES[paper];
+    const pct = transaction.sorting_deduction_percentage ?? 0;
 
     return (
         <div
@@ -165,8 +166,16 @@ function NotaThermal({
                             />
                             {load.has_sorting && (
                                 <Row
-                                    label="SORTIRAN:"
-                                    value={`-${formatKg(load.sorting_weight)}`}
+                                    label={
+                                        pct > 0
+                                            ? `SORTIRAN ${pct}%:`
+                                            : 'SORTIRAN:'
+                                    }
+                                    value={`-${formatKg(
+                                        pct > 0
+                                            ? load.sorting_net_weight
+                                            : load.sorting_weight,
+                                    )}`}
                                 />
                             )}
                             <Row
@@ -239,12 +248,26 @@ function NotaThermal({
                     bold
                 />
                 {transaction.has_sorting && (
-                    <Row
-                        label={`SORTIRAN (${formatKg(transaction.sorting_weight)}):`}
-                        value={new Intl.NumberFormat('id-ID').format(
-                            transaction.sorting_total_amount,
+                    <>
+                        {pct > 0 && (
+                            <Row
+                                label={`POTONGAN SORTIRAN (${pct}%):`}
+                                value={`-${formatKg(
+                                    transaction.sorting_deduction_weight,
+                                )}`}
+                            />
                         )}
-                    />
+                        <Row
+                            label={`SORTIRAN (${formatKg(
+                                pct > 0
+                                    ? transaction.sorting_net_weight
+                                    : transaction.sorting_weight,
+                            )}):`}
+                            value={new Intl.NumberFormat('id-ID').format(
+                                transaction.sorting_total_amount,
+                            )}
+                        />
+                    </>
                 )}
                 <div className="border-t border-dotted border-black pt-1">
                     <Row

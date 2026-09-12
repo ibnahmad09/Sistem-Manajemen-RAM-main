@@ -21,6 +21,8 @@ class WeighingLoad extends Model
         'sorting_weight',
         'sorting_price_per_kg',
         'sorting_total_amount',
+        'sorting_deduction_weight',
+        'sorting_net_weight',
     ];
 
     protected $casts = [
@@ -33,6 +35,8 @@ class WeighingLoad extends Model
         'sorting_weight' => 'decimal:2',
         'sorting_price_per_kg' => 'decimal:2',
         'sorting_total_amount' => 'decimal:2',
+        'sorting_deduction_weight' => 'decimal:2',
+        'sorting_net_weight' => 'decimal:2',
     ];
 
     /**

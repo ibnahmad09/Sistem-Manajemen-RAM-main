@@ -29,6 +29,9 @@ class WeighingTransaction extends Model
         'sorting_weight',
         'sorting_price_per_kg',
         'sorting_total_amount',
+        'sorting_deduction_percentage',
+        'sorting_deduction_weight',
+        'sorting_net_weight',
         'gross_total_amount',
         'previous_debt_amount',
         'debt_paid_amount',
@@ -61,6 +64,9 @@ class WeighingTransaction extends Model
         'sorting_weight' => 'decimal:2',
         'sorting_price_per_kg' => 'decimal:2',
         'sorting_total_amount' => 'decimal:2',
+        'sorting_deduction_percentage' => 'decimal:2',
+        'sorting_deduction_weight' => 'decimal:2',
+        'sorting_net_weight' => 'decimal:2',
         'gross_total_amount' => 'decimal:2',
         'previous_debt_amount' => 'decimal:2',
         'debt_paid_amount' => 'decimal:2',
@@ -194,6 +200,7 @@ class WeighingTransaction extends Model
         $hasDeduction = $data['has_deduction'] ?? true;
         $deductionPercentage = $data['deduction_percentage'] ?? 5;
         $palmPricePerKg = $data['palm_price_per_kg'];
+        $sortingDeductionPercentage = $data['sorting_deduction_percentage'] ?? 0;
 
         $loadResults = [];
         $totalGross = 0;
@@ -202,6 +209,8 @@ class WeighingTransaction extends Model
         $totalDeduction = 0;
         $totalNet = 0;
         $totalSortingWeight = 0;
+        $totalSortingDeduction = 0;
+        $totalSortingNet = 0;
         $totalSortingAmount = 0;
         $palmTotalAmount = 0;
         $hasSortingAny = false;
@@ -215,7 +224,9 @@ class WeighingTransaction extends Model
             $loadHasSorting = (bool) ($load['has_sorting'] ?? false);
             $sortingWeight = (float) ($load['sorting_weight'] ?? 0);
             $sortingPricePerKg = (float) ($load['sorting_price_per_kg'] ?? 0);
-            $sortingTotal = $loadHasSorting ? $sortingWeight * $sortingPricePerKg : 0;
+            $sortingDeductionWeight = $loadHasSorting ? $sortingWeight * ($sortingDeductionPercentage / 100) : 0;
+            $sortingNetWeight = $sortingWeight - $sortingDeductionWeight;
+            $sortingTotal = $loadHasSorting ? $sortingNetWeight * $sortingPricePerKg : 0;
 
             $totalGross += $gross;
             $totalTare += $tare;
@@ -223,6 +234,8 @@ class WeighingTransaction extends Model
             $totalDeduction += $deductionWeight;
             $totalNet += $net;
             $totalSortingWeight += $sortingWeight;
+            $totalSortingDeduction += $sortingDeductionWeight;
+            $totalSortingNet += $sortingNetWeight;
             $totalSortingAmount += $sortingTotal;
             $palmTotalAmount += $net * $palmPricePerKg;
             $hasSortingAny = $hasSortingAny || $loadHasSorting;
@@ -237,6 +250,8 @@ class WeighingTransaction extends Model
                 'has_sorting' => $loadHasSorting,
                 'sorting_weight' => round($sortingWeight, 2),
                 'sorting_price_per_kg' => round($sortingPricePerKg, 2),
+                'sorting_deduction_weight' => round($sortingDeductionWeight, 2),
+                'sorting_net_weight' => round($sortingNetWeight, 2),
                 'sorting_total_amount' => round($sortingTotal, 2),
             ];
         }
@@ -260,6 +275,8 @@ class WeighingTransaction extends Model
             'net_weight' => round($totalNet, 2),
             'has_sorting' => $hasSortingAny,
             'sorting_weight' => round($totalSortingWeight, 2),
+            'sorting_deduction_weight' => round($totalSortingDeduction, 2),
+            'sorting_net_weight' => round($totalSortingNet, 2),
             'sorting_total_amount' => round($totalSortingAmount, 2),
             'palm_total_amount' => round($palmTotalAmount, 2),
             'gross_total_amount' => round($grossTotalAmount, 2),
