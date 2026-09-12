@@ -7,7 +7,7 @@ import {
     Printer,
     PrinterIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePrinter } from '@/hooks/use-printer';
 import AppLayout from '@/layouts/app-layout';
 import { cn, formatKg, formatRupiah } from '@/lib/utils';
@@ -361,13 +361,32 @@ function NotaThermal({
 }
 
 export default function WeighingSuccess({ transaction }: Props) {
-    const { status, isSupported, activePrinter, connect, print, isConnecting } =
-        usePrinter();
+    const {
+        status,
+        isSupported,
+        activePrinter,
+        pairedDevices,
+        connect,
+        print,
+        isConnecting,
+        autoReconnect,
+    } = usePrinter();
     const [printError, setPrintError] = useState<string | null>(null);
     const [printing, setPrinting] = useState(false);
     const [paperSize, setPaperSize] = useState<'80' | '57'>(() =>
         activePrinter?.columns === 32 ? '57' : '80',
     );
+
+    // Page-load silent auto-reconnect: jika ada printer tersimpan tapi belum
+    // terhubung, coba sambungkan kembali tanpa membuka chooser (D-3).
+    // StrictMode double-fire aman karena reconnect() di service dedupe
+    // in-flight (T2).
+    useEffect(() => {
+        if (status !== 'connected' && pairedDevices.length > 0) {
+            autoReconnect().catch(() => {});
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleBluetoothPrint = async () => {
         setPrintError(null);
@@ -410,7 +429,15 @@ export default function WeighingSuccess({ transaction }: Props) {
 
                     {isSupported ? (
                         <>
-                            {isBluetoothReady ? (
+                            {isConnecting ? (
+                                <button
+                                    disabled
+                                    className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground transition disabled:opacity-60"
+                                >
+                                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+                                    Menghubungkan...
+                                </button>
+                            ) : status === 'connected' ? (
                                 <button
                                     onClick={handleBluetoothPrint}
                                     disabled={printing}
@@ -428,23 +455,41 @@ export default function WeighingSuccess({ transaction }: Props) {
                                         </>
                                     )}
                                 </button>
+                            ) : pairedDevices.length > 0 ? (
+                                <>
+                                    <button
+                                        onClick={handleBluetoothPrint}
+                                        disabled={printing}
+                                        className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-700 disabled:opacity-60"
+                                    >
+                                        {printing ? (
+                                            <>
+                                                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                                Mencetak...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <BluetoothConnected className="h-4 w-4" />
+                                                Cetak Nota via Bluetooth
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={connect}
+                                        className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted/30"
+                                    >
+                                        <Bluetooth className="h-4 w-4" />
+                                        Hubungkan Printer
+                                    </button>
+                                </>
                             ) : (
                                 <button
                                     onClick={connect}
                                     disabled={isConnecting}
                                     className="inline-flex items-center gap-2 rounded-lg border border-sidebar-border/50 px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted/30 disabled:opacity-60"
                                 >
-                                    {isConnecting ? (
-                                        <>
-                                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
-                                            Menghubungkan...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Bluetooth className="h-4 w-4" />
-                                            Hubungkan Printer
-                                        </>
-                                    )}
+                                    <Bluetooth className="h-4 w-4" />
+                                    Hubungkan Printer
                                 </button>
                             )}
 
