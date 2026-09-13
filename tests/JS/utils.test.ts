@@ -93,10 +93,10 @@ describe('calculateLoads', () => {
         expect(result.sortingDeductionWeight).toBe(5);
         expect(result.sortingNetWeight).toBe(95);
         expect(result.sortingTotalAmount).toBe(47500);
-        expect(result.perLoad[0].netWeight).toBe(681);
-        expect(result.netWeight).toBe(681);
-        expect(result.palmTotalAmount).toBe(1756980);
-        expect(result.grossTotalAmount).toBe(1804480);
+        expect(result.perLoad[0].netWeight).toBe(676);
+        expect(result.netWeight).toBe(676);
+        expect(result.palmTotalAmount).toBe(1744080);
+        expect(result.grossTotalAmount).toBe(1791580);
     });
 
     it('keeps legacy behavior when sorting deduction percentage is zero', () => {
@@ -118,7 +118,7 @@ describe('calculateLoads', () => {
         expect(result.perLoad[0].sortingTotalAmount).toBe(50000);
     });
 
-    it('subtracts sorting net weight from net to calculate palm amount (user scenario)', () => {
+    it('subtracts sorting gross weight from net to calculate palm amount (user scenario)', () => {
         const userLoads = [
             {
                 gross_weight: 1000,
@@ -136,12 +136,12 @@ describe('calculateLoads', () => {
             sortingPricePerKg: 500,
         });
 
-        // gross 1000 - tare 100 = 900; 5% deduction = 45; net = 900 - 45 = 855
-        // sorting: 50 - 5% = 47.5 net; net toto = 855 - 47.5 = 807.5
-        expect(result.perLoad[0].netWeight).toBe(807.5);
+        // gross 1000 - tare 100 = 900; 5% deduction = 45; netto bersih = 900 - 45 = 855
+        // sortiran: 50 gross, 5% potongan → 47.5 net; kolom sawit = 855 - 50 = 805
+        expect(result.perLoad[0].netWeight).toBe(805);
         expect(result.sortingNetWeight).toBe(47.5);
         expect(result.sortingTotalAmount).toBe(23750);
-        expect(result.palmTotalAmount).toBe(1615000);
-        expect(result.grossTotalAmount).toBe(1638750);
+        expect(result.palmTotalAmount).toBe(1610000);
+        expect(result.grossTotalAmount).toBe(1633750);
     });
 });
