@@ -53,24 +53,56 @@ test('multi load finalizes as one nota with per-load totals', function () {
     expect($transaction->nota_number)->toBe('HND-'.now()->format('Ymd').'-0001')
         ->and($transaction->gross_weight)->toBe('1800.00')
         ->and($transaction->tare_weight)->toBe('350.00')
-        ->and($transaction->net_weight)->toBe('1406.50')
+        ->and($transaction->net_weight)->toBe('1356.50')
         ->and($transaction->sorting_weight)->toBe('50.00')
         ->and($transaction->sorting_total_amount)->toBe('25000.00')
-        ->and($transaction->palm_total_amount)->toBe('3628770.00')
-        ->and($transaction->gross_total_amount)->toBe('3653770.00')
-        ->and($transaction->final_paid_amount_rounded)->toBe('3653770.00');
+        ->and($transaction->palm_total_amount)->toBe('3499770.00')
+        ->and($transaction->gross_total_amount)->toBe('3524770.00')
+        ->and($transaction->final_paid_amount_rounded)->toBe('3524770.00');
 
     expect($transaction->loads->count())->toBe(2);
 
     $secondLoad = $transaction->loads->firstWhere('seq_no', 2);
 
     expect($secondLoad->initial_weight)->toBe('650.00')
-        ->and($secondLoad->net_weight)->toBe('630.50')
+        ->and($secondLoad->net_weight)->toBe('580.50')
         ->and($secondLoad->sorting_total_amount)->toBe('25000.00');
 
-    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('3653770.00');
+    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('3524770.00');
 
     expect($transaction->farmer->balance)->toBe('0.00');
+});
+
+test('sorting net weight is deducted from netto before palm pricing', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 100, 'has_sorting' => true, 'sorting_weight' => 50],
+        ],
+        'deduction_percentage' => 5,
+        'palm_price_per_kg' => 2000,
+        'sorting_price_per_kg' => 500,
+        'sorting_deduction_percentage' => 5,
+    ]) + ['action' => 'finalize']);
+
+    $response->assertRedirect();
+
+    $transaction = WeighingTransaction::first();
+
+    expect($transaction)->not->toBeNull()
+        ->and($transaction->initial_weight)->toBe('900.00')
+        ->and($transaction->deduction_weight)->toBe('45.00')
+        ->and($transaction->net_weight)->toBe('807.50')
+        ->and($transaction->sorting_deduction_weight)->toBe('2.50')
+        ->and($transaction->sorting_net_weight)->toBe('47.50')
+        ->and($transaction->sorting_total_amount)->toBe('23750.00')
+        ->and($transaction->palm_total_amount)->toBe('1615000.00')
+        ->and($transaction->gross_total_amount)->toBe('1638750.00')
+        ->and($transaction->final_paid_amount_rounded)->toBe('1638750.00');
+
+    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('1638750.00');
 });
 
 test('draft can be saved without nota number or cash entry', function () {

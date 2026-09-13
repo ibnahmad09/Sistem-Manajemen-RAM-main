@@ -220,12 +220,12 @@ class WeighingTransaction extends Model
             $tare = (float) ($load['tare_weight'] ?? 0);
             $initial = $gross - $tare;
             $deductionWeight = $hasDeduction ? $initial * ($deductionPercentage / 100) : 0;
-            $net = $initial - $deductionWeight;
             $loadHasSorting = (bool) ($load['has_sorting'] ?? false);
             $sortingWeight = (float) ($load['sorting_weight'] ?? 0);
             $sortingPricePerKg = (float) ($load['sorting_price_per_kg'] ?? 0);
             $sortingDeductionWeight = $loadHasSorting ? $sortingWeight * ($sortingDeductionPercentage / 100) : 0;
             $sortingNetWeight = $sortingWeight - $sortingDeductionWeight;
+            $net = $initial - $deductionWeight - $sortingNetWeight;
             $sortingTotal = $loadHasSorting ? $sortingNetWeight * $sortingPricePerKg : 0;
 
             $totalGross += $gross;
