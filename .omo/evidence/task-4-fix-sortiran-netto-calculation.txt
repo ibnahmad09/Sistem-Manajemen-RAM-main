@@ -1,0 +1,174 @@
+# Evidence — Todo 4: Baterai verifikasi penuh (fix-sortiran-netto-calculation)
+# Date: 2026-09-13
+# Baseline git status (sebelum gate): 5 file modifikasi Todo 1-3 + .omo/ untracked
+#   M app/Http/Controllers/WeighingTransactionController.php
+#   M app/Models/WeighingTransaction.php
+#   M resources/js/lib/utils.ts
+#   M tests/Feature/WeighingTransactionTest.php
+#   M tests/JS/utils.test.ts
+#   ?? .omo/
+
+================================================================================
+GATE 1: composer test (suite penuh backend + unit, TANPA --filter)
+================================================================================
+$ composer test
+ INFO Configuration cache cleared successfully.
+
+{"tool":"pint","result":"passed"}{"tool":"pest","result":"passed","tests":127,"passed":127,"assertions":672,"duration_ms":12312}
+EXIT_CODE=0
+
+RESULT: PASSED — 127 tests / 127 passed / 672 assertions.
+(123 baseline + 1 test regresi Todo 1 + 3 test guard Todo 2 = 127. Sesuai ekspektasi.)
+
+================================================================================
+GATE 2: npm run test:js (seluruh vitest)
+================================================================================
+$ npm run test:js
+> test:js
+> vitest run --config vitest.config.ts
+
+
+ RUN  v4.1.5 /Users/assistmac2026/Documents/code/Sistem-Manajemen-RAM-main
+
+
+ Test Files  4 passed (4)
+      Tests  87 passed (87)
+   Start at  20:43:30
+   Duration  2.03s (transform 1.38s, setup 0ms, import 1.91s, tests 716ms, environment 1ms)
+
+EXIT_CODE=0
+
+RESULT: PASSED — 4 test files / 87 tests passed.
+
+================================================================================
+GATE 3: vendor/bin/pint --format agent (file PHP yang disentuh)
+================================================================================
+$ vendor/bin/pint --format agent
+{"tool":"pint","result":"passed"}EXIT_CODE=0
+
+RESULT: PASSED.
+
+================================================================================
+GATE 4: npm run format && npm run lint && npm run types:check
+================================================================================
+$ npm run format
+> format
+> prettier --write resources/
+
+resources/css/app.css 722ms (unchanged)
+resources/js/app.tsx 357ms (unchanged)
+resources/js/components/alert-error.tsx 470ms (unchanged)
+resources/js/components/app-content.tsx 89ms (unchanged)
+resources/js/components/app-header.tsx 477ms (unchanged)
+resources/js/components/app-logo-icon.tsx 17ms (unchanged)
+resources/js/components/app-logo.tsx 203ms (unchanged)
+resources/js/components/app-shell.tsx 22ms (unchanged)
+resources/js/components/app-sidebar-header.tsx 29ms (unchanged)
+resources/js/components/app-sidebar.tsx 108ms (unchanged)
+resources/js/components/appearance-tabs.tsx 58ms (unchanged)
+resources/js/components/breadcrumbs.tsx 146ms (unchanged)
+resources/js/components/currency-input.tsx 99ms (unchanged)
+resources/js/components/delete-user.tsx 74ms (unchanged)
+resources/js/components/heading.tsx 23ms (unchanged)
+resources/js/components/input-error.tsx 15ms (unchanged)
+resources/js/components/nav-footer.tsx 23ms (unchanged)
+resources/js/components/nav-main.tsx 13ms (unchanged)
+resources/js/components/nav-user.tsx 22ms (unchanged)
+resources/js/components/password-input.tsx 26ms (unchanged)
+resources/js/components/printer-connect-button.tsx 126ms (unchanged)
+resources/js/components/text-link.tsx 17ms (unchanged)
+resources/js/components/two-factor-recovery-codes.tsx 35ms (unchanged)
+resources/js/components/two-factor-setup-modal.tsx 104ms (unchanged)
+resources/js/components/user-info.tsx 22ms (unchanged)
+resources/js/components/user-menu-content.tsx 15ms (unchanged)
+resources/js/hooks/use-appearance.tsx 66ms (unchanged)
+resources/js/hooks/use-clipboard.ts 16ms (unchanged)
+resources/js/hooks/use-current-url.ts 44ms (unchanged)
+resources/js/hooks/use-flash-toast.ts 39ms (unchanged)
+resources/js/hooks/use-initials.tsx 14ms (unchanged)
+resources/js/hooks/use-mobile-navigation.ts 20ms (unchanged)
+resources/js/hooks/use-mobile.tsx 29ms (unchanged)
+resources/js/hooks/use-printer.ts 33ms (unchanged)
+resources/js/hooks/use-two-factor-auth.ts 40ms (unchanged)
+resources/js/layouts/app-layout.tsx 10ms (unchanged)
+resources/js/layouts/app/app-header-layout.tsx 11ms (unchanged)
+resources/js/layouts/app/app-sidebar-layout.tsx 41ms (unchanged)
+resources/js/layouts/auth-layout.tsx 41ms (unchanged)
+resources/js/layouts/auth/auth-card-layout.tsx 22ms (unchanged)
+resources/js/layouts/auth/auth-simple-layout.tsx 15ms (unchanged)
+resources/js/layouts/auth/auth-split-layout.tsx 35ms (unchanged)
+resources/js/layouts/settings/layout.tsx 21ms (unchanged)
+resources/js/lib/printer-models.ts 84ms (unchanged)
+resources/js/lib/receipt-builder.ts 114ms (unchanged)
+resources/js/lib/receipt-raster.ts 63ms (unchanged)
+resources/js/lib/utils.ts 147ms (unchanged)
+resources/js/lib/weighing-form.ts 24ms (unchanged)
+resources/js/pages/auth/confirm-password.tsx 15ms (unchanged)
+resources/js/pages/auth/forgot-password.tsx 17ms (unchanged)
+resources/js/pages/auth/login.tsx 36ms (unchanged)
+resources/js/pages/auth/register.tsx 20ms (unchanged)
+resources/js/pages/auth/reset-password.tsx 26ms (unchanged)
+resources/js/pages/auth/two-factor-challenge.tsx 29ms (unchanged)
+resources/js/pages/auth/verify-email.tsx 13ms (unchanged)
+resources/js/pages/CashFlow/Index.tsx 291ms (unchanged)
+resources/js/pages/dashboard.tsx 20ms (unchanged)
+resources/js/pages/Dashboard/Cashier.tsx 97ms (unchanged)
+resources/js/pages/Dashboard/Owner.tsx 104ms (unchanged)
+resources/js/pages/Dashboard/SuperAdmin.tsx 79ms (unchanged)
+resources/js/pages/Debts/Index.tsx 162ms (unchanged)
+resources/js/pages/Farmers/Form.tsx 37ms (unchanged)
+resources/js/pages/Farmers/Index.tsx 122ms (unchanged)
+resources/js/pages/PalmPrices/Index.tsx 124ms (unchanged)
+resources/js/pages/Reports/Index.tsx 156ms (unchanged)
+resources/js/pages/settings/appearance.tsx 33ms (unchanged)
+resources/js/pages/settings/DeductionConfig.tsx 109ms (unchanged)
+resources/js/pages/settings/profile.tsx 48ms (unchanged)
+resources/js/pages/settings/security.tsx 48ms (unchanged)
+resources/js/pages/Weighing/Form.tsx 195ms (unchanged)
+resources/js/pages/Weighing/List.tsx 139ms (unchanged)
+resources/js/pages/Weighing/Success.tsx 200ms (unchanged)
+resources/js/pages/welcome.tsx 109ms (unchanged)
+resources/js/services/printer-service.ts 107ms (unchanged)
+resources/js/types/auth.ts 58ms (unchanged)
+resources/js/types/domain.ts 17ms (unchanged)
+resources/js/types/global.d.ts 15ms (unchanged)
+resources/js/types/index.ts 8ms (unchanged)
+resources/js/types/navigation.ts 8ms (unchanged)
+resources/js/types/printer.d.ts 10ms (unchanged)
+resources/js/types/ui.ts 11ms (unchanged)
+resources/js/types/vite-env.d.ts 9ms (unchanged)
+
+$ npm run lint
+> lint
+> eslint . --fix
+
+$ npm run types:check
+> types:check
+> tsc --noEmit
+
+EXIT_CODE=0
+
+RESULT: PASSED — prettier semua unchanged, eslint --fix tanpa output (tidak ada pelanggaran), tsc --noEmit exit 0 tanpa output.
+
+================================================================================
+POST-GATE git status (verifikasi lint --fix tidak mengubah file di luar scope)
+================================================================================
+$ git status --short
+ M app/Http/Controllers/WeighingTransactionController.php
+ M app/Models/WeighingTransaction.php
+ M resources/js/lib/utils.ts
+ M tests/Feature/WeighingTransactionTest.php
+ M tests/JS/utils.test.ts
+?? .omo/
+
+RESULT: Hanya 5 file Todo 1-3 yang berubah + .omo/ untracked. TIDAK ada file lain yang berubah.
+
+================================================================================
+KESIMPULAN
+================================================================================
+Keempat gate HIJAU (exit 0):
+  1. composer test        → 127/127 passed, 672 assertions
+  2. npm run test:js      → 4 files / 87 tests passed
+  3. pint --format agent  → passed
+  4. format+lint+types    → passed (tidak ada perubahan file di luar scope)
+Tidak ada test merah → tidak ada update asersi tambahan yang diperlukan.

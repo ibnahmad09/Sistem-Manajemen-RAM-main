@@ -1,0 +1,46 @@
+TASK 2: CashFlow IDOR — scope ownership di update/destroy/show
+================================================================
+Date: 2026-09-13
+Branch: Fix-Security
+Plan: .omo/plans/security-fixes.md (SHA-256 e4fea869312f3e7e03ec3934b4ec693728624b05561e562017468d38566a288f)
+
+CHANGES
+-------
+app/Http/Controllers/CashFlowController.php:
+- update() (:115): ownership guard ditambahkan setelah opening brace, sebelum validasi
+- show() (:147): parameter Request $request ditambahkan sebagai param pertama + ownership guard
+- destroy() (:163): parameter Request $request ditambahkan sebagai param pertama + ownership guard
+
+Guard (identik di ketiga method):
+  abort_if(
+      $cashFlow->cashier_id !== $request->user()->id && $request->user()->role !== 'super_admin',
+      403,
+      'Anda tidak memiliki akses ke entri kas ini.'
+  );
+
+- super_admin dikecualikan (full access)
+- Route cash-flow hanya bisa dicapai role super_admin + cashier (routes/web.php:101),
+  jadi guard menutup IDOR antar cashier
+- index scope (:22-24) dan store scope TIDAK diubah
+
+tests/Feature/Security/CashFlowOwnershipTest.php (baru, Pest):
+1. cashier cannot update a cash entry owned by another cashier -> 403
+2. cashier cannot delete a cash entry owned by another cashier -> 403
+3. cashier cannot view a cash entry owned by another cashier -> 403
+4. cashier can update their own cash entry -> 302 + success
+5. super admin can update and delete a cash entry owned by a cashier -> 302 + success
+
+VERIFICATION
+------------
+$ php artisan test --compact --filter=CashFlowOwnershipTest
+{"tool":"pest","result":"passed","tests":5,"passed":5,"assertions":18,"duration_ms":2239}
+
+Pint: vendor/bin/pint --dirty --format agent -> CashFlowController.php & test sudah bersih
+(tidak ada fix yang diterapkan ke file task ini)
+
+CATATAN
+-------
+- User factory tidak meng-set 'status'; RoleMiddleware (fix #8, task paralel) kini
+  mewajibkan status === 'active'. Test ini membuat user dengan 'status' => 'active'
+  eksplisit agar lolos middleware. CashFlowTest.php lama ikut gagal karena hal yang
+  sama (pre-existing, di luar scope task ini).

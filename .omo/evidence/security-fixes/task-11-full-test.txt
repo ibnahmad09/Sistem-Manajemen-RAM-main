@@ -1,0 +1,56 @@
+=== Todo 11: Full test suite + Security regression check ===
+Date: 2026-09-13 02:39:20
+
+=== 1. FULL SUITE: php artisan test --compact ===
+{"tool":"pest","result":"passed","tests":122,"passed":122,"assertions":639,"duration_ms":10120}
+
+=== 2. SECURITY FILTER: php artisan test --compact --filter=Security ===
+{"tool":"pest","result":"passed","tests":36,"passed":36,"assertions":145,"duration_ms":3638}
+
+=== 3. Security test files ===
+CashFlowOwnershipTest.php
+DateParamValidationTest.php
+DebtExceedsGrossTest.php
+DoubleFinalizeTest.php
+DraftDebtPreserveTest.php
+FarmerDebtBindingTest.php
+FormulaInjectionTest.php
+InactiveUserBlockTest.php
+
+=== 4. Per-file Security test runs (fragility check) ===
+CashFlowOwnershipTest: 5 passed
+DateParamValidationTest: 4 passed
+DebtExceedsGrossTest: FAILED when run alone - "Call to undefined function createTestFarmer()"
+DoubleFinalizeTest: FAILED when run alone - "Call to undefined function createTestFarmer()"
+DraftDebtPreserveTest: FAILED when run alone - "Call to undefined function createTestFarmer()"
+FarmerDebtBindingTest: 3 passed
+FormulaInjectionTest: 3 passed
+InactiveUserBlockTest: 4 passed
+
+=== 5. Analysis of per-file failures ===
+- createTestFarmer() is defined in tests/Feature/WeighingTransactionTest.php:27 (pre-existing helper).
+- 3 new security test files (DebtExceedsGross, DoubleFinalize, DraftDebtPreserve) reuse it.
+- Pest loads ALL test files for full-suite / --filter runs, so the helper is available there
+  (full suite 122/122 PASS, --filter=Security 36/36 PASS).
+- Running a single file in isolation fails because the helper file is not loaded.
+- This is a PRE-EXISTING helper-location pattern (helper defined inside a test file, not a
+  shared helper). Our new tests inherited the fragility. NOT a failure in required runs.
+- Fix would require moving the helper to tests/Pest.php or a shared Helpers.php + editing
+  WeighingTransactionTest.php -> OUTSIDE scope fix 1-9. Flagged for orchestrator decision.
+
+=== 6. Filter composition ===
+--filter=Security = 30 tests (8 Security files) + 6 tests (Settings/SecurityTest.php) = 36 PASS
+
+=== Task 11 (discovered work): Move test helpers to tests/Pest.php ===
+Date: $(date '+%Y-%m-%d %H:%M:%S')
+
+Change:
+- tests/Pest.php: added global helpers weighingFormData() + createTestFarmer() in Functions section (replaced empty stub), added use App\Models\Farmer
+- tests/Feature/WeighingTransactionTest.php: removed duplicate helper definitions + unused Farmer import
+
+Verification:
+- php artisan test --compact tests/Feature/Security/DebtExceedsGrossTest.php tests/Feature/Security/DoubleFinalizeTest.php tests/Feature/Security/DraftDebtPreserveTest.php
+  => {"tool":"pest","result":"passed","tests":11,"passed":11,"assertions":48}
+- php artisan test --compact
+  => {"tool":"pest","result":"passed","tests":122,"passed":122,"assertions":639}
+- vendor/bin/pint --dirty --format agent => passed

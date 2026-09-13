@@ -1,0 +1,188 @@
+=== npm run format ===
+
+> format
+> prettier --write resources/
+
+resources/css/app.css 281ms (unchanged)
+resources/js/app.tsx 153ms (unchanged)
+resources/js/components/alert-error.tsx 57ms (unchanged)
+resources/js/components/app-content.tsx 55ms (unchanged)
+resources/js/components/app-header.tsx 228ms (unchanged)
+resources/js/components/app-logo-icon.tsx 38ms (unchanged)
+resources/js/components/app-logo.tsx 81ms (unchanged)
+resources/js/components/app-shell.tsx 24ms (unchanged)
+resources/js/components/app-sidebar-header.tsx 31ms (unchanged)
+resources/js/components/app-sidebar.tsx 84ms (unchanged)
+resources/js/components/appearance-tabs.tsx 26ms (unchanged)
+resources/js/components/breadcrumbs.tsx 25ms (unchanged)
+resources/js/components/currency-input.tsx 44ms (unchanged)
+resources/js/components/delete-user.tsx 40ms (unchanged)
+resources/js/components/heading.tsx 13ms (unchanged)
+resources/js/components/input-error.tsx 17ms (unchanged)
+resources/js/components/nav-footer.tsx 29ms (unchanged)
+resources/js/components/nav-main.tsx 23ms (unchanged)
+resources/js/components/nav-user.tsx 21ms (unchanged)
+resources/js/components/password-input.tsx 33ms (unchanged)
+resources/js/components/printer-connect-button.tsx 69ms (unchanged)
+resources/js/components/text-link.tsx 31ms (unchanged)
+resources/js/components/two-factor-recovery-codes.tsx 65ms (unchanged)
+resources/js/components/two-factor-setup-modal.tsx 154ms (unchanged)
+resources/js/components/user-info.tsx 18ms (unchanged)
+resources/js/components/user-menu-content.tsx 14ms (unchanged)
+resources/js/hooks/use-appearance.tsx 22ms (unchanged)
+resources/js/hooks/use-clipboard.ts 14ms (unchanged)
+resources/js/hooks/use-current-url.ts 33ms (unchanged)
+resources/js/hooks/use-flash-toast.ts 12ms (unchanged)
+resources/js/hooks/use-initials.tsx 31ms (unchanged)
+resources/js/hooks/use-mobile-navigation.ts 7ms (unchanged)
+resources/js/hooks/use-mobile.tsx 12ms (unchanged)
+resources/js/hooks/use-printer.ts 54ms (unchanged)
+resources/js/hooks/use-two-factor-auth.ts 31ms (unchanged)
+resources/js/layouts/app-layout.tsx 34ms (unchanged)
+resources/js/layouts/app/app-header-layout.tsx 11ms (unchanged)
+resources/js/layouts/app/app-sidebar-layout.tsx 28ms (unchanged)
+resources/js/layouts/auth-layout.tsx 37ms (unchanged)
+resources/js/layouts/auth/auth-card-layout.tsx 31ms (unchanged)
+resources/js/layouts/auth/auth-simple-layout.tsx 13ms (unchanged)
+resources/js/layouts/auth/auth-split-layout.tsx 16ms (unchanged)
+resources/js/layouts/settings/layout.tsx 75ms (unchanged)
+resources/js/lib/printer-models.ts 57ms (unchanged)
+resources/js/lib/receipt-builder.ts 78ms (unchanged)
+resources/js/lib/receipt-raster.ts 28ms (unchanged)
+resources/js/lib/utils.ts 109ms (unchanged)
+resources/js/lib/weighing-form.ts 28ms (unchanged)
+resources/js/pages/auth/confirm-password.tsx 18ms (unchanged)
+resources/js/pages/auth/forgot-password.tsx 40ms (unchanged)
+resources/js/pages/auth/login.tsx 56ms (unchanged)
+resources/js/pages/auth/register.tsx 27ms (unchanged)
+resources/js/pages/auth/reset-password.tsx 26ms (unchanged)
+resources/js/pages/auth/two-factor-challenge.tsx 70ms (unchanged)
+resources/js/pages/auth/verify-email.tsx 15ms (unchanged)
+resources/js/pages/CashFlow/Index.tsx 187ms (unchanged)
+resources/js/pages/dashboard.tsx 109ms (unchanged)
+resources/js/pages/Dashboard/Cashier.tsx 156ms (unchanged)
+resources/js/pages/Dashboard/Owner.tsx 68ms (unchanged)
+resources/js/pages/Dashboard/SuperAdmin.tsx 69ms (unchanged)
+resources/js/pages/Debts/Index.tsx 106ms (unchanged)
+resources/js/pages/Farmers/Form.tsx 78ms (unchanged)
+resources/js/pages/Farmers/Index.tsx 83ms (unchanged)
+resources/js/pages/PalmPrices/Index.tsx 157ms (unchanged)
+resources/js/pages/Reports/Index.tsx 133ms (unchanged)
+resources/js/pages/settings/appearance.tsx 20ms (unchanged)
+resources/js/pages/settings/DeductionConfig.tsx 50ms (unchanged)
+resources/js/pages/settings/profile.tsx 45ms (unchanged)
+resources/js/pages/settings/security.tsx 69ms (unchanged)
+resources/js/pages/Weighing/Form.tsx 214ms
+resources/js/pages/Weighing/List.tsx 97ms (unchanged)
+resources/js/pages/Weighing/Success.tsx 313ms (unchanged)
+resources/js/pages/welcome.tsx 189ms (unchanged)
+resources/js/services/printer-service.ts 126ms (unchanged)
+resources/js/types/auth.ts 17ms (unchanged)
+resources/js/types/domain.ts 35ms (unchanged)
+resources/js/types/global.d.ts 16ms (unchanged)
+resources/js/types/index.ts 8ms (unchanged)
+resources/js/types/navigation.ts 23ms (unchanged)
+resources/js/types/printer.d.ts 99ms (unchanged)
+resources/js/types/ui.ts 10ms (unchanged)
+resources/js/types/vite-env.d.ts 9ms (unchanged)
+EXIT: 0
+
+=== npm run lint ===
+
+> lint
+> eslint . --fix
+
+EXIT: 0
+
+=== npm run types:check ===
+
+> types:check
+> tsc --noEmit
+
+EXIT: 0
+
+=== npm run build ===
+
+> build
+> vite build
+
+vite v8.0.10 building client environment for production...
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+[2Ktransforming...✓ 2322 modules transformed.
+rendering chunks...
+computing gzip size...
+public/build/assets/instrument-sans-400-normal-Q_nF8v4l.woff2       6.85 kB
+public/build/assets/instrument-sans-600-normal-BsaQcF38.woff2       6.94 kB
+public/build/assets/instrument-sans-500-normal-CTEe1bJa.woff2       6.98 kB
+public/build/assets/instrument-sans-400-normal-r32jotim.woff        8.96 kB
+public/build/assets/instrument-sans-500-normal-CAxz3nsc.woff        9.06 kB
+public/build/assets/instrument-sans-600-normal-DMks36a2.woff        9.10 kB
+public/build/fonts-manifest.json                                   11.19 kB │ gzip:  0.97 kB
+public/build/assets/instrument-sans-400-normal-DRC__1Mx.woff2      16.86 kB
+public/build/assets/instrument-sans-500-normal-Dk9ku72i.woff2      17.23 kB
+public/build/assets/instrument-sans-600-normal-B7fBEWYG.woff2      17.40 kB
+public/build/manifest.json                                         17.79 kB │ gzip:  2.16 kB
+public/build/assets/instrument-sans-400-normal-D1W7dsQl.woff       21.24 kB
+public/build/assets/instrument-sans-500-normal-Z6ESRlEs.woff       21.65 kB
+public/build/assets/instrument-sans-600-normal-B9e8oLYv.woff       21.67 kB
+public/build/assets/fonts-DkuEHybc.css                              4.76 kB │ gzip:  0.55 kB
+public/build/assets/app-DxTo7BKI.css                              112.83 kB │ gzip: 18.25 kB
+public/build/assets/minus-C6l3DnFl.js                               0.10 kB │ gzip:  0.12 kB
+public/build/assets/loader-circle-BsGc2UTL.js                       0.13 kB │ gzip:  0.14 kB
+public/build/assets/arrow-left-hiDu9TDs.js                          0.15 kB │ gzip:  0.15 kB
+public/build/assets/search-u3_QR_ji.js                              0.16 kB │ gzip:  0.16 kB
+public/build/assets/clock-Br5obkt5.js                               0.17 kB │ gzip:  0.16 kB
+public/build/assets/trending-up-DzYSwfSO.js                         0.19 kB │ gzip:  0.17 kB
+public/build/assets/trending-down-B-kvEcA-.js                       0.19 kB │ gzip:  0.16 kB
+public/build/assets/pencil-BTzomk0l.js                              0.26 kB │ gzip:  0.21 kB
+public/build/assets/save-DdkXeZK7.js                                0.31 kB │ gzip:  0.22 kB
+public/build/assets/file-text-DCm00BGa.js                           0.32 kB │ gzip:  0.20 kB
+public/build/assets/confirm-CR6lNpYI.js                             0.36 kB │ gzip:  0.22 kB
+public/build/assets/input-error-EQZbGqkD.js                         0.44 kB │ gzip:  0.32 kB
+public/build/assets/spinner-C7rjNUbH.js                             0.47 kB │ gzip:  0.34 kB
+public/build/assets/text-link-DhQdiTRJ.js                           0.61 kB │ gzip:  0.40 kB
+public/build/assets/label-CWsnR2iT.js                               0.84 kB │ gzip:  0.54 kB
+public/build/assets/verify-email-xl9h63XZ.js                        1.30 kB │ gzip:  0.70 kB
+public/build/assets/confirm-password-DmTE-r9g.js                    1.36 kB │ gzip:  0.68 kB
+public/build/assets/currency-input-C0m72y5k.js                      1.37 kB │ gzip:  0.82 kB
+public/build/assets/verification-CHDRKOpl.js                        1.48 kB │ gzip:  0.52 kB
+public/build/assets/password-input-tPyoToJF.js                      1.82 kB │ gzip:  1.00 kB
+public/build/assets/forgot-password-Bn0c3aE9.js                     1.93 kB │ gzip:  0.90 kB
+public/build/assets/reset-password-BqtIC6__.js                      2.23 kB │ gzip:  0.92 kB
+public/build/assets/dashboard-DIUtSW4N.js                           2.51 kB │ gzip:  0.88 kB
+public/build/assets/appearance-BAaW9lsX.js                          2.55 kB │ gzip:  1.24 kB
+public/build/assets/register-BEDlbSv2.js                            2.73 kB │ gzip:  1.03 kB
+public/build/assets/password-BR2zPxe2.js                            2.73 kB │ gzip:  0.73 kB
+public/build/assets/two-factor-challenge-Bs0EDvTT.js                2.74 kB │ gzip:  1.26 kB
+public/build/assets/dialog-C8fN_RR1.js                              4.02 kB │ gzip:  1.24 kB
+public/build/assets/webbluetooth-receipt-printer.esm-DzGsiAN5.js    5.41 kB │ gzip:  1.55 kB
+public/build/assets/DeductionConfig-Bzs7GiCu.js                     6.17 kB │ gzip:  2.41 kB
+public/build/assets/Owner-BzgWG4Ap.js                               6.71 kB │ gzip:  2.23 kB
+public/build/assets/profile-Dw_qPEMI.js                             6.84 kB │ gzip:  2.33 kB
+public/build/assets/SuperAdmin-Cy5e2ot9.js                          6.90 kB │ gzip:  2.40 kB
+public/build/assets/Form-B3bu8zO9.js                                6.95 kB │ gzip:  2.64 kB
+public/build/assets/Index-BrjxvXkQ.js                               7.38 kB │ gzip:  2.69 kB
+public/build/assets/login--LU0d_4D.js                               9.57 kB │ gzip:  3.85 kB
+public/build/assets/Index-Bdfq7IAc.js                               9.80 kB │ gzip:  2.96 kB
+public/build/assets/Cashier-Bpd-8Eyk.js                             9.93 kB │ gzip:  3.09 kB
+public/build/assets/Index-DqoiklEh.js                              12.12 kB │ gzip:  3.47 kB
+public/build/assets/List-B7Tg2JNg.js                               12.78 kB │ gzip:  3.62 kB
+public/build/assets/Index-D6a1J2g5.js                              14.13 kB │ gzip:  4.34 kB
+public/build/assets/use-two-factor-auth-BsZIhb7M.js                16.63 kB │ gzip:  5.98 kB
+public/build/assets/Index-BYdCg7l4.js                              16.64 kB │ gzip:  4.86 kB
+public/build/assets/Success-DsuQdpu-.js                            18.87 kB │ gzip:  5.86 kB
+public/build/assets/security-CPl5LOFL.js                           21.41 kB │ gzip:  7.04 kB
+public/build/assets/Form-CaUben4p.js                               22.50 kB │ gzip:  5.30 kB
+public/build/assets/welcome-D0gtiX5H.js                            30.71 kB │ gzip:  6.50 kB
+public/build/assets/receipt-printer-encoder.esm-OkZj7KQo.js        81.37 kB │ gzip: 21.17 kB
+public/build/assets/app-CncqdbwP.js                               293.91 kB │ gzip: 82.97 kB
+public/build/assets/wayfinder-CD_6PAhi.js                         314.46 kB │ gzip: 99.12 kB
+
+[33m[PLUGIN_TIMINGS] Warning:[0m Your build spent significant time in plugins. Here is a breakdown:
+  - @inertiajs/vite (77%)
+  - vite:react-babel (13%)
+  - laravel (9%)
+See https://rolldown.rs/options/checks#plugintimings for more details.
+
+✓ built in 26.43s
+EXIT: 0

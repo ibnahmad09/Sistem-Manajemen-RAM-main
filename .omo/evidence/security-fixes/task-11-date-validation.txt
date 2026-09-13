@@ -1,0 +1,43 @@
+Task #11 — Validasi date param di ReportsController
+====================================================
+Date: 2026-09-13
+Branch: Fix-Security
+
+Change
+-------
+File: app/Http/Controllers/ReportsController.php
+- Added $request->validate(['date_start' => ['nullable', 'date'], 'date_end' => ['nullable', 'date']])
+  at the start of applyReportFilters() (line ~22).
+- Covers all 3 entry points: index(), exportPdf(), exportExcel() — all call applyReportFilters().
+- Invalid date params now redirect (302) with session errors instead of reaching
+  whereDate() with garbage input (previously a 500 / DoS vector; filename injection
+  was already blocked by Symfony).
+
+Test file
+----------
+tests/Feature/Security/DateParamValidationTest.php (Pest, 4 tests, 10 assertions)
+
+Scenarios:
+1. GET /reports?date_start=garbage            -> 302 + assertSessionHasErrors('date_start')  PASS
+2. GET /reports?date_start=2026-01-01&date_end=2026-12-31 -> 200                          PASS
+3. GET /reports/export/excel?date_start=garbage -> 302 + assertSessionHasErrors('date_start') PASS
+4. GET /reports/export/pdf?date_start=garbage  -> 302 + assertSessionHasErrors('date_start')  PASS
+
+Verification
+-------------
+$ php artisan test --compact --filter=DateParamValidationTest
+{"tool":"pest","result":"passed","tests":4,"passed":4,"assertions":10,"duration_ms":2152}
+
+Regression: existing reports tests unaffected
+$ php artisan test --compact --filter=ReportsExportTest
+{"tool":"pest","result":"passed","tests":5,"passed":5,"assertions":98,"duration_ms":2452}
+
+Formatting: vendor/bin/pint --dirty --format agent -> fixed (single_blank_line_at_eof)
+
+Constraints honored
+-------------------
+- No method signature changes
+- No filename changes for PDF/Excel export
+- No other files modified (only ReportsController.php + new test)
+- No new dependencies
+- No existing tests removed

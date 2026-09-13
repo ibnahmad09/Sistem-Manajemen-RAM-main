@@ -1,0 +1,79 @@
+F3 — Skenario User Smoke Test (fix-sortiran-gross-weight)
+==========================================================
+Tanggal: 2026-09-14 | Mode: read-only (tidak ada file diubah)
+
+SKENARIO USER
+-------------
+- Gross 1000, tare 100 → netto kotor 900
+- Potongan kualitas 5% → 45 kg
+- Sortiran 50 kg @ potongan 5% → net sortiran 47,5 kg
+- Harga sawit 2000/kg, harga sortiran 500/kg
+- Hitung manual: 900 − 45 − 50 = 805; 805 × 2000 = 1.610.000;
+  47,5 × 500 = 23.750; total = 1.633.750
+
+1) TEST BACKEND (PHP mirror)
+----------------------------
+Command: php artisan test --compact --filter=WeighingTransactionTest
+Result : 26 passed, 198 assertions (PASS)
+
+Test 'sorting weight is deducted from netto before palm pricing'
+(tests/Feature/WeighingTransactionTest.php:76-106) mengunci:
+  initial_weight            = 900.00
+  deduction_weight          = 45.00
+  net_weight                = 805.00        ✓ (900 − 45 − 50)
+  sorting_deduction_weight  = 2.50
+  sorting_net_weight        = 47.50
+  sorting_total_amount      = 23750.00      ✓ (47,5 × 500)
+  palm_total_amount         = 1610000.00    ✓ (805 × 2000)
+  gross_total_amount        = 1633750.00    ✓ (1610000 + 23750)
+  final_paid_amount_rounded = 1633750.00
+  CashierCashEntry amount   = 1633750.00
+
+2) TEST JS MIRROR (TS)
+----------------------
+Command: npm run test:js -- tests/JS/utils.test.ts -t "subtracts sorting gross weight"
+Result : 1 passed | 12 skipped (PASS)
+Test 'subtracts sorting gross weight from net to calculate palm amount (user scenario)'
+mengunci netWeight 805, palmTotalAmount 1610000, grossTotalAmount 1633750
+(utils.ts:154: net = initial − deductionWeight − sortingWeight)
+
+3) RENDER KARTU "HASIL HITUNG" (Form.tsx:479-587) — muatan #1
+-------------------------------------------------------------
+Nilai dibaca dari calc.perLoad[i] (closure useMemo calculateLoads, Form.tsx:138-140),
+bukan hardcoded:
+  Netto Kotor      → formatKgTrimmed(perLoad.initialWeight)  = 900 kg
+  Potongan 5%      → -formatKgTrimmed(perLoad.deductionWeight) = -45 kg
+  Sortiran (gross) → -formatKgTrimmed(perLoad.sortingWeight)  = -50 kg  ✓
+  Netto            → formatKgTrimmed(perLoad.netWeight)       = 805 kg  ✓
+  + Sortiran       → +formatRupiah(perLoad.sortingTotalAmount) = +Rp 23.750
+  Nilai Muatan     → formatRupiah(perLoad.netWeight × palm_price + sortingTotalAmount)
+                   = Rp 1.633.750  ✓ (805 × 2000 + 23750)
+
+4) RENDER PANEL KALKULASI (Form.tsx:814-1059) — 4 seksi berlabel
+----------------------------------------------------------------
+  HARGA     : Harga Sawit Rp 2.000 (/kg); Harga Sortiran Rp 500 (/kg)
+  BERAT     : Muatan #1 (805) → Rp 1.633.750; Netto Kotor (total) 900 kg;
+              Potongan 5% -45 kg; Sortiran (gross) -50 kg  ✓; Netto Bersih 805 kg  ✓
+  NILAI     : Total Sawit Rp 1.610.000; Potongan Sortiran (5%) -2,5 kg;
+              Total Sortiran +Rp 23.750; Total Kotor Rp 1.633.750  ✓
+  PEMBAYARAN: seksi opsional (render hanya jika debt_paid_amount > 0 — per desain
+              Todo 5). Skenario user tanpa hutang → heading PEMBAYARAN tidak render,
+              namun final block "Total Diterima Petani" SELALU render:
+              Rp 1.633.750 (calc.finalPaidAmountRounded).
+
+5) NOTA LAYAR & RECEIPT THERMAL (konsistensi gross)
+---------------------------------------------------
+  Success.tsx:167-180      → SORTIRAN 5%: -50 kg (load.sorting_weight), NETTO: 805 kg
+  receipt-builder.ts:111-125 → #1 SORTIRAN: -50 kg (5%) (load.sorting_weight)
+  Bagian HARGA nota (pembayaran sortiran) TIDAK berubah — tetap net 47,5 → Rp 23.750.
+
+VERDICT: APPROVE
+----------------
+- Skenario user dijalankan ulang: netto sawit 805.00, palm 1.610.000.00,
+  sortiran 23.750.00, total 1.633.750.00 — semua angka cocok (PHP + TS mirror).
+- Kartu "Hasil Hitung" muatan #1 menampilkan Netto 805 kg & Nilai Muatan Rp 1.633.750.
+- Panel menampilkan seksi HARGA/BERAT/NILAI (+ final block) dengan
+  Sortiran (gross) -50, Netto Bersih 805, Total Kotor Rp 1.633.750.
+- Catatan: heading seksi PEMBAYARAN hanya render saat debt_paid_amount > 0
+  (desain Todo 5 "seksi opsional"); skenario user tanpa hutang → tidak tampil,
+  sesuai spesifikasi plan.

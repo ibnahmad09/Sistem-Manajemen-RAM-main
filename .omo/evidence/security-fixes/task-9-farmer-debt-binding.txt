@@ -1,0 +1,46 @@
+Task 9: FarmerDebt — fix implicit binding + dangling transaction
+=================================================================
+Date: 2026-09-13
+Branch: Fix-Security
+Status: DONE
+
+ROOT CAUSE
+----------
+Route::resource('debts', ...) (routes/web.php:73-74) generates route param
+{debt} for show/destroy. Controller signatures used $farmerDebt
+(FarmerDebtController.php:124/134) which does NOT match {debt} -> implicit
+route model binding skipped -> fresh empty FarmerDebt model -> fatal Error
+(not Exception) -> HTTP 500 + DB::beginTransaction() in destroy() left
+dangling (never rolled back because fatal Error bypasses catch \Exception)
+-> poisons subsequent requests (PoC-A+B).
+
+FIX
+---
+app/Http/Controllers/FarmerDebtController.php:
+- show(FarmerDebt $farmerDebt)  -> show(FarmerDebt $debt)   (line 124)
+- destroy(FarmerDebt $farmerDebt) -> destroy(FarmerDebt $debt) (line 134)
+- All body references renamed $farmerDebt -> $debt (load, json, farmer, delete)
+- DB::rollBack() in catch block (line 151) verified PRESENT and unchanged
+- grep: 0 remaining references to $farmerDebt
+
+TEST
+----
+New: tests/Feature/Security/FarmerDebtBindingTest.php (Pest, 3 tests)
+1. show returns debt data as json for a valid id  -> 200 + JSON fields
+2. show returns 404 for a non-existent debt       -> 404
+3. destroy deletes the debt and redirects with success -> 302 + success flash
+
+VERIFICATION
+------------
+$ php artisan test --compact --filter=FarmerDebtBindingTest
+PASS  (3 tests, 10 assertions)
+
+$ vendor/bin/pint --dirty --format agent
+Fixed: tests/Feature/Security/FarmerDebtBindingTest.php (EOF newline)
+
+SCOPE
+-----
+Changed: app/Http/Controllers/FarmerDebtController.php (rename only)
+         tests/Feature/Security/FarmerDebtBindingTest.php (new)
+Not changed: routes, index/store, frontend, other files, no new deps,
+             no existing tests removed.

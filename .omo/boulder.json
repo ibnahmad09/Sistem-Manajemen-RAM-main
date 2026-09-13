@@ -1,0 +1,471 @@
+{
+  "schema_version": 2,
+  "active_work_id": "restructure-nota-output",
+  "works": {
+    "security-fixes": {
+      "work_id": "security-fixes",
+      "active_plan": ".omo/plans/security-fixes.md",
+      "plan_name": "security-fixes",
+      "session_ids": [
+        "opencode:ses_f6b4b5a93ffexHCdBz72WogR22"
+      ],
+      "status": "completed",
+      "worktree_path": null,
+      "session_origins": {},
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "`resources/js/lib/weighing-form.ts` (BARU)",
+          "session_id": "opencode:ses_f662c1a2effeuWDtPzhw8l2Nh3",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "started_at": "2026-09-12T18:40:47.476Z",
+          "ended_at": "2026-09-13T08:13:35.337Z",
+          "elapsed_ms": 48767861,
+          "status": "completed",
+          "updated_at": "2026-09-13T08:13:35.338Z"
+        },
+        "todo:9": {
+          "task_key": "todo:9",
+          "task_label": "9",
+          "task_title": "#6 TOCTOU double-finalize",
+          "session_id": "opencode:ses_f68e8f2d2ffeicHYa5fHQSoji1",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "updated_at": "2026-09-12T19:34:29.490Z",
+          "started_at": "2026-09-12T19:31:48.374Z",
+          "status": "completed",
+          "ended_at": "2026-09-12T19:34:29.490Z",
+          "elapsed_ms": 161116
+        },
+        "todo:10": {
+          "task_key": "todo:10",
+          "task_label": "10",
+          "task_title": "Full Pint format + Lint check",
+          "session_id": "opencode:ses_f68e22e35ffeHVpydG5fw9akmG",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-09-12T19:38:15.688Z",
+          "started_at": "2026-09-12T19:37:09.000Z",
+          "status": "completed",
+          "ended_at": "2026-09-12T19:38:15.688Z",
+          "elapsed_ms": 66688
+        },
+        "todo:11": {
+          "task_key": "todo:11",
+          "task_label": "11",
+          "task_title": "Jalankan test suite penuh + regression check",
+          "session_id": "opencode:ses_f68def54effeaFN4kn6KQ3Wrx8",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-09-12T19:44:11.189Z",
+          "started_at": "2026-09-12T19:42:42.000Z",
+          "status": "completed",
+          "ended_at": "2026-09-12T19:44:11.189Z",
+          "elapsed_ms": 89189
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "Plan compliance audit — Setiap fix di-diff dengan rencana: #6b zeroing dihapus (baris 413,454), #4 guard debt>gross ditambah, #9 param rename, #7 trustProxies dihapus, #8 status check ditambah, #6 cek pindah ke dalam transaksi, #2 ownership guard, #5 sanitizeFormula, #11 validasi date.",
+          "session_id": "opencode:ses_f68d4ee16ffed4pU287QdAxP3t",
+          "agent": "oracle",
+          "started_at": "2026-09-12T19:47:48.015Z",
+          "status": "completed",
+          "updated_at": "2026-09-12T19:57:45.437Z",
+          "ended_at": "2026-09-12T19:57:45.437Z",
+          "elapsed_ms": 597422
+        }
+      },
+      "updated_at": "2026-09-13T08:24:10.609Z",
+      "ended_at": "2026-09-13T08:24:10.609Z"
+    },
+    "fix-draft-debt": {
+      "work_id": "fix-draft-debt",
+      "active_plan": ".omo/plans/fix-draft-debt.md",
+      "plan_name": "fix-draft-debt",
+      "session_ids": [],
+      "status": "completed",
+      "worktree_path": null,
+      "session_origins": {},
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "Buat resources/js/lib/weighing-form.ts (buildInitialWeighingFormState fix debt_paid_amount dari draft)",
+          "session_id": "opencode:ses_f663a69f6ffeRf6dyTdUf7ZHo5",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed"
+        },
+        "todo:2": {
+          "task_key": "todo:2",
+          "task_label": "2",
+          "task_title": "Update Form.tsx pakai buildInitialWeighingFormState (import + useForm)",
+          "session_id": "opencode:ses_f663740b3ffeGp7YUC3X7t6MK7",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed"
+        },
+        "todo:3": {
+          "task_key": "todo:3",
+          "task_label": "3",
+          "task_title": "Buat tests/JS/weighing-form.test.ts (RED-to-GREEN: draft debt 100000 → state 100000)",
+          "session_id": "opencode:ses_f66406595ffehKunmCYriUGK1P",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed"
+        },
+        "todo:4": {
+          "task_key": "todo:4",
+          "task_label": "4",
+          "task_title": "Tambah assertInertia di DraftDebtPreserveTest.php (GET create?draft kirim debt utuh)",
+          "session_id": "opencode:ses_f664016e0ffe78f7NG0G93zfyC",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed"
+        },
+        "todo:5": {
+          "task_key": "todo:5",
+          "task_label": "5",
+          "task_title": "Verifikasi penuh: format + test:js + lint + types:check + composer test",
+          "session_id": "opencode:ses_f66336715ffe5iI7gzrm3oLwwp",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed"
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "Plan compliance audit",
+          "session_id": "opencode:ses_f662f409cffexBqiTEZExUs6EX",
+          "agent": "oracle",
+          "status": "completed",
+          "verdict": "APPROVE"
+        },
+        "final-wave:f2": {
+          "task_key": "final-wave:f2",
+          "task_label": "F2",
+          "task_title": "Code quality review",
+          "session_id": "opencode:ses_f662f1914ffeHrtf4OtSLhSUsT",
+          "agent": "oracle",
+          "status": "completed",
+          "verdict": "APPROVE"
+        },
+        "final-wave:f3": {
+          "task_key": "final-wave:f3",
+          "task_label": "F3",
+          "task_title": "Real execution QA",
+          "session_id": "opencode:ses_f662eff15ffe0Y1OhAm1W0kggE",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "verdict": "APPROVE"
+        },
+        "final-wave:f4": {
+          "task_key": "final-wave:f4",
+          "task_label": "F4",
+          "task_title": "Scope fidelity",
+          "session_id": "opencode:ses_f662edb1affeOyodWazVhNhshJ",
+          "agent": "oracle",
+          "status": "completed",
+          "verdict": "APPROVE"
+        },
+        "commit": {
+          "task_key": "commit",
+          "task_label": "commit",
+          "task_title": "Squash commit fix(perhitungan): draft pertahankan hutang saat dibuka kembali",
+          "session_id": "opencode:ses_f662c1a2effeuWDtPzhw8l2Nh3",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "status": "completed",
+          "commit": "6fa5216"
+        }
+      },
+      "updated_at": "2026-09-13T08:13:35.338Z",
+      "ended_at": "2026-09-13T08:13:35.338Z"
+    },
+    "fix-sortiran-netto-calculation": {
+      "work_id": "fix-sortiran-netto-calculation",
+      "active_plan": ".omo/plans/fix-sortiran-netto-calculation.md",
+      "plan_name": "fix-sortiran-netto-calculation",
+      "session_ids": [
+        "opencode:ses_f6529fc6affeOOoHri0dutXSqs"
+      ],
+      "status": "completed",
+      "worktree_path": null,
+      "session_origins": {},
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "Restructure NotaThermal UI into labeled sections (BERAT/HARGA/HUTANG) in Success.tsx",
+          "session_id": "opencode:ses_f63c88469ffeeaRSVjo2OaVf37",
+          "agent": "Sisyphus-Junior",
+          "category": "visual-engineering",
+          "started_at": "2026-09-13T13:34:23.449Z",
+          "ended_at": "2026-09-13T19:29:00.898Z",
+          "elapsed_ms": 21277449,
+          "status": "completed",
+          "updated_at": "2026-09-13T19:29:00.898Z"
+        },
+        "todo:2": {
+          "task_key": "todo:2",
+          "task_label": "2",
+          "task_title": "Koreksi formula TS + update asersi test JS",
+          "session_id": "opencode:ses_f645922feffeEE4rsO0DCC662y",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "started_at": "2026-09-13T13:41:18.871Z",
+          "ended_at": "2026-09-13T16:48:42.934Z",
+          "elapsed_ms": 11244063,
+          "status": "completed",
+          "updated_at": "2026-09-13T16:48:42.934Z"
+        },
+        "todo:3": {
+          "task_key": "todo:3",
+          "task_label": "3",
+          "task_title": "Nota layar & receipt thermal: baris deduksi SORTIRAN tampilkan berat KOTOR + update test",
+          "session_id": "opencode:ses_f64501af3ffe2zDDa0O3rJKy4u",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "status": "completed",
+          "updated_at": "2026-09-13T16:54:51.672Z",
+          "started_at": "2026-09-13T16:54:51.669Z",
+          "ended_at": "2026-09-13T16:54:51.672Z",
+          "elapsed_ms": 3
+        },
+        "todo:4": {
+          "task_key": "todo:4",
+          "task_label": "4",
+          "task_title": "Option A — kartu \"Hasil Hitung\" per-muatan di Form.tsx",
+          "session_id": "opencode:ses_f644d5756ffeFUX8lnYe4Ozsjx",
+          "agent": "Sisyphus-Junior",
+          "category": "visual-engineering",
+          "status": "completed",
+          "updated_at": "2026-09-13T17:01:30.817Z",
+          "started_at": "2026-09-13T17:01:30.814Z",
+          "ended_at": "2026-09-13T17:01:30.817Z",
+          "elapsed_ms": 3
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "Plan compliance audit",
+          "session_id": "opencode:ses_f63b65688ffeNpxVZ2Hx8QB5GK",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "started_at": "2026-09-13T13:50:08.168Z",
+          "ended_at": "2026-09-13T19:44:39.932Z",
+          "elapsed_ms": 21271764,
+          "status": "completed",
+          "updated_at": "2026-09-13T19:44:39.933Z"
+        },
+        "final-wave:f2": {
+          "task_key": "final-wave:f2",
+          "task_label": "F2",
+          "task_title": "Code quality review — diff hanya menyentuh: WeighingTransaction.php:228 (satu variabel), utils.ts:154 (satu variabel), WeighingTransactionTest.php, utils.test.ts, Success.tsx (baris 167-180 saja), receipt-builder.ts (line 113-114 saja), printer-service.test.ts (test 361), Form.tsx (kartu muatan + panel kanan). Tidak ada file lain berubah.",
+          "session_id": "opencode:ses_f643946b0ffeaExYlCHmxhXIP6",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "updated_at": "2026-09-13T17:21:32.455Z",
+          "started_at": "2026-09-13T17:21:32.451Z",
+          "ended_at": "2026-09-13T17:21:32.455Z",
+          "elapsed_ms": 4
+        },
+        "final-wave:f3": {
+          "task_key": "final-wave:f3",
+          "task_label": "F3",
+          "task_title": "Skenario user smoke test — jalankan ulang skenario user (1000/100, potongan 5%, harga 2000, sortiran 50 @5% harga 500) → 805.00 / 1610000.00 / 23750.00 / 1633750.00; PLUS render halaman input: kartu \"Hasil Hitung\" muatan #1 menampilkan `Netto 805` & `Nilai Muatan Rp 1.633.750`; panel menampilkan 4 seksi dengan `Sortiran (gross) -50`, `Netto Bersih 805`, `Total Kotor 1.633.750`. Capture ke `.omo/evidence/final-f3-fix-sortiran-gross-weight.txt`.",
+          "session_id": "opencode:ses_f643903bfffe2F4GoQAJ8Q6oyO",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "updated_at": "2026-09-13T17:21:24.911Z",
+          "started_at": "2026-09-13T17:21:24.908Z",
+          "ended_at": "2026-09-13T17:21:24.911Z",
+          "elapsed_ms": 3
+        },
+        "final-wave:f4": {
+          "task_key": "final-wave:f4",
+          "task_label": "F4",
+          "task_title": "Scope fidelity — tidak ada backfill, tidak ada perubahan API/skema/dead code, guard tetap; bagian HARGA nota (pembayaran sortiran) TIDAK berubah (tetap net 47,5 → 23.750); test dengan sorting_deduction_percentage = 0 atau has_sorting = false TIDAK berubah (regresi nol).",
+          "session_id": "opencode:ses_f6438d238ffeP9d43pTYoX2DnQ",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "updated_at": "2026-09-13T17:21:12.223Z",
+          "started_at": "2026-09-13T17:21:12.222Z",
+          "ended_at": "2026-09-13T17:21:12.223Z",
+          "elapsed_ms": 1
+        },
+        "todo:5": {
+          "task_key": "todo:5",
+          "task_label": "5",
+          "task_title": "Option B — restrukturisasi panel \"Kalkulasi Pembayaran\" jadi seksi berlabel + keterangan rumus",
+          "session_id": "opencode:ses_f644d5756ffeFUX8lnYe4Ozsjx",
+          "agent": "Sisyphus-Junior",
+          "category": "visual-engineering",
+          "updated_at": "2026-09-13T17:10:51.347Z",
+          "started_at": "2026-09-13T17:10:51.347Z",
+          "status": "running"
+        }
+      },
+      "ended_at": "2026-09-13T19:57:46.151Z",
+      "updated_at": "2026-09-13T19:57:46.151Z"
+    },
+    "restructure-nota-output": {
+      "work_id": "restructure-nota-output",
+      "active_plan": ".omo/plans/restructure-nota-output.md",
+      "plan_name": "restructure-nota-output",
+      "session_ids": [
+        "opencode:ses_f63d1fe85ffei41Jst4w808dvk"
+      ],
+      "status": "completed",
+      "worktree_path": null,
+      "session_origins": {},
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "Restructure NotaThermal UI into labeled sections (BERAT/HARGA/HUTANG) in Success.tsx",
+          "agent": "Sisyphus-Junior",
+          "category": "visual-engineering",
+          "status": "completed",
+          "commit": "63bb4fd"
+        },
+        "todo:2": {
+          "task_key": "todo:2",
+          "task_label": "2",
+          "task_title": "Sync buildReceipt (receipt-builder.ts) with the new UI layout + update printer-service.test.ts",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "commit": "4f46b4c"
+        },
+        "todo:3": {
+          "task_key": "todo:3",
+          "task_label": "3",
+          "task_title": "Full-suite verification + scope guard (format/lint/types:check/test:js/build)",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed"
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "Plan compliance audit",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "verdict": "APPROVE"
+        },
+        "final-wave:f2": {
+          "task_key": "final-wave:f2",
+          "task_label": "F2",
+          "task_title": "Code quality review",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "verdict": "APPROVE"
+        },
+        "final-wave:f3": {
+          "task_key": "final-wave:f3",
+          "task_label": "F3",
+          "task_title": "Real manual QA",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "verdict": "APPROVE"
+        },
+        "final-wave:f4": {
+          "task_key": "final-wave:f4",
+          "task_label": "F4",
+          "task_title": "Scope fidelity",
+          "agent": "Sisyphus-Junior",
+          "category": "unspecified-high",
+          "status": "completed",
+          "verdict": "APPROVE"
+        }
+      },
+      "updated_at": "2026-09-14T00:00:00.000Z",
+      "ended_at": "2026-09-14T00:00:00.000Z"
+    }
+  },
+  "session_ids": [
+    "opencode:ses_f63d1fe85ffei41Jst4w808dvk"
+  ],
+  "session_origins": {},
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Restructure NotaThermal UI into labeled sections (BERAT/HARGA/HUTANG) in Success.tsx",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "status": "completed",
+      "commit": "63bb4fd"
+    },
+    "todo:2": {
+      "task_key": "todo:2",
+      "task_label": "2",
+      "task_title": "Sync buildReceipt (receipt-builder.ts) with the new UI layout + update printer-service.test.ts",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "status": "completed",
+      "commit": "4f46b4c"
+    },
+    "todo:3": {
+      "task_key": "todo:3",
+      "task_label": "3",
+      "task_title": "Full-suite verification + scope guard (format/lint/types:check/test:js/build)",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "status": "completed"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "Plan compliance audit",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "status": "completed",
+      "verdict": "APPROVE"
+    },
+    "final-wave:f2": {
+      "task_key": "final-wave:f2",
+      "task_label": "F2",
+      "task_title": "Code quality review",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "status": "completed",
+      "verdict": "APPROVE"
+    },
+    "final-wave:f3": {
+      "task_key": "final-wave:f3",
+      "task_label": "F3",
+      "task_title": "Real manual QA",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "status": "completed",
+      "verdict": "APPROVE"
+    },
+    "final-wave:f4": {
+      "task_key": "final-wave:f4",
+      "task_label": "F4",
+      "task_title": "Scope fidelity",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "status": "completed",
+      "verdict": "APPROVE"
+    }
+  },
+  "active_plan": ".omo/plans/restructure-nota-output.md",
+  "plan_name": "restructure-nota-output",
+  "status": "completed",
+  "updated_at": "2026-09-14T00:00:00.000Z",
+  "worktree_path": null,
+  "ended_at": "2026-09-14T00:00:00.000Z"
+}

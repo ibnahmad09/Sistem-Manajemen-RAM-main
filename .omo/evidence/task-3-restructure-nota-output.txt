@@ -1,0 +1,46 @@
+# Task 3 Evidence — Full-suite verification + scope guard
+
+Date: 2026-09-14
+Branch: Fix-Security
+BASELINE: d2504dc9a81aeafd6d9475fdbdbc1d6aeae74182 (captured at START OF WAVE 1, before Todo 1's commit)
+
+## Commands + exit codes (run in order)
+
+| Command | Exit |
+|---|---|
+| `npm run format` (prettier write) | 0 |
+| `npm run lint` | 0 |
+| `npm run types:check` | 0 |
+| `npm run test:js` (full vitest suite = 4 files) | 0 |
+| `npm run build` | 0 |
+
+`npm run format` was a no-op (working tree clean after; `git status --short` shows only `?? .omo/`).
+
+## Full vitest suite output
+
+```
+Test Files  4 passed (4)
+     Tests  96 passed (96)
+```
+
+## Scope guard (BASELINE..HEAD diff)
+
+`git diff --name-only d2504dc9a81aeafd6d9475fdbdbc1d6aeae74182..HEAD`:
+
+```
+resources/js/lib/receipt-builder.ts
+resources/js/pages/Weighing/Success.tsx
+tests/JS/printer-service.test.ts
+```
+
+Exactly the 3 scope files. Nothing else.
+
+## Guardrail greps (git show BASELINE..HEAD)
+
+- Added/removed lines touching the PAPER_CLASSES definition block (wrap:/brand:/sub:/heading:/row:/totalBox:/totalAmount:/totalLabel:/metode:/sigName:/sigGap:/note:/'80'/'57'/text-[...]/w-[...]): NONE — PAPER_CLASSES untouched (no font-size changes).
+- Files outside the 3 scope files in the diff (utils.ts, package.json, routes/**, app/**, Form.tsx, printer-service.ts, receipt-raster.ts, use-printer.ts): NONE.
+- The single `PAPER_CLASSES[paper]` grep hit in the raw diff is a context line near the added `showDebt` const (Success.tsx:94), not a modification.
+
+## Conclusion
+
+All 5 commands exit 0; scope guard matches the exact 3-file list; guardrails held. No commit (todos 1-2 already committed as 63bb4fd + 4f46b4c). No test deleted.

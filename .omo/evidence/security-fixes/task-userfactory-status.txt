@@ -1,0 +1,18 @@
+TASK: UserFactory status fix
+DATE: 2026-09-13
+
+CHANGE:
+- database/factories/UserFactory.php: added 'status' => 'active' to definition()
+  (mirrors DB default from migration 2026_05_07_150154_add_role_to_users_table.php:
+   enum('status', ['active','inactive'])->default('active'))
+
+WHY:
+- Fix #8 (RoleMiddleware) blocks users with status !== 'active'
+- Eloquent create() does not load DB defaults into memory, so factory-created
+  users had status NULL and were blocked by middleware
+- Existing tests using User::factory()->create(['role' => ...]) without
+  explicit status failed (ReportsExportTest, DateParamValidationTest)
+
+VERIFICATION:
+- php artisan test --compact --filter='Security|ReportsExportTest'
+  => 30 passed, 0 failed, 0 errors (195 assertions)

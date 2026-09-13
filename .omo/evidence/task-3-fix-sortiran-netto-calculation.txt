@@ -1,0 +1,107 @@
+# Task 3 — Koreksi mirror TS calculateLoads() + vitest
+Date: 2026-09-13
+Files touched: resources/js/lib/utils.ts, tests/JS/utils.test.ts
+
+## RED phase (before fix) — npm run test:js -- tests/JS/utils.test.ts
+```
+> test:js
+> vitest run --config vitest.config.ts tests/JS/utils.test.ts
+
+ RUN  v4.1.5 /Users/assistmac2026/Documents/code/Sistem-Manajemen-RAM-main
+
+ ❯ tests/JS/utils.test.ts (13 tests | 2 failed) 158ms
+     × applies sorting deduction percentage to sorting total 26ms
+     × subtracts sorting net weight from net to calculate palm amount (user scenario) 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/JS/utils.test.ts > calculateLoads > applies sorting deduction percentage to sorting total
+AssertionError: expected 776 to be 681 // Object.is equality
+
+- Expected
++ Received
+
+- 681
++ 776
+
+ ❯ tests/JS/utils.test.ts:96:45
+     94|         expect(result.sortingNetWeight).toBe(95);
+     95|         expect(result.sortingTotalAmount).toBe(47500);
+     96|         expect(result.perLoad[0].netWeight).toBe(681);
+       |                                             ^
+     97|         expect(result.netWeight).toBe(681);
+     98|         expect(result.palmTotalAmount).toBe(1756980);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/JS/utils.test.ts > calculateLoads > subtracts sorting net weight from net to calculate palm amount (user scenario)
+AssertionError: expected 855 to be 807.5 // Object.is equality
+
+- Expected
++ Received
+
+- 807.5
++ 855
+
+ ❯ tests/JS/utils.test.ts:141:45
+    139|         // gross 1000 - tare 100 = 900; 5% deduction = 45; net = 900 -…
+    140|         // sorting: 50 - 5% = 47.5 net; net toto = 855 - 47.5 = 807.5
+    141|         expect(result.perLoad[0].netWeight).toBe(807.5);
+       |                                             ^
+    142|         expect(result.sortingNetWeight).toBe(47.5);
+    143|         expect(result.sortingTotalAmount).toBe(23750);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  20:31:13
+   Duration  817ms (transform 126ms, setup 0ms, import 172ms, tests 158ms, environment 0ms)
+
+EXIT_CODE=1
+```
+
+## GREEN phase (after fix) — npm run test:js -- tests/JS/utils.test.ts
+```
+> test:js
+> vitest run --config vitest.config.ts tests/JS/utils.test.ts
+
+ RUN  v4.1.5 /Users/assistmac2026/Documents/code/Sistem-Manajemen-RAM-main
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  20:31:43
+   Duration  861ms (transform 131ms, setup 0ms, import 177ms, tests 88ms, environment 0ms)
+
+EXIT_CODE=0
+```
+
+## types:check — npm run types:check
+```
+> types:check
+> tsc --noEmit
+
+TYPES_EXIT=0
+```
+
+## lint — npm run lint
+```
+> lint
+> eslint . --fix
+
+LINT_EXIT=0
+```
+
+## git status --short (post-lint)
+```
+ M app/Models/WeighingTransaction.php      <- Todo 1 (worker lain)
+ M resources/js/lib/utils.ts               <- Todo 3 (saya)
+ M tests/Feature/WeighingTransactionTest.php <- Todo 1/2 (worker lain)
+ M tests/JS/utils.test.ts                  <- Todo 3 (saya)
+?? .omo/
+```
+Hanya utils.ts + utils.test.ts yang diubah oleh Todo 3; lint tidak menyentuh file lain.
+
+## Angka diverifikasi
+- Test lama (gross 1000/tare 200/sorting 100, ded 3%, sorting ded 5%): netWeight 681, palmTotalAmount 1756980, grossTotalAmount 1804480
+- Test baru (gross 1000/tare 100/sorting 50, ded 5%, sorting ded 5%, palm 2000, sorting price 500): netWeight 807.5, sortingNetWeight 47.5, sortingTotalAmount 23750, palmTotalAmount 1615000, grossTotalAmount 1638750

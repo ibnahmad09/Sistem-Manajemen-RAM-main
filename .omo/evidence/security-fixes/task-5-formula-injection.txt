@@ -1,0 +1,52 @@
+# Task 5 — Excel Formula Injection Sanitization
+
+Date: 2026-09-13
+Branch: Fix-Security
+Status: DONE
+
+## Change
+
+`app/Exports/ReportsExport.php`:
+- Added private helper `sanitizeFormula(?string $value): ?string` — prepends `'` when the
+  first character is one of `=`, `+`, `-`, `@` (PhpSpreadsheet DefaultValueBinder treats
+  these prefixes as formulas/numbers). Null/empty values pass through unchanged.
+- Applied to `farmer_name_snapshot` and `kasir_name` in BOTH `map()` (lines 51-52) and
+  `mapDebtRow()` (lines 71-72).
+
+## Why
+
+PhpSpreadsheet v5.8 `DefaultValueBinder::dataTypeForValue()` classifies strings starting
+with `=` as `TYPE_FORMULA` (verified in vendor source). A farmer named
+`=HYPERLINK("evil")` would be written as a live formula in the exported xlsx. Prepending
+`'` forces Excel to render it as text.
+
+## Test
+
+New file `tests/Feature/Security/FormulaInjectionTest.php` (Pest, 3 tests). Uses
+`Excel::store()` + `PhpOffice\PhpSpreadsheet\IOFactory::load` to assert ACTUAL cell
+contents (Excel::fake() only captures intent, cannot inspect cells):
+
+1. `farmer_name_snapshot = '=HYPERLINK("evil")'` → cell C2 = `'=HYPERLINK("evil")'`
+2. `farmer_name_snapshot = 'Pak Budi = petani'` (`=` not first char) → cell C2 unchanged
+3. `kasir_name = '=SUM(1)'` → cell D2 = `'=SUM(1)'`
+
+Row 1 = headings, row 2 = first data row. Column C = Petani, D = Kasir.
+
+## Verification
+
+```
+$ php artisan test --compact --filter=FormulaInjectionTest
+{"tool":"pest","result":"passed","tests":3,"passed":3,"assertions":3,"duration_ms":3516}
+```
+
+Pint: clean on changed files.
+
+## Notes
+
+- `tests/Feature/ReportsExportTest.php` currently fails with
+  `Call to a member function all() on array` (TestResponseAssert.php:81) — verified
+  PRE-EXISTING: fails identically with ReportsExport.php stashed. Caused by parallel
+  wave-1 changes to ReportsController.php / routes/web.php / bootstrap/app.php, not by
+  this task.
+- No new dependencies. No changes to headings, date formatting, numeric columns, or
+  nota_number.

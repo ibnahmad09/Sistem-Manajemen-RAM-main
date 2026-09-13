@@ -1,0 +1,59 @@
+# Evidence — Task 1: fix-sortiran-netto-calculation
+
+Date: 2026-09-13
+Worker: Todo 1 (rumus PHP + feature tests)
+
+## Scope
+- `app/Models/WeighingTransaction.php` — `calculateLoads()`: blok sortiran dipindah ke atas `$net`, rumus `$net = $initial - $deductionWeight - $sortingNetWeight;`
+- `tests/Feature/WeighingTransactionTest.php` — 6 asersi lama di-update + 1 test regresi baru
+
+## RED (sebelum koreksi rumus)
+
+Test regresi baru ditulis DULU dengan angka yang diharapkan, lalu dijalankan sebelum
+koreksi rumus. Output:
+
+```
+$ php artisan test --compact --filter=WeighingTransactionTest
+{"tool":"pest","result":"failed","tests":23,"passed":22,"assertions":180,"duration_ms":6006,"failed":1,"failures":[{"test":"P\\Tests\\Feature\\WeighingTransactionTest::__pest_evaluable_sorting_net_weight_is_deducted_from_netto_before_palm_pricing","file":"/Users/assistmac2026/Documents/code/Sistem-Manajemen-RAM-main/tests/Feature/WeighingTransactionTest.php","line":97,"message":"Failed asserting that two strings are identical.\n--- Expected\n+++ Actual\n@@ @@\n-'807.50'\n+'855.00'"}]}
+```
+
+- 22 passed, 1 failed (test regresi baru)
+- Failure yang benar: `net_weight` expected `807.50`, actual `855.00` (855 = 900 − 45, rumus lama tidak mengurangi berat bersih sortiran 47,5)
+- Test lama (asersi lama) masih hijau pada run ini — sesuai TDD, hanya test baru yang merah
+
+## GREEN (setelah koreksi rumus + update asersi lama)
+
+```
+$ php artisan test --compact --filter=WeighingTransactionTest
+{"tool":"pest","result":"passed","tests":23,"passed":23,"assertions":187,"duration_ms":12307}
+```
+
+- 23/23 passed, 187 assertions — termasuk test regresi baru dan test multi-load dengan asersi baru
+
+## Pint
+
+```
+$ vendor/bin/pint --format agent app/Models/WeighingTransaction.php tests/Feature/WeighingTransactionTest.php
+{"tool":"pint","result":"passed"}
+```
+
+## Angka diverifikasi (test regresi baru)
+
+| Field | Expected | Actual |
+|---|---|---|
+| initial_weight | 900.00 | 900.00 |
+| deduction_weight | 45.00 | 45.00 |
+| net_weight | 807.50 | 807.50 |
+| sorting_deduction_weight | 2.50 | 2.50 |
+| sorting_net_weight | 47.50 | 47.50 |
+| sorting_total_amount | 23750.00 | 23750.00 |
+| palm_total_amount | 1615000.00 | 1615000.00 |
+| gross_total_amount | 1638750.00 | 1638750.00 |
+| final_paid_amount_rounded | 1638750.00 | 1638750.00 |
+| CashierCashEntry.amount | 1638750.00 | 1638750.00 |
+
+## Hitung manual (QA)
+
+netto kotor 1000−100=900; potongan 5%×900=45; netto pra-sortiran 855;
+berat bersih sortiran 50−5%=47,5; netto bersih FIX = 855−47,5=807,5;
+palm = 807,5×2000=1.615.000; sortiran = 47,5×500=23.750; total = 1.638.750. ✓

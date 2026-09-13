@@ -1,0 +1,166 @@
+# Task 5 — Full Verification (fix-draft-debt)
+
+Date: 2026-09-13 15:06
+Plan: .omo/plans/fix-draft-debt.md (todo 5)
+Commands run sequentially: format → test:js → lint → types:check → composer test
+
+## (a) npm run format — Prettier
+
+EXIT_CODE=0
+
+```
+> format
+> prettier --write resources/
+
+resources/css/app.css 360ms (unchanged)
+resources/js/app.tsx 123ms (unchanged)
+resources/js/components/alert-error.tsx 59ms (unchanged)
+resources/js/components/app-content.tsx 74ms (unchanged)
+resources/js/components/app-header.tsx 192ms (unchanged)
+resources/js/components/app-logo-icon.tsx 28ms (unchanged)
+resources/js/components/app-logo.tsx 17ms (unchanged)
+resources/js/components/app-shell.tsx 174ms (unchanged)
+resources/js/components/app-sidebar-header.tsx 96ms (unchanged)
+resources/js/components/app-sidebar.tsx 35ms (unchanged)
+resources/js/components/appearance-tabs.tsx 43ms (unchanged)
+resources/js/components/breadcrumbs.tsx 21ms (unchanged)
+resources/js/components/currency-input.tsx 79ms (unchanged)
+resources/js/components/delete-user.tsx 35ms (unchanged)
+resources/js/components/heading.tsx 12ms (unchanged)
+resources/js/components/input-error.tsx 24ms (unchanged)
+resources/js/components/nav-footer.tsx 37ms (unchanged)
+resources/js/components/nav-main.tsx 31ms (unchanged)
+resources/js/components/nav-user.tsx 48ms (unchanged)
+resources/js/components/password-input.tsx 14ms (unchanged)
+resources/js/components/printer-connect-button.tsx 121ms (unchanged)
+resources/js/components/text-link.tsx 10ms (unchanged)
+resources/js/components/two-factor-recovery-codes.tsx 63ms (unchanged)
+resources/js/components/two-factor-setup-modal.tsx 157ms (unchanged)
+resources/js/components/user-info.tsx 20ms (unchanged)
+resources/js/components/user-menu-content.tsx 15ms (unchanged)
+resources/js/hooks/use-appearance.tsx 44ms (unchanged)
+resources/js/hooks/use-clipboard.ts 15ms (unchanged)
+resources/js/hooks/use-current-url.ts 19ms (unchanged)
+resources/js/hooks/use-flash-toast.ts 19ms (unchanged)
+resources/js/hooks/use-initials.tsx 12ms (unchanged)
+resources/js/hooks/use-mobile-navigation.ts 18ms (unchanged)
+resources/js/hooks/use-mobile.tsx 15ms (unchanged)
+resources/js/hooks/use-printer.ts 47ms (unchanged)
+resources/js/hooks/use-two-factor-auth.ts 33ms (unchanged)
+resources/js/layouts/app-layout.tsx 17ms (unchanged)
+resources/js/layouts/app/app-header-layout.tsx 11ms (unchanged)
+resources/js/layouts/app/app-sidebar-layout.tsx 14ms (unchanged)
+resources/js/layouts/auth-layout.tsx 9ms (unchanged)
+resources/js/layouts/auth/auth-card-layout.tsx 27ms (unchanged)
+resources/js/layouts/auth/auth-simple-layout.tsx 113ms (unchanged)
+resources/js/layouts/auth/auth-split-layout.tsx 24ms (unchanged)
+resources/js/layouts/settings/layout.tsx 55ms (unchanged)
+resources/js/lib/printer-models.ts 102ms (unchanged)
+resources/js/lib/receipt-builder.ts 72ms (unchanged)
+resources/js/lib/receipt-raster.ts 19ms (unchanged)
+resources/js/lib/utils.ts 133ms (unchanged)
+resources/js/lib/weighing-form.ts 34ms
+resources/js/pages/auth/confirm-password.tsx 15ms (unchanged)
+resources/js/pages/auth/forgot-password.tsx 15ms (unchanged)
+resources/js/pages/auth/login.tsx 24ms (unchanged)
+resources/js/pages/auth/register.tsx 50ms (unchanged)
+resources/js/pages/auth/reset-password.tsx 27ms (unchanged)
+resources/js/pages/auth/two-factor-challenge.tsx 214ms (unchanged)
+resources/js/pages/auth/verify-email.tsx 20ms (unchanged)
+resources/js/pages/CashFlow/Index.tsx 255ms (unchanged)
+resources/js/pages/dashboard.tsx 19ms (unchanged)
+resources/js/pages/Dashboard/Cashier.tsx 90ms (unchanged)
+resources/js/pages/Dashboard/Owner.tsx 102ms (unchanged)
+resources/js/pages/Dashboard/SuperAdmin.tsx 115ms (unchanged)
+resources/js/pages/Debts/Index.tsx 175ms (unchanged)
+resources/js/pages/Farmers/Form.tsx 163ms (unchanged)
+resources/js/pages/Farmers/Index.tsx 91ms (unchanged)
+resources/js/pages/PalmPrices/Index.tsx 163ms (unchanged)
+resources/js/pages/Reports/Index.tsx 136ms (unchanged)
+resources/js/pages/settings/appearance.tsx 26ms (unchanged)
+resources/js/pages/settings/DeductionConfig.tsx 44ms (unchanged)
+resources/js/pages/settings/profile.tsx 37ms (unchanged)
+resources/js/pages/settings/security.tsx 89ms (unchanged)
+resources/js/pages/Weighing/Form.tsx 178ms
+resources/js/pages/Weighing/List.tsx 179ms (unchanged)
+resources/js/pages/Weighing/Success.tsx 390ms (unchanged)
+resources/js/pages/welcome.tsx 124ms (unchanged)
+resources/js/services/printer-service.ts 102ms (unchanged)
+resources/js/types/auth.ts 22ms (unchanged)
+resources/js/types/domain.ts 46ms (unchanged)
+resources/js/types/global.d.ts 12ms (unchanged)
+resources/js/types/index.ts 16ms (unchanged)
+resources/js/types/navigation.ts 9ms (unchanged)
+resources/js/types/printer.d.ts 10ms (unchanged)
+resources/js/types/ui.ts 18ms (unchanged)
+resources/js/types/vite-env.d.ts 8ms (unchanged)
+```
+
+Note: `resources/js/lib/weighing-form.ts` and `resources/js/pages/Weighing/Form.tsx` were (re)written by Prettier (no "(unchanged)" suffix) — formatting applied, exit 0. No other files changed.
+
+## (b) npm run test:js — Vitest
+
+EXIT_CODE=0
+
+```
+> test:js
+> vitest run --config vitest.config.ts
+
+
+ RUN  v4.1.5 /Users/assistmac2026/Documents/code/Sistem-Manajemen-RAM-main
+
+
+ Test Files  4 passed (4)
+      Tests  86 passed (86)
+   Start at  15:06:15
+   Duration  1.76s (transform 1.07s, setup 0ms, import 1.26s, tests 770ms, environment 1ms)
+```
+
+Includes `tests/JS/weighing-form.test.ts` (6 scenarios) — all green.
+
+## (c) npm run lint — ESLint
+
+EXIT_CODE=0
+
+```
+> lint
+> eslint . --fix
+```
+
+(no diagnostics output — clean)
+
+## (d) npm run types:check — TypeScript
+
+EXIT_CODE=0
+
+```
+> types:check
+> tsc --noEmit
+```
+
+(no diagnostics output — clean)
+
+## (e) composer test — Pint gate + full Pest suite
+
+EXIT_CODE=0
+
+```
+ INFO Configuration cache cleared successfully.
+
+{"tool":"pint","result":"passed"}{"tool":"pest","result":"passed","tests":123,"passed":123,"assertions":649,"duration_ms":8619}
+```
+
+- Pint (lint:check gate): passed
+- Pest: 123 tests, 123 passed, 649 assertions — ≥ 122 required ✓
+
+## Summary
+
+| Command | Exit Code | Result |
+|---|---|---|
+| npm run format | 0 | Prettier clean (2 files rewritten, no errors) |
+| npm run test:js | 0 | 86/86 passed (4 files, incl. weighing-form.test.ts) |
+| npm run lint | 0 | 0 errors |
+| npm run types:check | 0 | 0 errors |
+| composer test | 0 | 123/123 passed, 649 assertions (Pint passed) |
+
+All 5 commands exit 0. No tests deleted or skipped. Acceptance todo 5 met.

@@ -1,0 +1,19 @@
+=== Task 7: Hapus trustProxies('*') ===
+Date: 2026-09-13 01:37:57
+
+--- grep -n trustProxies bootstrap/app.php ---
+(0 matches — trustProxies('*') dihapus)
+
+--- php artisan tinker: config trusted_proxies.proxies ---
+not set
+
+
+--- bootstrap/app.php (withMiddleware block) ---
+    ->withMiddleware(function (Middleware $middleware): void {
+        // TODO: Set trusted proxies saat deploy (Laravel Cloud / nginx reverse proxy)
+
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        $middleware->web(append: [
+
+STATUS: PASS — trustProxies('*') dihapus, TODO comment ditambahkan, method trustProxies() tidak dihapus

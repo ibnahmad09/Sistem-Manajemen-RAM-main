@@ -1,0 +1,46 @@
+Task 6 (#6 TOCTOU double-finalize) — DONE
+==========================================
+Date: 2026-09-13
+Branch: Fix-Security
+
+Perubahan di app/Http/Controllers/WeighingTransactionController.php:
+
+1. update() (:166-223):
+   - HAPUS abort_unless(status === 'draft') di awal method (sebelumnya :168)
+   - DB::beginTransaction() + try: re-fetch model dengan
+     WeighingTransaction::query()->whereKey($weighing->id)->lockForUpdate()->firstOrFail()
+   - Status check dipindah KE DALAM transaksi: jika status !== 'draft' ->
+     DB::rollBack() + return back()->withErrors(['error' => 'Hanya transaksi draft yang bisa diubah.'])
+   - Model fresh $weighing dipakai untuk sisa body try (fillTransactionData, save,
+     loads()->delete(), storeLoads, finalizeDraft)
+   - Guard #4 debt>gross (:194-196) PERTAHANAN — tidak diubah
+
+2. finalize() (:228-289):
+   - HAPUS abort_unless(status === 'draft') di awal method (sebelumnya :224)
+   - Pembangunan $farmer, $loads, $validated DIPINDAHKAN ke dalam try, dibaca dari
+     model fresh hasil re-fetch: WeighingTransaction::query()->with('loads')
+     ->whereKey($weighing->id)->lockForUpdate()->firstOrFail()
+   - Status check di dalam transaksi: jika !== 'draft' -> rollBack + back withErrors
+   - Mapping $loads IDENTIK dengan blok lama (gross/tare/has_sorting/sorting_weight/
+     sorting_price_per_kg), hanya sumbernya model fresh
+   - Guard #4 debt>gross (:271-273) PERTAHANAN — tidak diubah
+
+3. Test baru: tests/Feature/Security/DoubleFinalizeTest.php (3 test, 15 assertions):
+   - finalizing an already printed transaction is rejected
+     (draft -> POST finalize -> 302 + status printed -> finalize lagi -> 302 back + error + count 1)
+   - finalize after update with action finalize is rejected on second call
+     (draft -> PUT update action=finalize -> status printed -> finalize lagi -> 302 back + error)
+   - sequential finalize requests produce only one nota number
+     (2x POST finalize -> WeighingTransaction::whereNotNull('nota_number')->count() === 1)
+
+Verifikasi:
+- php artisan test --compact --filter=DoubleFinalizeTest -> 3 passed, 15 assertions
+- Regression: DebtExceedsGrossTest|DraftDebtPreserveTest|WeighingTransactionTest -> 30 passed, 208 assertions
+- Pint: single_blank_line_at_eof di test file (fixed)
+
+Catatan:
+- lockForUpdate() no-op di SQLite (test DB) — InnoDB defense-in-depth untuk produksi.
+  Test membuktikan observable behavior jalur sequential (re-fetch + status check).
+- Tidak pakai abort_if/abort_unless di dalam try (HttpException ditangkap catch jadi
+  pesan generik) — pakai pola return + rollback eksplisit.
+- cancel() TIDAK diubah. Tidak ada index DB baru. Method signature tidak diubah.

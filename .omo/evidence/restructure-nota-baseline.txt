@@ -1,0 +1,8 @@
+BASELINE=d2504dc9a81aeafd6d9475fdbdbc1d6aeae74182
+branch=Fix-Security
+top3_commits=d2504dc feat(weighing): restrukturisasi panel kalkulasi pembayaran dengan seksi berlabel
+1aad89d feat(weighing): tambah kartu hasil hitung per muatan di input timbangan
+9699260 fix(weighing): tampilkan berat kotor sortiran di nota dan receipt
+status_porcelain=?? .omo/
+captured_at=2026-09-14 02:11:06 +0700
+note=The BASELINE..HEAD diff guard in the todo-3 verification uses this BASELINE; it MUST be the HEAD before any restructure-nota-output commits land.

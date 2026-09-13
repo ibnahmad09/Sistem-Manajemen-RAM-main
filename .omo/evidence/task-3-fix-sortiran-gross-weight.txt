@@ -1,0 +1,13 @@
+
+> test:js
+> vitest run --config vitest.config.ts tests/JS/printer-service.test.ts
+
+
+ RUN  v4.1.5 /Users/assistmac2026/Documents/code/Sistem-Manajemen-RAM-main
+
+
+ Test Files  1 passed (1)
+      Tests  56 passed (56)
+   Start at  23:54:16
+   Duration  1.10s (transform 423ms, setup 0ms, import 420ms, tests 345ms, environment 0ms)
+

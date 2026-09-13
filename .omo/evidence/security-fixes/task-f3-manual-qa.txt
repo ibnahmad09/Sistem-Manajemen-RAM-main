@@ -1,0 +1,40 @@
+# F3 Final Verification Wave — Real Manual QA
+
+Date: 2026-09-13
+Runner: F3 verification agent (manual QA, no file changes)
+
+## 1. Per-file run — 8 file Security (run file tunggal, helper global dari Pest.php)
+
+| File | Tests | Passed | Assertions | Result |
+|---|---|---|---|---|
+| CashFlowOwnershipTest.php | 5 | 5 | 18 | PASS |
+| DateParamValidationTest.php | 4 | 4 | 10 | PASS |
+| DebtExceedsGrossTest.php | 4 | 4 | 21 | PASS |
+| DoubleFinalizeTest.php | 3 | 3 | 15 | PASS |
+| DraftDebtPreserveTest.php | 4 | 4 | 12 | PASS |
+| FarmerDebtBindingTest.php | 3 | 3 | 10 | PASS |
+| FormulaInjectionTest.php | 3 | 3 | 3 | PASS |
+| InactiveUserBlockTest.php | 4 | 4 | 15 | PASS |
+| **TOTAL** | **30** | **30** | **104** | **ALL PASS** |
+
+Catatan: run file tunggal PASS — konfirmasi helper createTestFarmer()/weighingFormData()
+yang dipindah ke tests/Pest.php berfungsi (fragility task-11 sudah teratasi).
+
+## 2. Filter Security
+
+`php artisan test --compact --filter=Security`
+→ 36 passed, 145 assertions, exit 0
+(30 dari 8 file Security + 6 dari Settings/SecurityTest.php yang nama test-nya mengandung "security")
+
+## 3. Full suite
+
+`php artisan test --compact`
+→ 122 passed, 639 assertions, exit 0
+
+## Verdict
+
+VERDICT: APPROVE
+- 8/8 file Security baru PASS saat run file tunggal (30 tests, 104 assertions)
+- filter=Security: 36 passed, 145 assertions, exit 0
+- Full suite: 122 passed, 639 assertions, exit 0
+- Tidak ada file yang diubah selama QA ini

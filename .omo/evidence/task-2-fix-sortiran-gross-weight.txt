@@ -1,0 +1,14 @@
+
+> test:js
+> vitest run --config vitest.config.ts tests/JS/utils.test.ts
+
+
+ RUN  v4.1.5 /Users/assistmac2026/Documents/code/Sistem-Manajemen-RAM-main
+
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  23:47:00
+   Duration  549ms (transform 110ms, setup 0ms, import 153ms, tests 72ms, environment 0ms)
+
+--- exit: 0 ---

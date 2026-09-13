@@ -1,0 +1,51 @@
+Task 6b — Draft pertahankan debt_paid_amount
+=============================================
+Date: 2026-09-13
+Branch: Fix-Security
+Plan: .omo/plans/security-fixes.md (todo #6b, wave 2 serial pertama)
+
+Problem
+-------
+save_draft membuang debt_paid_amount: calculate() :413 dan fillTransactionData()
+:454 hardcode 0 saat action === 'save_draft'. Akibatnya hutang petani tak pernah
+berkurang saat draft difinalisasi via finalize() (:240 memakai
+$weighing->debt_paid_amount yang sudah 0).
+
+Changes
+-------
+app/Http/Controllers/WeighingTransactionController.php (2 baris, method signature TIDAK diubah):
+- calculate() :413
+    'debt_paid_amount' => $action === 'save_draft' ? 0 : ($validated['debt_paid_amount'] ?? 0)
+    -> 'debt_paid_amount' => $validated['debt_paid_amount'] ?? 0
+- fillTransactionData() :454
+    'debt_paid_amount' => $action === 'save_draft' ? 0 : ($validated['debt_paid_amount'] ?? 0)
+    -> 'debt_paid_amount' => $validated['debt_paid_amount'] ?? 0
+
+finalizeDraft() TIDAK diubah (sudah benar pakai $validated['debt_paid_amount']).
+
+Test baru
+---------
+tests/Feature/Security/DraftDebtPreserveTest.php (Pest, 3 test / 4 kasus):
+1. draft preserves debt_paid_amount instead of zeroing it
+   - POST weighing.store action=save_draft debt_paid_amount=100000
+   - expect draft->debt_paid_amount === '100000.00'
+2. finalizing a draft with preserved debt creates the payment record
+   - loan 500000 -> save_draft debt_paid_amount=100000 -> POST weighing.finalize
+   - expect status printed, debt_paid_amount '100000.00',
+     FarmerDebt type=payment latest amount === '100000.00'
+3. draft without debt payment keeps debt_paid_amount at zero (dataset: 0, null)
+   - expect draft->debt_paid_amount === '0.00'
+
+Verification
+------------
+$ php artisan test --compact --filter=DraftDebtPreserveTest
+  -> passed 4 tests, 12 assertions
+
+Regression
+----------
+$ php artisan test --compact --filter=WeighingTransactionTest
+  -> passed 22 tests, 175 assertions (tidak ada yang rusak)
+
+Formatting
+----------
+vendor/bin/pint --dirty --format agent -> fixed single_blank_line_at_eof (test file)

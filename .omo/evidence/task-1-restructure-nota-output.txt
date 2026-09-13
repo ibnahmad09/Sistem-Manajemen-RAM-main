@@ -1,0 +1,88 @@
+# Task 1 Evidence — Restructure NotaThermal UI (Success.tsx)
+
+Date: 2026-09-14
+Branch: Fix-Security
+Baseline: d2504dc9a81aeafd6d9475fdbdbc1d6aeae74182 (pre-captured, not re-captured)
+
+## What changed (resources/js/pages/Weighing/Success.tsx ONLY)
+
+1. Added `SolidDivider` component (full-width solid-border Divider variant); kept the
+   existing dashed `Divider` for header and footer.
+2. Weights block restructured:
+   - Multi-load: per-load RINCIAN MUATAN block kept byte-identical, then a dashed
+     `Divider` (within-section), then aggregate BERAT section.
+   - Aggregate BERAT (KG) section: BRUTO / TARE (MOBIL) / NETTO AWAL (new aggregate
+     row, was NETTO KOTOR) / POTONGAN (x%) (moved into section, bold={false}) /
+     SORTIRAN (x%) (label `SORTIRAN (N%)` when pct>0 else `SORTIRAN`, gross weight
+     negative, bold={false}) / NETTO SAWIT (was NETTO BERSIH, bold).
+   - Single-load: same BERAT section rendered directly; separate NETTO BERSIH row
+     removed; SORTIRAN row added (was missing).
+3. Prices block: header `HARGA (RP)`; HARGA SAWIT (was HARGA/KG, de-bolded);
+   TOTAL SAWIT (de-bolded); HARGA SORTIRAN + TOTAL SORTIRAN two-row format (replaces
+   removed POTONGAN SORTIRAN row + old single-line SORTIRAN money row); TOTAL KOTOR
+   (bold, unchanged).
+4. Debt block: condition now `transaction.previous_debt_amount > 0 ||
+   transaction.debt_paid_amount > 0` (via `showDebt` const, prettier-ignore to keep
+   the exact condition on one line for the grep contract); header `HUTANG`;
+   HUTANG SEBELUMNYA (bold={false}); BAYAR HUTANG (-) (de-bolded, value stays
+   positive); SISA HUTANG (bold, value stays remaining_debt_amount).
+5. Solid dividers at all section boundaries: before BERAT, between BERAT/HARGA,
+   between HARGA/HUTANG (replaces old dashed), and always before the TOTAL DITERIMA
+   box (outside the debt conditional).
+
+## Verification commands + exit codes
+
+| Command | Exit |
+|---|---|
+| `npm run lint` | 0 |
+| `npm run types:check` | 0 |
+| `npm run build` | 0 |
+
+## Grep assertions
+
+```
+$ grep -n "BERAT (KG)" resources/js/pages/Weighing/Success.tsx
+194:                        <p className={cn('font-bold', c.heading)}>BERAT (KG)</p>
+237:                    <p className={cn('font-bold', c.heading)}>BERAT (KG)</p>
+
+$ grep -n "HARGA (RP)" resources/js/pages/Weighing/Success.tsx
+281:                <p className={cn('font-bold', c.heading)}>HARGA (RP)</p>
+
+$ grep -n "HUTANG" resources/js/pages/Weighing/Success.tsx
+330:                        <p className={cn('font-bold', c.heading)}>HUTANG</p>
+332:                            label="HUTANG SEBELUMNYA:"
+339:                            label="BAYAR HUTANG (-):"
+346:                            label="SISA HUTANG:"
+
+$ grep -n "NETTO AWAL" resources/js/pages/Weighing/Success.tsx
+206:                            label="NETTO AWAL:"
+249:                        label="NETTO AWAL:"
+
+$ grep -n "NETTO SAWIT" resources/js/pages/Weighing/Success.tsx
+229:                            label="NETTO SAWIT:"
+270:                        label="NETTO SAWIT:"
+
+$ grep -c "TOTAL SORTIRAN" resources/js/pages/Weighing/Success.tsx
+1
+
+$ grep -c "POTONGAN SORTIRAN" resources/js/pages/Weighing/Success.tsx
+0
+
+$ grep -n "previous_debt_amount > 0 || transaction.debt_paid_amount > 0" resources/js/pages/Weighing/Success.tsx
+94:    const showDebt = transaction.previous_debt_amount > 0 || transaction.debt_paid_amount > 0;
+
+$ grep -n "SolidDivider" resources/js/pages/Weighing/Success.tsx
+78:function SolidDivider() {
+145:            <SolidDivider />
+277:            <SolidDivider />
+328:                    <SolidDivider />
+355:            <SolidDivider />
+```
+
+All greps satisfy the acceptance criteria (>=1 / >=1 / >=1 / >=1 / >=1 / >=1 / ==0 / ==1 / >=3).
+
+## Scope guard
+
+`git status --short` shows only `M resources/js/pages/Weighing/Success.tsx`
+(+ untracked `.omo/` evidence dir, intentionally not committed).
+No other file touched. No font-size/PAPER_CLASSES/Row-default changes.

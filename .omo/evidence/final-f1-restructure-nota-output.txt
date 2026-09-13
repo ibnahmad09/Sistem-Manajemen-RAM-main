@@ -1,0 +1,96 @@
+# F1 — Plan Compliance Audit — restructure-nota-output
+
+Date: 2026-09-14
+Reviewer: F1 (Plan Compliance Audit)
+Plan: .omo/plans/restructure-nota-output.md
+BASELINE: d2504dc9a81aeafd6d9475fdbdbc1d6aeae74182
+Commits under review: 63bb4fd (Todo 1), 4f46b4c (Todo 2)
+
+VERDICT: APPROVE
+
+## Per-todo compliance check
+
+### Todo 1 (Success.tsx) — PASS
+All 9 acceptance criteria re-verified against the actual source (greps re-run, not
+trusted from evidence alone):
+- `npm run lint` / `types:check` / `build` exit 0 (evidence task-1; build not re-run — it writes)
+- "BERAT (KG)" = 2 (>=1) | "HARGA (RP)" = 1 (>=1) | "HUTANG" = 4 (>=1)
+- "NETTO AWAL" = 2 (>=1) | "NETTO SAWIT" = 2 (>=1) | "TOTAL SORTIRAN" = 1 (>=1)
+- "POTONGAN SORTIRAN" = 0 (removed) | condition line = 1 (exact, Success.tsx:94) | "SolidDivider" = 5 (>=3)
+- Solid dividers at all 4 section boundaries (before BERAT :145, BERAT/HARGA :277,
+  HARGA/HUTANG :328 inside showDebt, before box :355 always outside conditional).
+- Guardrails: PAPER_CLASSES untouched (no text-[ / w-[ diff lines), Row `bold = true`
+  default untouched (no diff in Row region), per-load RINCIAN MUATAN block byte-identical
+  (python comparison: 35 lines, identical ignoring indentation), TOTAL DITERIMA box /
+  signatures / NB / print CSS / paper toggle untouched (no diff lines).
+
+### Todo 2 (receipt-builder.ts + tests) — PASS
+- `npx vitest run tests/JS/printer-service.test.ts` RE-RUN: 65/65 passed (matches evidence).
+- Greps re-verified: "TOTAL SORTIRAN" = 1, "HUTANG SEBELUMNYA" = 1,
+  "Terima kasih atas kepercayaannya" = 1, `align(` = 4 (unchanged vs baseline).
+- align sequence exactly ['center','left','center','left'] (baseline :49/:69/:186/:200 →
+  new :49/:69/:251/:262 — same sequence, no new align calls).
+- size() calls unchanged (first `size(big ? 2 : 1)` = 2 @48 / 1 @32, then `size(1)`; identical to baseline).
+- rule() count 4 → 7 (>= 3 required, plan expected >= 5).
+- Per-load RINCIAN MUATAN block byte-identical (python comparison: 44 lines, identical).
+- TOTAL DITERIMA box byte-identical (python comparison: 6 lines, identical).
+- All 9 new tests present and correct: HUTANG 3 cases (:417-489), sorting fixture
+  (:491-540, asserts HARGA SORTIRAN: 500 / TOTAL SORTIRAN: 47.500 / SORTIRAN (5%): -100 kg),
+  32-col realistic sorting+debt (:542-602, TOTAL SORTIRAN: 1.995.000 / SISA HUTANG: 800.000 /
+  every line <= 32), bold-state (:604-640), signatures after METODE (:642-658),
+  37-char truncation (:660-674), thanks line (:676-682). Existing tests preserved.
+
+### Todo 3 (full-suite verification + scope guard) — PASS
+- All 5 commands exit 0 per evidence; full vitest suite RE-RUN: 96/96 passed (4 files).
+- `git diff --name-only BASELINE..HEAD` RE-VERIFIED = exactly the 3 scope files:
+  resources/js/lib/receipt-builder.ts, resources/js/pages/Weighing/Success.tsx,
+  tests/JS/printer-service.test.ts.
+- Guardrail diff RE-VERIFIED: no changes to utils.ts, package.json, routes/**, app/**,
+  Form.tsx, printer-service.ts, receipt-raster.ts, use-printer.ts.
+- Evidence files written (task-1/2/3 + baseline).
+
+## Canonical-layout parity check (BOTH render paths)
+
+| Element | Success.tsx | receipt-builder.ts | Match |
+|---|---|---|---|
+| BERAT (KG) header | :194/:237 bold heading | :143-144 bold | YES |
+| BRUTO (kg, not bold) | :195-199 | :146 | YES |
+| TARE (MOBIL) (kg, not bold) | :200-204 | :147 | YES |
+| NETTO AWAL (kg, not bold) | :205-209 | :148-150 | YES |
+| POTONGAN (x%) (if has_deduction, not bold) | :210-216 | :152-160 | YES |
+| SORTIRAN (x%) (if has_sorting, not bold, `SORTIRAN` if pct<=0) | :217-227 | :162-172 | YES |
+| NETTO SAWIT (kg, BOLD) | :228-232 | :174-177 | YES |
+| HARGA (RP) header | :281 bold | :181-182 bold | YES |
+| HARGA SAWIT (not bold) | :282-288 | :184-186 | YES |
+| TOTAL SAWIT (not bold) | :289-295 | :187-189 | YES |
+| HARGA SORTIRAN (if has_sorting, not bold) | :296-304 | :191-199 | YES |
+| TOTAL SORTIRAN (if has_sorting, not bold) | :305-311 | :200-206 | YES |
+| TOTAL KOTOR (BOLD) | :314-322 | :209-214 | YES |
+| HUTANG header (BOLD) | :330 | :220-221 | YES |
+| HUTANG SEBELUMNYA (not bold) | :331-337 | :223-229 | YES |
+| BAYAR HUTANG (-) (not bold, positive value) | :338-344 | :230-236 | YES |
+| SISA HUTANG (BOLD, remaining_debt_amount) | :345-350 | :237-244 | YES |
+| HUTANG condition prev>0 OR paid>0 | :94 | :216 | YES |
+| kg suffix on every weight value | formatKg() appends ' kg' | `${fmtKg(...)} kg` | YES |
+| Sortiran = TWO rows (not single-line) | :298-311 | :193-206 | YES |
+| Bold ONLY on NETTO SAWIT/TOTAL KOTOR/SISA HUTANG/TOTAL DITERIMA | verified | verified (test :604-640) | YES |
+
+## Scope guardrail check (git diff BASELINE..HEAD)
+
+- PAPER_CLASSES untouched (no font-size changes): PASS
+- Row default `bold = true` untouched: PASS
+- No backend/PHP/controller/migration/route/wayfinder changes: PASS
+- No utils.ts / calculation-logic changes: PASS
+- No header/info/per-load/box/signatures/NB/print-CSS/toggle changes: PASS
+- No new dependencies, no new files: PASS
+- POTONGAN SORTIRAN + old SORTIRAN money line removed: PASS
+- align sequence ['center','left','center','left'] unchanged: PASS
+- size() calls unchanged: PASS
+- git diff --name-only BASELINE..HEAD = exactly the 3 scope files: PASS
+
+## Conclusion
+
+All 3 todos meet their acceptance criteria; the canonical layout table is implemented
+identically in both render paths (labels, bold set, HUTANG visibility condition, kg
+suffixes, two-row sortiran format); no scope guardrail violated. Full vitest suite
+96/96 re-confirmed by this reviewer. No source code or plan file modified during review.

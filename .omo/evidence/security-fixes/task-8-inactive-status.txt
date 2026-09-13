@@ -1,0 +1,66 @@
+Task 8: Enforce users.status 'active' di RoleMiddleware (semua rute authenticated)
+================================================================================
+Date: 2026-09-13
+Branch: Fix-Security
+
+CHANGES
+-------
+1. app/Http/Middleware/RoleMiddleware.php
+   - handle() kini cek $user->status !== 'active' -> auth()->logout() + redirect ke
+     route('login') dengan withErrors(['email' => 'Akun Anda tidak aktif. Silakan hubungi admin.'])
+   - Signature handle() TIDAK berubah (string ...$roles)
+   - Tidak memanggil session invalidate/regenerate agar flash errors survive
+
+2. routes/web.php:109-114
+   - 3 rute reports (index, export/pdf, export/excel) dibungkus
+     Route::middleware(['role:super_admin,cashier,owner'])
+   - Route names & URL patterns TIDAK berubah
+   - Role list = semua 3 role (perilaku akses role tidak berubah; status check kini aktif)
+
+3. tests/Feature/Security/InactiveUserBlockTest.php (baru, Pest)
+   - active user -> GET /weighing -> 200
+   - inactive user login -> GET /weighing -> 302 ke login + sessionHasErrors('email') + guest
+   - inactive user -> GET /reports -> 302 ke login + sessionHasErrors('email')
+   - inactive user -> GET /reports/export/excel -> 302 ke login + sessionHasErrors('email')
+
+VERIFICATION
+------------
+$ php artisan test --compact --filter=InactiveUserBlockTest
+=> PASSED: 4 tests, 15 assertions
+
+$ vendor/bin/pint --dirty --format agent
+=> passed
+
+GOTCHA
+------
+- Route cache stale (bootstrap/cache/routes-v7.php dari Sep 7) membuat rute reports
+  TIDAK memuat role middleware saat test pertama dijalankan -> php artisan route:clear
+  diperlukan setelah mengubah routes/web.php.
+
+NOTES
+-----
+- auth()->logout() di middleware: LSP melaporkan "Undefined method 'logout'" — false
+  positive (auth() helper return AuthManager yang punya logout()).
+- Tidak commit (orchestrator yang commit).
+
+CRITICAL FINDING (affects Wave 3 full suite)
+--------------------------------------------
+UserFactory::definition() TIDAK mengatur 'status'. Eloquent create() tidak me-load
+DB default ke model in-memory -> User::factory()->create() menghasilkan model dengan
+status=NULL di memory (DB row = 'active' via default migration).
+
+Dampak: middleware baru memblokir user status NULL (NULL !== 'active') -> SEMUA test
+existing yang pakai actingAs(User::factory()->create()) pada rute ber-role middleware
+akan redirect ke login dan GAGAL (ReportsExportTest 5/5 gagal, DashboardTest, dll).
+
+Bukti (debug test):
+  model status: NULL
+  raw original status: NULL
+  db status: 'active'
+
+FIX YANG DIPERLUKAN (di luar scope task #8 — butuh approval orchestrator):
+  database/factories/UserFactory.php definition() tambahkan:
+      'status' => 'active',
+  (1 baris, mencocokkan DB default migration 2026_05_07_150154:16)
+
+Task #8 sendiri SELESAI sesuai plan (test InactiveUserBlockTest 4/4 PASS).

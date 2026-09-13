@@ -1,0 +1,73 @@
+# Final Review F4 — Scope Fidelity: restructure-nota-output
+
+Date: 2026-09-14
+Reviewer: F4 (Scope Fidelity)
+BASELINE: d2504dc9a81aeafd6d9475fdbdbc1d6aeae74182 (branch Fix-Security)
+Commits under review: 63bb4fd (Todo 1), 4f46b4c (Todo 2)
+
+## VERDICT: APPROVE
+
+## Checklist (all pass)
+
+1. **Scope diff = exactly 3 files** — `git diff --name-only BASELINE..HEAD`:
+   ```
+   resources/js/lib/receipt-builder.ts
+   resources/js/pages/Weighing/Success.tsx
+   tests/JS/printer-service.test.ts
+   ```
+   Nothing else. Stat: 3 files changed, 518 insertions(+), 100 deletions(-).
+
+2. **No changes to forbidden files** — routes/**, resources/js/lib/utils.ts, app/**,
+   package.json, Form.tsx, printer-service.ts, receipt-raster.ts, use-printer.ts,
+   resources/js/routes/** all absent from the diff (name-only list is exactly the 3 scope files).
+
+3. **No font-size / PAPER_CLASSES changes** — Success.tsx:26-55 extracted from BASELINE and
+   HEAD and diffed: BYTE-IDENTICAL. buildReceipt size() calls unchanged (4 -> 4).
+   align() calls unchanged (4 -> 4, no new align calls; signatures use justify()).
+   rule() calls 4 -> 7 (plan requires >= 3, now >= 5 — section separators only).
+
+4. **No test deleted** — `it(` count: BASELINE 62, HEAD 71 (+9, 0 deleted).
+   Diff stat for tests/JS/printer-service.test.ts: 288 insertions(+), 0 deletions.
+
+5. **No new dependencies** — `git diff BASELINE..HEAD -- package.json` = empty.
+
+6. **Draft state updated** — `.omo/drafts/restructure-nota-output.md` frontmatter:
+   status: approved; pending-action: "EXECUTION COMPLETE - all 3 todos done
+   (commits 63bb4fd + 4f46b4c, BASELINE d2504dc); full suite green (vitest 96/96,
+   lint, types:check, build); scope guard = exactly 3 files; FINAL VERIFICATION WAVE
+   (F1-F4) RUNNING". Components C1-C4 all marked `completed` with evidence paths.
+
+## Additional guardrail verifications (beyond the F4 checklist)
+
+- **Per-load RINCIAN MUATAN block (Success.tsx)**: inner content byte-identical to
+  BASELINE. Only change is a React fragment wrapper (`<>`/`</>`) around the block —
+  structurally required to render the aggregate BERAT section as a sibling. No row
+  content, label, or value modified.
+- **Per-load block (receipt-builder.ts:93-137)**: byte-identical.
+- **Frozen UI regions untouched**: no diff hunks touch PAPER_CLASSES (:26-55), Row
+  (:57-72), header (:99-111), info (:113-137), TOTAL DITERIMA box (:308-324),
+  signatures UI (:326-344), NB (:346-360), print CSS (:589-625), paper toggle (:529-555).
+  Success.tsx hunks: :75 (SolidDivider), :90 (showDebt const), :142-323 (weights/prices/
+  debt restructure), :352 (SolidDivider before box).
+- **Commits match plan**: exactly 2 commits on BASELINE — 63bb4fd (Todo 1),
+  4f46b4c (Todo 2). Todo 3 verification-only (no commit), as specified.
+- **Working tree clean** except `?? .omo/` (intentionally untracked; not a scope
+  violation — BASELINE..HEAD diff reflects commits only).
+- **Task 3 evidence** (.omo/evidence/task-3-restructure-nota-output.txt) confirms:
+  format/lint/types:check/test:js/build all exit 0; vitest 96/96 (4 files);
+  scope guard = exactly 3 files; guardrail greps clean.
+
+## Notes (non-blocking)
+
+- The per-load block fragment wrapper is the only deviation from a literal
+  "byte-identical" reading of the guardrail; it is a minimal structural necessity
+  (sibling rendering), preserves all inner content exactly, and does not alter
+  output. Not a scope violation.
+- The per-load SORTIRAN weight line is intentionally kept in both paths (per-load
+  detail row) — confirmed present, not dead code.
+
+## Conclusion
+
+All F4 scope-fidelity guardrails held. No file outside the 3 scope files changed,
+no font-size/PAPER_CLASSES change, no test deleted, no new dependency, draft state
+reflects plan completion. APPROVE.

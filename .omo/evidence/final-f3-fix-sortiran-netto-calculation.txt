@@ -1,0 +1,99 @@
+================================================================================
+F3 — REAL SMOKE QA (agent-executed)
+Plan: .omo/plans/fix-sortiran-netto-calculation.md (Final verification wave)
+Date: 2026-09-13
+================================================================================
+
+SCENARIO (user story, exact payload):
+  POST route('weighing.store') as cashier, action=finalize
+  loads: gross_weight 1000, tare_weight 100, has_sorting true, sorting_weight 50
+  deduction_percentage: 5
+  palm_price_per_kg: 2000
+  sorting_price_per_kg: 500
+  sorting_deduction_percentage: 5
+
+EXPECTED (from plan):
+  net_weight                 = 807.50
+  palm_total_amount          = 1615000.00
+  sorting_net_weight         = 47.50
+  sorting_total_amount       = 23750.00
+  gross_total_amount         = 1638750.00
+  final_paid_amount_rounded  = 1638750.00
+  CashierCashEntry.amount    = 1638750.00
+
+--------------------------------------------------------------------------------
+STEP 1 — Regression suite (real HTTP POST + DB assertions)
+Command: php artisan test --compact --filter=WeighingTransactionTest
+Result : {"tool":"pest","result":"passed","tests":26,"passed":26,"assertions":198,"duration_ms":6158}
+  -> ALL 26 tests GREEN (198 assertions), including regression test
+     'sorting net weight is deducted from netto before palm pricing'
+     (tests/Feature/WeighingTransactionTest.php:76-106) which POSTs this exact
+     scenario and asserts every number + cash entry.
+
+--------------------------------------------------------------------------------
+STEP 2 — Temp smoke test with RAW DB query (proves stored values)
+Command: php artisan test --compact tests/Feature/TempF3SmokeTest.php
+Result : {"tool":"pest","result":"passed","tests":1,"passed":1,"assertions":8,"duration_ms":2431}
+
+Output:
+=== F3 SMOKE: HTTP POST weighing.store (1000/100, ded 5%, palm 2000, sorting 50 @5% price 500) ===
+HTTP status: 302 redirect: http://localhost/weighing/success?nota=HND-20260913-0001
+nota_number: HND-20260913-0001
+
+--- Raw SQL: SELECT net_weight, palm_total_amount, sorting_net_weight, sorting_total_amount, gross_total_amount, final_paid_amount_rounded FROM weighing_transactions ---
+{
+ "net_weight": 807.5,
+ "palm_total_amount": 1615000,
+ "sorting_net_weight": 47.5,
+ "sorting_total_amount": 23750,
+ "gross_total_amount": 1638750,
+ "final_paid_amount_rounded": 1638750
+}
+
+--- Raw SQL: SELECT amount FROM cashier_cash_entries WHERE type = ? ---
+{
+ "amount": 1638750,
+ "type": "farmer_payment"
+}
+
+--- Eloquent values ---
+initial_weight: 900.00
+deduction_weight: 45.00
+net_weight: 807.50
+sorting_deduction_weight: 2.50
+sorting_net_weight: 47.50
+sorting_total_amount: 23750.00
+palm_total_amount: 1615000.00
+gross_total_amount: 1638750.00
+final_paid_amount_rounded: 1638750.00
+cash_entry_amount: 1638750.00
+
+--------------------------------------------------------------------------------
+VERIFICATION MATRIX
+  Field                        Expected      Stored (DB)   Status
+  ---------------------------  ------------  ------------  ------
+  net_weight                   807.50        807.5         PASS
+  palm_total_amount            1615000.00    1615000       PASS
+  sorting_net_weight           47.50         47.5          PASS
+  sorting_total_amount         23750.00      23750         PASS
+  gross_total_amount           1638750.00    1638750       PASS
+  final_paid_amount_rounded    1638750.00    1638750       PASS
+  CashierCashEntry.amount      1638750.00    1638750       PASS
+
+  Manual math check: netto kotor 1000-100=900; potongan 5%x900=45;
+  netto pra-sortiran 855; berat bersih sortiran 50-5%=47.5;
+  netto bersih FIX = 855-47.5 = 807.5; palm = 807.5x2000 = 1.615.000;
+  sortiran = 47.5x500 = 23.750; total = 1.638.750.  -> matches stored values.
+
+--------------------------------------------------------------------------------
+HOUSEKEEPING
+  Temp test tests/Feature/TempF3SmokeTest.php created, run, and DELETED.
+  No production files modified. No commits made.
+
+================================================================================
+VERDICT: APPROVE
+  Bukti: 26/26 test regresi hijau (198 assertions) + raw SQL SELECT pada
+  weighing_transactions dan cashier_cash_entries membuktikan angka tersimpan
+  persis sesuai ekspektasi (807.50 / 1615000.00 / 47.50 / 23750.00 /
+  1638750.00 / 1638750.00 / cash entry 1638750.00).
+================================================================================

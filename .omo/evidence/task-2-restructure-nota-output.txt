@@ -1,0 +1,73 @@
+# Task 2 Evidence — Align buildReceipt with canonical layout (sortiran, TOTAL KOTOR, HUTANG, signatures, thanks)
+
+Date: 2026-09-14
+Branch: Fix-Security
+Baseline: d2504dc9a81aeafd6d9475fdbdbc1d6aeae74182 (pre-restructure HEAD, NOT re-captured)
+
+## Files modified (scope)
+- resources/js/lib/receipt-builder.ts
+- tests/JS/printer-service.test.ts
+
+## What changed
+
+### resources/js/lib/receipt-builder.ts (buildReceipt)
+- Per-load RINCIAN MUATAN block (:93-138) kept byte-identical (frozen).
+- Removed the single-load `else` branch (old BRUTO/TARE/NETTO KOTOR rows) and the
+  pre-box POTONGAN / NETTO BERSIH rows.
+- Added aggregate BERAT (KG) section for BOTH branches: rule() -> bold header ->
+  BRUTO / TARE (MOBIL) / NETTO AWAL (all not bold, kg suffix) -> POTONGAN (x%)
+  (only if has_deduction) -> SORTIRAN (x%) (only if has_sorting; label
+  `SORTIRAN (N%)` when sorting_deduction_percentage > 0 else `SORTIRAN`; gross
+  weight, negative) -> NETTO SAWIT (bold).
+- Added HARGA (RP) section: bold header -> HARGA SAWIT / TOTAL SAWIT (not bold) ->
+  HARGA SORTIRAN / TOTAL SORTIRAN (two-row format, only if has_sorting) ->
+  TOTAL KOTOR (bold).
+- Added HUTANG section when `previous_debt_amount > 0 || debt_paid_amount > 0`:
+  bold header -> HUTANG SEBELUMNYA / BAYAR HUTANG (-) (not bold) -> SISA HUTANG
+  (bold, uses tx.remaining_debt_amount — not recomputed).
+- TOTAL DITERIMA box unchanged (align center + bold + size + Rp + METODE, then
+  align left). Signatures added via justify() with NO new align() calls:
+  `KASIR: <cashier_name_snapshot>` and `PETANI: <farmer_name_snapshot>`
+  (fallback `-` when empty), each name truncated via fit() so lines stay <= 32.
+- NB 4-line block unchanged; added closing `Terima kasih atas kepercayaannya`
+  via fit() (exactly 32 chars); cut/feed unchanged.
+- Align sequence kept exactly ['center','left','center','left'] (4 align calls).
+- rule() calls now 7 (>= 3 required). First size() call unchanged (2 @48 / 1 @32).
+- No math, no font-size changes, no new dependencies.
+
+### tests/JS/printer-service.test.ts
+- Added helpers: getTexts(encoder), boldStateAtText(encoder).
+- Added 9 tests:
+  1. HUTANG renders all 3 rows when prev>0 + paid>0
+  2. HUTANG renders when only prev>0 (SISA HUTANG = prev)
+  3. HUTANG omitted when both 0 (no 'HUTANG' line, no 'HUTANG SEBELUMNYA')
+  4. HARGA SORTIRAN: 500 / TOTAL SORTIRAN: 47.500 / aggregate SORTIRAN (5%): -100 kg
+  5. 32-col fit with realistic sorting+debt (TOTAL SORTIRAN: 1.995.000,
+     SISA HUTANG: 800.000, every text line <= 32)
+  6. Bold-state: NETTO SAWIT / TOTAL KOTOR / SISA HUTANG / TOTAL DITERIMA bold;
+     HARGA SAWIT / TOTAL SAWIT / BRUTO / HUTANG SEBELUMNYA NOT bold
+  7. KASIR/PETANI signature lines appear AFTER the METODE: line (after the box)
+  8. 37-char farmer name truncated in signature line, stays <= 32 cols
+  9. Closing thanks line 'Terima kasih atas kepercayaannya' present
+
+## Verification commands + exit codes
+
+1. `npx prettier --write resources/js/lib/receipt-builder.ts tests/JS/printer-service.test.ts` -> exit 0
+2. `npx vitest run tests/JS/printer-service.test.ts` -> exit 0
+   - Test Files 1 passed (1) | Tests 65 passed (65) | Duration 1.54s
+3. `npm run types:check` -> exit 0 (tsc --noEmit clean)
+4. `npm run lint` -> exit 0 (eslint . --fix clean)
+5. Greps:
+   - `grep -n "TOTAL SORTIRAN" resources/js/lib/receipt-builder.ts` -> 1 match (line 202)
+   - `grep -n "HUTANG SEBELUMNYA" resources/js/lib/receipt-builder.ts` -> 1 match (line 225)
+   - `grep -n "Terima kasih atas kepercayaannya" resources/js/lib/receipt-builder.ts` -> 1 match (line 283)
+   - `grep -c "align(" resources/js/lib/receipt-builder.ts` -> 4 (unchanged vs pre-edit; sequence center/left/center/left)
+
+## QA scenario (happy path)
+All acceptance criteria met. The new realistic 32-col fixture (test 5) would fail if
+the sortiran rows were collapsed to the single-line `SORTIRAN 47,5 kg @ 500: 23.750`
+format (38 chars > 32), proving the two-row format is enforced by the suite.
+
+## Commit
+`fix(nota): sinkronkan buildReceipt dengan layout UI (sortiran, TOTAL KOTOR, HUTANG, tanda tangan, penutup)`
+Staged ONLY: resources/js/lib/receipt-builder.ts, tests/JS/printer-service.test.ts

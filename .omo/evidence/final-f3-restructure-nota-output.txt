@@ -1,0 +1,127 @@
+# F3 — Real Manual QA — restructure-nota-output
+
+Date: 2026-09-14
+Reviewer: F3 (Real Manual QA)
+Branch: Fix-Security
+Plan: .omo/plans/restructure-nota-output.md (canonical layout lines 28-53, F3 def lines 140-141)
+
+## VERDICT: APPROVE
+
+## How QA was performed
+
+1. `php artisan serve --port=8000` (assets already built; no rebuild needed).
+2. Logged in as cashier `kasir@sisawit.com` / `password` (Fortify) via agent-browser
+   (system Chrome via `--executable-path`; the bundled Chrome-for-Testing failed to
+   launch on this macOS — VideoToolbox symbol mismatch).
+3. Opened `http://127.0.0.1:8000/weighing/success?nota=HND-20260913-0004`
+   (transaction id=8: has_sorting=1, has_deduction=1, previous_debt=108.600,
+   paid=108.600, remaining=0 — full HUTANG section with all 3 rows).
+4. Verified the rendered DOM (innerText + computed font-weight per row), toggled
+   80mm/57mm, exported print-preview PDFs (exercises the @media print path), and
+   exercised the ESC/POS text receipt via a node script importing `buildReceipt`
+   with a mock encoder (the debug UI path needs `navigator.bluetooth`, absent in
+   headless Chrome — plan-sanctioned fallback).
+
+## 1. On-screen nota (80mm default) — HND-20260913-0004
+
+DOM innerText (authoritative) — all canonical sections present, in order:
+
+```
+RAM SAWIT HND JAYA / JL. PARIT 1 API-API / TELP: 0822-6429-0744 / NOTA TIMBANGAN SAWIT
+HND-20260913-0004 / TANGGAL: 13/9/2026 / JAM: 00.38 / KASIR: KASIR 1 / PETANI: ADITYA AHMAD
+RINCIAN MUATAN: MUATAN #1 (BRUTO 1.000 KG, TARE 100 KG, SORTIRAN 5.00% -50 KG, NETTO 805 KG)
+               MUATAN #2 (BRUTO 500 KG, TARE 100 KG, SORTIRAN 5.00% -10 KG, NETTO 370 KG)
+BERAT (KG)
+  BRUTO: 1.500 kg | TARE (MOBIL): 200 kg | NETTO AWAL: 1.300 kg
+  POTONGAN (5.00%): -65 kg | SORTIRAN (5.00%): -60 kg | NETTO SAWIT: 1.175 kg
+HARGA (RP)
+  HARGA SAWIT: 2.000 | TOTAL SAWIT: 2.350.000 | HARGA SORTIRAN: 500 | TOTAL SORTIRAN: 28.500
+  TOTAL KOTOR: 2.378.500
+HUTANG
+  HUTANG SEBELUMNYA: 108.600 | BAYAR HUTANG (-): 108.600 | SISA HUTANG: 0
+TOTAL DITERIMA box: TOTAL DITERIMA / Rp 2.269.900 / METODE: TUNAI
+KASIR / Kasir 1 | PETANI / Aditya Ahmad
+NB: Harap hitung kembali uang anda, kami tidak menerima komplain saat sudah keluar dari RAMP
+Terima kasih atas kepercayaannya
+```
+
+### Bold-state check (computed font-weight, aggregate section only)
+- BOLD (700): NETTO SAWIT, TOTAL KOTOR, SISA HUTANG, TOTAL DITERIMA (+ box amount 900)
+- NOT bold (400): BRUTO, TARE (MOBIL), NETTO AWAL, POTONGAN, SORTIRAN, HARGA SAWIT,
+  TOTAL SAWIT, HARGA SORTIRAN, TOTAL SORTIRAN, HUTANG SEBELUMNYA, BAYAR HUTANG (-), METODE
+- Section headers BERAT (KG) / HARGA (RP) / HUTANG: bold (700) as specified.
+- Per-load RINCIAN MUATAN rows remain bold — frozen block, byte-identical (plan :142-183).
+
+### kg suffix
+Every weight row carries the unit: 1.500 kg, 200 kg, 1.300 kg, -65 kg, -60 kg, 1.175 kg
+(+ per-load rows). Price rows are unit-less. id-ID formatting confirmed
+(decimal comma, dot thousands: 2.378.500, 108.600).
+
+## 2. 57mm toggle
+
+- Toggled via the "57mm" button (agent-browser ref click was unreliable on this page;
+  a direct DOM `.click()` on the button worked — same result as a user click).
+- `#nota-thermal-57` rendered (215px wide). All 23 required strings present
+  (BERAT (KG) … Terima kasih atas kepercayaannya) — zero missing.
+- Clipping check: every leaf element `scrollWidth <= clientWidth` → 0 overflow
+  across 72 leaf nodes. Nothing clipped.
+
+## 3. 80mm toggle back + print preview (@media print)
+
+- Toggled back to 80mm; `#nota-thermal` re-rendered (302px wide).
+- Exported print-preview PDFs via `agent-browser pdf` for BOTH paper sizes
+  (exercises the @media print CSS: `size: 80mm/57mm auto`, only #nota-thermal visible).
+- PDF text extracted with pypdf (the look_at vision tool hallucinated on these
+  images — pypdf extraction is authoritative):
+  - f3-80mm-print-preview.pdf: single page, full nota, all sections + values
+    identical to the on-screen DOM (BRUTO 1.500 KG … TOTAL KOTOR 2.378.500 …
+    SISA HUTANG 0 … RP 2.269.900 … KASIR/PETANI … NB … Terima kasih atas kepercayaannya).
+  - f3-57mm-print-preview.pdf: single page, all sections present; NB wraps to 4
+    lines (expected on narrow paper); nothing lost.
+
+## 4. Debug-mode text receipt (ESC/POS buildReceipt)
+
+Debug UI path (`printer_debug` localStorage → Mock Thermal Printer) requires
+`navigator.bluetooth`, which headless Chrome lacks — used the plan-sanctioned
+fallback: node script importing `buildReceipt` from
+`resources/js/lib/receipt-builder.ts` with a mock encoder (pattern from
+tests/JS/printer-service.test.ts) and the REAL transaction data of
+HND-20260913-0004 (queried via `php artisan tinker`).
+
+Results at columns=32 AND columns=48:
+- MISSING SECTIONS: NONE — BERAT (KG), HARGA (RP), HUTANG, TOTAL DITERIMA,
+  KASIR:/PETANI: (after METODE:), NB, "Terima kasih atas kepercayaannya" all present.
+- LINES > columns: NONE — every text line within width (32-col contract holds
+  with the realistic sorting+debt data: TOTAL SORTIRAN: 28.500, SISA HUTANG: 0).
+- Bold set: NETTO SAWIT / TOTAL KOTOR / SISA HUTANG / TOTAL DITERIMA (+ Rp amount)
+  bold; BRUTO / TARE (MOBIL) / NETTO AWAL / POTONGAN / SORTIRAN / HARGA SAWIT /
+  TOTAL SAWIT / HARGA SORTIRAN / TOTAL SORTIRAN / HUTANG SEBELUMNYA / BAYAR HUTANG (-)
+  NOT bold. (Pre-existing bold: header, NOTA TIMBANGAN SAWIT, info PETANI,
+  RINCIAN MUATAN, per-load NETTO — frozen blocks.)
+- WEIGHT ROWS WITHOUT kg: NONE.
+- HARGA SORTIRAN: 500 / TOTAL SORTIRAN: 28.500 / TOTAL KOTOR: 2.378.500 rows present
+  (the rows the old receipt silently dropped).
+
+## 5. Extra check — old-debt-only case (HND-20260913-0003, id=7)
+
+prev=108.600, paid=0 → HUTANG section renders with SISA HUTANG: 108.600
+(confirms the hidden-old-debt fix in the UI, not just the tests).
+
+## Evidence artifacts (.omo/evidence/)
+
+- f3-80mm-full.png            — full page, 80mm default (1280x1358)
+- f3-80mm-nota.png            — scoped #nota-thermal, 80mm (302x1012)
+- f3-57mm-nota.png            — scoped #nota-thermal-57, 57mm (215x1025)
+- f3-80mm-print-preview.pdf   — @media print path, 80mm (text verified via pypdf)
+- f3-57mm-print-preview.pdf   — @media print path, 57mm (text verified via pypdf)
+- f3-80mm-print-preview.png   — rasterized copy of the 80mm print PDF
+
+## Notes / limitations
+
+- Physical Bluetooth print was NOT exercised (no hardware) — per plan, the debug
+  text receipt + browser print preview are sufficient.
+- The look_at vision tool produced unreliable/hallucinated text extractions on the
+  receipt images; all visual claims above rest on DOM innerText, computed styles,
+  scrollWidth/clientWidth overflow checks, and pypdf PDF text extraction, which
+  are mutually consistent.
+- No source code, plan file, or test file was modified. Nothing committed.

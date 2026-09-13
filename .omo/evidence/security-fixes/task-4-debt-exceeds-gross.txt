@@ -1,0 +1,52 @@
+Task 4: Hutang melebihi total bruto — guard di store/update/finalize
+====================================================================
+Plan: security-fixes | Todo 8 | Wave 2 serial (todo 7 selesai -> 8 -> 9)
+Date: 2026-09-13
+
+CHANGES
+-------
+1. app/Http/Controllers/WeighingTransactionController.php
+   - store()  : guard setelah $calculation, sebelum fillTransactionData
+   - update() : guard setelah $calculation, sebelum fillTransactionData
+   - finalize(): guard setelah $calculation, sebelum fillTransactionData
+   Guard:
+     if (($validated['debt_paid_amount'] ?? 0) > $calculation['gross_total_amount']) {
+         throw new \InvalidArgumentException('Pembayaran hutang tidak boleh melebihi total bruto.');
+     }
+   Throw InvalidArgumentException -> catch existing -> rollback -> withErrors(['error' => ...])
+
+2. resources/js/pages/Weighing/Form.tsx
+   - Render errors.error sebagai banner merah (pola sama dengan errors.loads)
+     di summary card, sebelum tombol "SELESAI & CETAK".
+   - Cast (errors as Record<string, string | undefined>) karena useForm
+     mengetik errors hanya untuk key form data.
+
+3. tests/Feature/Security/DebtExceedsGrossTest.php (baru, Pest)
+   - store finalize debt > gross (3.000.000 > 2.002.080) -> 302 + errors.error + 0 transaksi
+   - update draft debt > gross -> 302 + errors.error + draft tetap draft
+   - finalize draft legacy (debt > gross di DB) -> 302 + errors.error + draft tetap draft
+   - kasus valid (debt 100.000 <= gross) -> redirect weighing.success
+
+VERIFICATION
+------------
+$ php artisan test --compact --filter=DebtExceedsGrossTest
+  PASS 4 tests, 21 assertions
+
+$ php artisan test --compact --filter='DraftDebtPreserveTest|DebtExceedsGrossTest'
+  PASS 8 tests, 33 assertions  (tidak ada regresi pada todo 7)
+
+$ npm run types:check
+  PASS (tsc --noEmit, 0 error)
+
+$ vendor/bin/pint --dirty --format agent
+  FIXED: single_blank_line_at_eof (test file)
+
+NOTES
+-----
+- Guard di store()/update() berlaku untuk action save_draft DAN finalize:
+  draft dengan debt > gross tidak bisa disimpan (blocking di sumber).
+- Test finalize memakai draft legacy (update debt_paid_amount langsung di DB)
+  karena draft dengan debt > gross tidak bisa dibuat lewat store() lagi.
+- Tidak menyentuh calculate()/fillTransactionData() (todo 7).
+- Tidak menyentuh finalize :216 abort_unless / :244 beginTransaction /
+  :247-248 calculate (area todo 9).

@@ -1,0 +1,65 @@
+# F2 — Code Quality Review — restructure-nota-output
+
+Date: 2026-09-14
+Reviewer: F2 (Code Quality)
+Scope: resources/js/pages/Weighing/Success.tsx, resources/js/lib/receipt-builder.ts, tests/JS/printer-service.test.ts
+Baseline: d2504dc9a81aeafd6d9475fdbdbc1d6aeae74182
+Commits reviewed: 63bb4fd (Todo 1), 4f46b4c (Todo 2)
+
+## VERDICT: APPROVE
+
+## Evidence
+
+### 1. Scope guard
+`git diff --name-only BASELINE..HEAD` = exactly the 3 scope files. No other file touched.
+
+### 2. Formatting clean
+- `npx prettier --check` on all 3 files -> exit 0 ("All matched files use Prettier code style!")
+- `npx eslint` on all 3 files -> exit 0
+- `npx vitest run tests/JS/printer-service.test.ts` -> 65 passed (65), exit 0
+
+### 3. Dead code — fully removed
+- `grep "POTONGAN SORTIRAN"` in all 3 files -> 0 matches (old UI POTONGAN SORTIRAN row removed)
+- `grep "NETTO BERSIH"` -> 0 matches (renamed to NETTO SAWIT in both paths)
+- `grep "NETTO KOTOR"` -> 0 matches (renamed to NETTO AWAL in both paths)
+- `grep "HARGA/KG"` -> 0 matches (renamed to HARGA SAWIT)
+- Old single-load `else` branch (BRUTO/TARE/NETTO KOTOR) and pre-box POTONGAN/NETTO BERSIH rows removed from receipt-builder.ts
+- Per-load SORTIRAN weight line KEPT as intended (Success.tsx:174-183, receipt-builder.ts:111-124) — per-load detail row, NOT dead code
+- No stubs/TODOs/FIXMEs/placeholders/console.log in any scope file (grep exit 1)
+
+### 4. Logic correctness — line-by-line
+- BERAT (KG) section identical in both paths: BRUTO / TARE (MOBIL) / NETTO AWAL / [POTONGAN (x%) if has_deduction] / [SORTIRAN (x%) if has_sorting, label falls back to `SORTIRAN:` when pct<=0, gross weight negative] / NETTO SAWIT (bold). kg suffix on every weight row.
+- HARGA (RP) section identical: HARGA SAWIT / TOTAL SAWIT / [HARGA SORTIRAN + TOTAL SORTIRAN if has_sorting, two-row format] / TOTAL KOTOR (bold).
+- HUTANG section identical, gated on `previous_debt_amount > 0 || debt_paid_amount > 0` in BOTH paths (Success.tsx:94 via showDebt const; receipt-builder.ts:216 inline). SISA HUTANG uses tx.remaining_debt_amount (not recomputed).
+- TOTAL DITERIMA box unchanged; signatures added via justify() with NO new align() calls (align sequence still exactly ['center','left','center','left'], 4 calls); NB 4-line block unchanged; thanks line added via fit() (exactly 32 chars).
+- Edge cases verified: has_deduction=false (POTONGAN omitted), has_sorting=false (SORTIRAN + HARGA/TOTAL SORTIRAN omitted), loads empty (single-load branch renders same BERAT section), debt zero (HUTANG omitted), null snapshot names (receipt-builder signature lines fall back to `-` per plan).
+- fit() widths correct: KASIR: prefix 7 chars -> fit(name, columns-7); PETANI: prefix 8 chars -> fit(name, columns-8). Every line <= 32 cols at columns=32 (verified by the realistic 32-col fixture test).
+
+### 5. Bold-state verification
+- Success.tsx: Row default bold=true preserved (guardrail); rows de-bolded via bold={false}. Bold ONLY on NETTO SAWIT / TOTAL KOTOR / SISA HUTANG / TOTAL DITERIMA (+ section headers BERAT/HARGA/HUTANG via c.heading, + pre-existing bolds: header, NOTA title, PETANI info, RINCIAN MUATAN, per-load NETTO).
+- receipt-builder.ts: bold(true)/bold(false) calls bracket exactly the same rows. Traced the full encoder call sequence — no bold leakage into non-bold rows.
+- Test "should bold only NETTO SAWIT, TOTAL KOTOR, SISA HUTANG, and TOTAL DITERIMA" reconstructs bold state from the encoder call log and asserts both the bold set AND the non-bold set (HARGA SAWIT / TOTAL SAWIT / BRUTO / HUTANG SEBELUMNYA). Not tautological.
+
+### 6. Test quality — meaningful, not tautological
+- HUTANG 3 cases: prev>0+paid>0 renders all 3 rows; prev>0+paid=0 renders (SISA HUTANG = prev); both 0 -> no HUTANG section. Directly exercises the bug-fix condition.
+- Sortiran two-row test: asserts HARGA SORTIRAN: 500, TOTAL SORTIRAN: 47.500 (id-ID dot separator), and aggregate `SORTIRAN (5%): -100 kg` (distinguished from the per-load `#1 SORTIRAN:` line by the startsWith prefix).
+- 32-col realistic fixture: sorting 1200 @ 1.750 + deduction 5% + debt 1.000.000/200.000; asserts every text line <= 32 AND the specific formatted values (TOTAL SORTIRAN: 1.995.000, SISA HUTANG: 800.000). Fixture numbers verified internally consistent (9000-450-1200=7350; 7350×1750=12.862.500; +1.995.000=14.857.500; -200.000=14.657.500).
+- Bold-state reconstruction: see section 5.
+- Signatures-after-METODE: positional assertion (finds METODE: index, asserts KASIR:/PETANI: appear after) — not a weak presence check, since the info block also emits a PETANI: line.
+- 37-char farmer name truncation: asserts the signature line stays <= 32.
+- Thanks line: presence assertion per plan.
+
+### 7. No duplicated logic beyond intentional label duplication
+- Label strings duplicated between the two render paths — explicitly permitted by the plan (no shared constants module).
+- The BERAT section JSX appears in both the multi-load and single-load branches of Success.tsx — pre-existing structural pattern, explicitly required by the plan ("render the same BERAT section directly").
+- `pct` computation duplicated in receipt-builder.ts (per-load forEach + aggregate) — the per-load block is frozen byte-identical, so this is unavoidable and acceptable.
+
+### 8. Guardrails held
+- PAPER_CLASSES untouched (no font-size changes); Row bold=true default untouched; no new deps; no new files; no backend/PHP changes; no changes to calculation logic; TOTAL DITERIMA box, signatures UI, NB wording, print CSS, paper toggle, use-printer hook, printer-service.ts, receipt-raster.ts all untouched.
+
+## Notes (non-blocking)
+- `// prettier-ignore` on the showDebt const (Success.tsx:93) is a deliberate, documented tradeoff to keep the plan's exact grep contract line on one line. Acceptable.
+- Per-load RINCIAN MUATAN block in Success.tsx was re-indented (wrapped in a fragment) but its rendered rows are identical — cosmetic only, no output change.
+
+## Conclusion
+All MUST-DO checks pass: formatting clean, no dead code, no stubs, logic correct in both render paths, bold set exact, tests meaningful and green (65/65). APPROVE.
