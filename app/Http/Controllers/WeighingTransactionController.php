@@ -265,6 +265,17 @@ class WeighingTransactionController extends Controller
                 'payment_method' => $weighing->payment_method,
             ];
 
+            // Guard untuk draft lama (tersimpan sebelum guard ada): tolak muatan
+            // yang berat sortirannya melebihi netto kotor agar tidak difinalisasi
+            // dengan netto negatif.
+            foreach ($weighing->loads as $i => $load) {
+                if ($load->has_sorting && $load->sorting_weight > $load->gross_weight - $load->tare_weight) {
+                    DB::rollBack();
+
+                    return back()->withErrors(['error' => 'Tidak bisa finalisasi: berat sortiran melebihi netto kotor muatan #'.($i + 1).'.']);
+                }
+            }
+
             $currentDebt = $farmer->calculateDebtBalance();
             $calculation = $this->calculate($validated, $loads, $currentDebt, 'finalize');
 
@@ -394,6 +405,10 @@ class WeighingTransactionController extends Controller
         foreach ($loads as $index => $load) {
             if ($load['gross_weight'] <= $load['tare_weight']) {
                 return 'Berat bruto muatan #'.($index + 1).' harus lebih besar dari berat tara.';
+            }
+
+            if ($load['has_sorting'] && $load['sorting_weight'] > $load['gross_weight'] - $load['tare_weight']) {
+                return 'Berat sortiran muatan #'.($index + 1).' tidak boleh melebihi netto kotor.';
             }
         }
 

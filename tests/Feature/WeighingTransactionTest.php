@@ -549,3 +549,60 @@ test('sorting deduction rejects negative and over-100 percentages', function () 
 
     expect(WeighingTransaction::count())->toBe(0);
 });
+
+test('rejects sorting weight exceeding gross netto on store', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 900],
+        ],
+    ]) + ['action' => 'finalize']);
+
+    $response->assertSessionHasErrors('loads');
+
+    expect(WeighingTransaction::count())->toBe(0);
+});
+
+test('accepts sorting weight within gross netto and deducts it from netto', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 750],
+        ],
+    ]) + ['action' => 'finalize']);
+
+    $response->assertRedirect()->assertSessionHasNoErrors();
+
+    $transaction = WeighingTransaction::first();
+
+    expect($transaction)->not->toBeNull()
+        ->and($transaction->net_weight)->toBe('26.00');
+});
+
+test('finalize rejects old draft with sorting weight exceeding gross netto', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 50],
+        ],
+    ]) + ['action' => 'save_draft']);
+
+    $draft = WeighingTransaction::first();
+
+    // Simulasi data lama yang tersimpan sebelum guard ada (guard tidak ada saat draft dibuat)
+    $draft->loads()->first()->update(['sorting_weight' => 900]);
+
+    $response = $this->actingAs($cashier)->post(route('weighing.finalize', $draft->id));
+
+    $response->assertSessionHasErrors('error');
+
+    expect($draft->refresh()->status)->toBe('draft');
+
+    expect(CashierCashEntry::count())->toBe(0);
+});
