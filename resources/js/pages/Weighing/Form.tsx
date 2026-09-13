@@ -20,6 +20,7 @@ import {
     sanitizeCurrencyInput,
 } from '@/lib/utils';
 import type { LoadInput } from '@/lib/utils';
+import { buildInitialWeighingFormState, emptyLoad } from '@/lib/weighing-form';
 import * as farmersRoute from '@/routes/farmers';
 import * as weighingRoute from '@/routes/weighing';
 import type {
@@ -82,15 +83,6 @@ function NumberInput({
     );
 }
 
-function emptyLoad(): LoadInput {
-    return {
-        gross_weight: 0,
-        tare_weight: 0,
-        has_sorting: false,
-        sorting_weight: 0,
-    };
-}
-
 export default function WeighingForm({
     farmers,
     latestPrice,
@@ -103,35 +95,9 @@ export default function WeighingForm({
     const [loadingDebt, setLoadingDebt] = useState(false);
     const actionRef = useRef<'save_draft' | 'finalize'>('finalize');
 
-    const form = useForm({
-        farmer_id: draft ? String(draft.farmer_id) : '',
-        transaction_date: draft
-            ? draft.transaction_date.slice(0, 10)
-            : new Date().toISOString().split('T')[0],
-        loads: draft?.loads?.length
-            ? draft.loads.map((l) => ({
-                  gross_weight: Number(l.gross_weight),
-                  tare_weight: Number(l.tare_weight),
-                  has_sorting: l.has_sorting,
-                  sorting_weight: Number(l.sorting_weight),
-              }))
-            : [emptyLoad()],
-        has_deduction: draft ? draft.has_deduction : true,
-        deduction_percentage: draft
-            ? Number(draft.deduction_percentage)
-            : (deductionConfig?.percentage ?? 5),
-        palm_price_per_kg: draft
-            ? Number(draft.palm_price_per_kg)
-            : (latestPrice?.price_per_kg ?? 0),
-        sorting_price_per_kg: draft ? Number(draft.sorting_price_per_kg) : 0,
-        sorting_deduction_percentage: draft
-            ? Number(draft.sorting_deduction_percentage)
-            : 5,
-        debt_paid_amount: 0,
-        payment_method: (draft ? draft.payment_method : 'cash') as
-            | 'cash'
-            | 'transfer',
-    });
+    const form = useForm(
+        buildInitialWeighingFormState({ draft, latestPrice, deductionConfig }),
+    );
 
     useEffect(() => {
         form.transform((formData) => ({
@@ -888,9 +854,21 @@ export default function WeighingForm({
                                         </div>
                                     )}
 
-                                    {(errors as Record<string, string | undefined>).error && (
+                                    {(
+                                        errors as Record<
+                                            string,
+                                            string | undefined
+                                        >
+                                    ).error && (
                                         <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 dark:border-red-900/40 dark:bg-red-900/10 dark:text-red-400">
-                                            {(errors as Record<string, string | undefined>).error}
+                                            {
+                                                (
+                                                    errors as Record<
+                                                        string,
+                                                        string | undefined
+                                                    >
+                                                ).error
+                                            }
                                         </p>
                                     )}
 

@@ -3,6 +3,7 @@
 use App\Models\FarmerDebt;
 use App\Models\User;
 use App\Models\WeighingTransaction;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('draft preserves debt_paid_amount instead of zeroing it', function () {
     $cashier = User::factory()->create(['role' => 'cashier']);
@@ -69,3 +70,21 @@ test('draft without debt payment keeps debt_paid_amount at zero', function ($deb
     'zero' => 0,
     'null' => null,
 ]);
+
+test('weighing.create with draft sends debt_paid_amount intact to the frontend', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'debt_paid_amount' => 100000,
+    ]) + ['action' => 'save_draft']);
+
+    $draft = WeighingTransaction::first();
+
+    $this->actingAs($cashier)
+        ->get(route('weighing.create', ['draft' => $draft->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Weighing/Form')
+            ->where('draft.debt_paid_amount', '100000.00'));
+});
