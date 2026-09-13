@@ -358,7 +358,7 @@ describe('buildReceipt', () => {
         expect(petani!.endsWith(tx.farmer_name_snapshot)).toBe(true);
     });
 
-    it('should include net sorting weight on SORTIRAN line', () => {
+    it('should include gross sorting weight on SORTIRAN line', () => {
         const encoder = createMockEncoder();
         const tx = createSampleTransaction({
             has_sorting: true,
@@ -390,7 +390,7 @@ describe('buildReceipt', () => {
             .map((c) => String(c.args[0]));
         const sortiran = texts.find((t) => t.startsWith('#1 SORTIRAN:'));
         expect(sortiran).toBeTruthy();
-        expect(sortiran).toContain('-95 kg');
+        expect(sortiran).toContain('-100 kg');
     });
 });
 

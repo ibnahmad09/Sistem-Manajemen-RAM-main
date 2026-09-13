@@ -171,11 +171,7 @@ function NotaThermal({
                                             ? `SORTIRAN ${pct}%:`
                                             : 'SORTIRAN:'
                                     }
-                                    value={`-${formatKg(
-                                        pct > 0
-                                            ? load.sorting_net_weight
-                                            : load.sorting_weight,
-                                    )}`}
+                                    value={`-${formatKg(load.sorting_weight)}`}
                                 />
                             )}
                             <Row
