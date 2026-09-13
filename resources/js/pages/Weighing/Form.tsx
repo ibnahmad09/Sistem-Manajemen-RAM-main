@@ -475,6 +475,116 @@ export default function WeighingForm({
                                                         )}
                                                     </div>
                                                 </div>
+
+                                                {/* Hasil Hitung */}
+                                                <div className="mt-3 border-t border-dashed pt-2">
+                                                    <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                                                        Hasil Hitung
+                                                    </p>
+                                                    <div className="mt-2 space-y-1 font-mono text-xs">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-muted-foreground italic">
+                                                                Netto Kotor
+                                                                <span className="block text-[10px] text-muted-foreground/60 not-italic">
+                                                                    Bruto − Tara
+                                                                </span>
+                                                            </span>
+                                                            <span className="font-bold">
+                                                                {formatKgTrimmed(
+                                                                    perLoad?.initialWeight ??
+                                                                        0,
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                        {data.has_deduction && (
+                                                            <div className="flex justify-between">
+                                                                <span className="text-red-500 italic">
+                                                                    Potongan{' '}
+                                                                    {
+                                                                        data.deduction_percentage
+                                                                    }
+                                                                    %
+                                                                </span>
+                                                                <span className="font-bold text-red-500">
+                                                                    -
+                                                                    {formatKgTrimmed(
+                                                                        perLoad?.deductionWeight ??
+                                                                            0,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {perLoad?.hasSorting && (
+                                                            <div className="flex justify-between">
+                                                                <span className="text-red-500 italic">
+                                                                    Sortiran
+                                                                    (gross)
+                                                                    <span className="block text-[10px] text-muted-foreground/60 not-italic">
+                                                                        dikeluarkan
+                                                                        dari
+                                                                        kolom
+                                                                        sawit
+                                                                    </span>
+                                                                </span>
+                                                                <span className="font-bold text-red-500">
+                                                                    -
+                                                                    {formatKgTrimmed(
+                                                                        perLoad?.sortingWeight ??
+                                                                            0,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-between">
+                                                            <span className="text-emerald-600 italic">
+                                                                Netto
+                                                                <span className="block text-[10px] text-muted-foreground/60 not-italic">
+                                                                    dasar harga
+                                                                    sawit
+                                                                </span>
+                                                            </span>
+                                                            <span className="font-bold text-emerald-600">
+                                                                {formatKgTrimmed(
+                                                                    perLoad?.netWeight ??
+                                                                        0,
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                        {perLoad?.hasSorting && (
+                                                            <div className="flex justify-between">
+                                                                <span className="text-emerald-600 italic">
+                                                                    + Sortiran
+                                                                    <span className="block text-[10px] text-muted-foreground/60 not-italic">
+                                                                        net ×
+                                                                        harga
+                                                                        sortiran
+                                                                    </span>
+                                                                </span>
+                                                                <span className="font-bold text-emerald-600">
+                                                                    +
+                                                                    {formatRupiah(
+                                                                        perLoad?.sortingTotalAmount ??
+                                                                            0,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-between border-t border-dashed pt-1">
+                                                            <span className="font-bold">
+                                                                Nilai Muatan
+                                                            </span>
+                                                            <span className="font-bold">
+                                                                {formatRupiah(
+                                                                    (perLoad?.netWeight ??
+                                                                        0) *
+                                                                        data.palm_price_per_kg +
+                                                                        (perLoad?.sortingTotalAmount ??
+                                                                            0),
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         );
                                     })}
