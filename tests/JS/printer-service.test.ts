@@ -124,6 +124,27 @@ function createSampleTransaction(
     };
 }
 
+function getTexts(encoder: any): string[] {
+    return encoder.calls
+        .filter((c: any) => c.method === 'text')
+        .map((c: any) => String(c.args[0]));
+}
+
+function boldStateAtText(encoder: any): { text: string; bold: boolean }[] {
+    let bold = false;
+    const states: { text: string; bold: boolean }[] = [];
+
+    for (const call of encoder.calls as any[]) {
+        if (call.method === 'bold') {
+            bold = Boolean(call.args[0]);
+        } else if (call.method === 'text') {
+            states.push({ text: String(call.args[0]), bold });
+        }
+    }
+
+    return states;
+}
+
 // --- Helpers for PrinterService tests ---
 
 const originalNavigator = globalThis.navigator;
@@ -391,6 +412,273 @@ describe('buildReceipt', () => {
         const sortiran = texts.find((t) => t.startsWith('#1 SORTIRAN:'));
         expect(sortiran).toBeTruthy();
         expect(sortiran).toContain('-100 kg');
+    });
+
+    it('should render the HUTANG section when previous and paid debt exist', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            previous_debt_amount: 200000,
+            debt_paid_amount: 200000,
+            remaining_debt_amount: 0,
+        });
+        buildReceipt(encoder, tx);
+        const texts = getTexts(encoder);
+        expect(texts).toContain('HUTANG');
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('HUTANG SEBELUMNYA:') &&
+                    t.trim().endsWith('200.000'),
+            ),
+        ).toBe(true);
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('BAYAR HUTANG (-):') &&
+                    t.trim().endsWith('200.000'),
+            ),
+        ).toBe(true);
+        expect(
+            texts.some(
+                (t) => t.startsWith('SISA HUTANG:') && t.trim().endsWith('0'),
+            ),
+        ).toBe(true);
+    });
+
+    it('should render the HUTANG section when only previous debt exists', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            previous_debt_amount: 200000,
+            debt_paid_amount: 0,
+            remaining_debt_amount: 200000,
+        });
+        buildReceipt(encoder, tx);
+        const texts = getTexts(encoder);
+        expect(texts).toContain('HUTANG');
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('HUTANG SEBELUMNYA:') &&
+                    t.trim().endsWith('200.000'),
+            ),
+        ).toBe(true);
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('BAYAR HUTANG (-):') && t.trim().endsWith('0'),
+            ),
+        ).toBe(true);
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('SISA HUTANG:') &&
+                    t.trim().endsWith('200.000'),
+            ),
+        ).toBe(true);
+    });
+
+    it('should omit the HUTANG section when there is no debt', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction();
+        buildReceipt(encoder, tx);
+        const texts = getTexts(encoder);
+        expect(texts).not.toContain('HUTANG');
+        expect(texts.some((t) => t.startsWith('HUTANG SEBELUMNYA:'))).toBe(
+            false,
+        );
+    });
+
+    it('should include HARGA SORTIRAN and TOTAL SORTIRAN rows', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            has_sorting: true,
+            sorting_weight: 100,
+            sorting_price_per_kg: 500,
+            sorting_total_amount: 47500,
+            gross_total_amount: 2254250,
+            loads: [
+                {
+                    id: 1,
+                    weighing_transaction_id: 1,
+                    seq_no: 1,
+                    gross_weight: 1000,
+                    tare_weight: 200,
+                    initial_weight: 800,
+                    deduction_weight: 24,
+                    net_weight: 776,
+                    has_sorting: true,
+                    sorting_weight: 100,
+                    sorting_price_per_kg: 500,
+                    sorting_deduction_weight: 5,
+                    sorting_net_weight: 95,
+                    sorting_total_amount: 47500,
+                    created_at: '2026-05-10T08:35:00.000Z',
+                    updated_at: '2026-05-10T08:35:00.000Z',
+                },
+            ],
+        });
+        buildReceipt(encoder, tx);
+        const texts = getTexts(encoder);
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('HARGA SORTIRAN:') && t.trim().endsWith('500'),
+            ),
+        ).toBe(true);
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('TOTAL SORTIRAN:') &&
+                    t.trim().endsWith('47.500'),
+            ),
+        ).toBe(true);
+        expect(
+            texts.some(
+                (t) => t.startsWith('SORTIRAN (5%):') && t.includes('-100 kg'),
+            ),
+        ).toBe(true);
+    });
+
+    it('should keep every text line within 32 columns with sorting and debt', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            gross_weight: 10000,
+            tare_weight: 1000,
+            initial_weight: 9000,
+            has_deduction: true,
+            deduction_percentage: 5,
+            deduction_weight: 450,
+            has_sorting: true,
+            sorting_weight: 1200,
+            sorting_price_per_kg: 1750,
+            sorting_total_amount: 1995000,
+            net_weight: 7350,
+            palm_price_per_kg: 1750,
+            palm_total_amount: 12862500,
+            gross_total_amount: 14857500,
+            previous_debt_amount: 1000000,
+            debt_paid_amount: 200000,
+            remaining_debt_amount: 800000,
+            final_paid_amount_rounded: 14657500,
+            loads: [
+                {
+                    id: 1,
+                    weighing_transaction_id: 1,
+                    seq_no: 1,
+                    gross_weight: 10000,
+                    tare_weight: 1000,
+                    initial_weight: 9000,
+                    deduction_weight: 450,
+                    net_weight: 7350,
+                    has_sorting: true,
+                    sorting_weight: 1200,
+                    sorting_price_per_kg: 1750,
+                    sorting_deduction_weight: 60,
+                    sorting_net_weight: 1140,
+                    sorting_total_amount: 1995000,
+                    created_at: '2026-05-10T08:35:00.000Z',
+                    updated_at: '2026-05-10T08:35:00.000Z',
+                },
+            ],
+        });
+        buildReceipt(encoder, tx, 32);
+        const texts = getTexts(encoder);
+        const overlong = texts.filter((t) => t.length > 0 && t.length > 32);
+        expect(overlong).toEqual([]);
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('TOTAL SORTIRAN:') &&
+                    t.trim().endsWith('1.995.000'),
+            ),
+        ).toBe(true);
+        expect(
+            texts.some(
+                (t) =>
+                    t.startsWith('SISA HUTANG:') &&
+                    t.trim().endsWith('800.000'),
+            ),
+        ).toBe(true);
+    });
+
+    it('should bold only NETTO SAWIT, TOTAL KOTOR, SISA HUTANG, and TOTAL DITERIMA', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            gross_weight: 1000,
+            tare_weight: 100,
+            initial_weight: 900,
+            has_deduction: true,
+            deduction_percentage: 5,
+            deduction_weight: 45,
+            has_sorting: true,
+            sorting_weight: 50,
+            sorting_price_per_kg: 500,
+            sorting_total_amount: 23750,
+            net_weight: 805,
+            palm_price_per_kg: 2000,
+            palm_total_amount: 1610000,
+            gross_total_amount: 1633750,
+            previous_debt_amount: 200000,
+            debt_paid_amount: 200000,
+            remaining_debt_amount: 0,
+            final_paid_amount_rounded: 1433750,
+        });
+        buildReceipt(encoder, tx);
+        const states = boldStateAtText(encoder);
+        const find = (prefix: string) =>
+            states.find((s) => s.text.startsWith(prefix));
+        expect(find('NETTO SAWIT:')?.bold).toBe(true);
+        expect(find('TOTAL KOTOR:')?.bold).toBe(true);
+        expect(find('SISA HUTANG:')?.bold).toBe(true);
+        expect(states.find((s) => s.text === 'TOTAL DITERIMA')?.bold).toBe(
+            true,
+        );
+        expect(find('HARGA SAWIT:')?.bold).toBe(false);
+        expect(find('TOTAL SAWIT:')?.bold).toBe(false);
+        expect(find('BRUTO:')?.bold).toBe(false);
+        expect(find('HUTANG SEBELUMNYA:')?.bold).toBe(false);
+    });
+
+    it('should include KASIR and PETANI signature lines after the payment box', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction();
+        buildReceipt(encoder, tx);
+        const texts = getTexts(encoder);
+        const metodeIdx = texts.findIndex((t) => t.startsWith('METODE:'));
+        expect(metodeIdx).toBeGreaterThanOrEqual(0);
+        const after = texts.slice(metodeIdx + 1);
+        expect(
+            after.some((t) => t.startsWith('KASIR:') && t.includes('KASIR 1')),
+        ).toBe(true);
+        expect(
+            after.some(
+                (t) => t.startsWith('PETANI:') && t.includes('BUDI SANTOSO'),
+            ),
+        ).toBe(true);
+    });
+
+    it('should truncate a 37-char farmer name in the signature line within 32 columns', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            farmer_name_snapshot: 'PETERNAKAN MAJU JAYA ABADI SENTOSA BE',
+        });
+        buildReceipt(encoder, tx, 32);
+        const texts = getTexts(encoder);
+        const overlong = texts.filter((t) => t.length > 0 && t.length > 32);
+        expect(overlong).toEqual([]);
+        const metodeIdx = texts.findIndex((t) => t.startsWith('METODE:'));
+        const after = texts.slice(metodeIdx + 1);
+        const sig = after.find((t) => t.startsWith('PETANI:'));
+        expect(sig).toBeTruthy();
+        expect(sig!.length).toBeLessThanOrEqual(32);
+    });
+
+    it('should include the closing thanks line', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction();
+        buildReceipt(encoder, tx);
+        const texts = getTexts(encoder);
+        expect(texts).toContain('Terima kasih atas kepercayaannya');
     });
 });
 

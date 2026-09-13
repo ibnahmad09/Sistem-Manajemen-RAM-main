@@ -135,25 +135,19 @@ export function buildReceipt(
                 .bold(false);
         });
         encoder.newline();
-    } else {
-        encoder.text(
-            justify('BRUTO: ', `${fmtKg(tx.gross_weight)} kg`, columns),
-        );
-        encoder.text(
-            justify('TARE (MOBIL): ', `${fmtKg(tx.tare_weight)} kg`, columns),
-        );
-        encoder
-            .bold(true)
-            .text(
-                justify(
-                    'NETTO KOTOR: ',
-                    `${fmtKg(tx.initial_weight)} kg`,
-                    columns,
-                ),
-            )
-            .bold(false);
-        encoder.newline();
     }
+
+    encoder
+        .rule()
+
+        .bold(true)
+        .text('BERAT (KG)')
+        .bold(false)
+        .text(justify('BRUTO: ', `${fmtKg(tx.gross_weight)} kg`, columns))
+        .text(justify('TARE (MOBIL): ', `${fmtKg(tx.tare_weight)} kg`, columns))
+        .text(
+            justify('NETTO AWAL: ', `${fmtKg(tx.initial_weight)} kg`, columns),
+        );
 
     if (tx.has_deduction) {
         encoder.text(
@@ -165,22 +159,93 @@ export function buildReceipt(
         );
     }
 
-    return encoder
+    if (tx.has_sorting) {
+        const pct = tx.sorting_deduction_percentage ?? 0;
+
+        encoder.text(
+            justify(
+                pct > 0 ? `SORTIRAN (${pct}%): ` : 'SORTIRAN: ',
+                `-${fmtKg(tx.sorting_weight)} kg`,
+                columns,
+            ),
+        );
+    }
+
+    encoder
         .bold(true)
-        .text(justify('NETTO BERSIH: ', `${fmtKg(tx.net_weight)} kg`, columns))
+        .text(justify('NETTO SAWIT: ', `${fmtKg(tx.net_weight)} kg`, columns))
         .bold(false)
 
-        .newline()
+        .rule()
 
-        .text(justify('HARGA/KG: ', fmtAmount(tx.palm_price_per_kg), columns))
         .bold(true)
+        .text('HARGA (RP)')
+        .bold(false)
+        .text(
+            justify('HARGA SAWIT: ', fmtAmount(tx.palm_price_per_kg), columns),
+        )
         .text(
             justify('TOTAL SAWIT: ', fmtAmount(tx.palm_total_amount), columns),
+        );
+
+    if (tx.has_sorting) {
+        encoder
+            .text(
+                justify(
+                    'HARGA SORTIRAN: ',
+                    fmtAmount(tx.sorting_price_per_kg),
+                    columns,
+                ),
+            )
+            .text(
+                justify(
+                    'TOTAL SORTIRAN: ',
+                    fmtAmount(tx.sorting_total_amount),
+                    columns,
+                ),
+            );
+    }
+
+    encoder
+        .bold(true)
+        .text(
+            justify('TOTAL KOTOR: ', fmtAmount(tx.gross_total_amount), columns),
         )
-        .bold(false)
+        .bold(false);
 
-        .newline()
+    if (tx.previous_debt_amount > 0 || tx.debt_paid_amount > 0) {
+        encoder
+            .rule()
 
+            .bold(true)
+            .text('HUTANG')
+            .bold(false)
+            .text(
+                justify(
+                    'HUTANG SEBELUMNYA: ',
+                    fmtAmount(tx.previous_debt_amount),
+                    columns,
+                ),
+            )
+            .text(
+                justify(
+                    'BAYAR HUTANG (-): ',
+                    fmtAmount(tx.debt_paid_amount),
+                    columns,
+                ),
+            )
+            .bold(true)
+            .text(
+                justify(
+                    'SISA HUTANG: ',
+                    fmtAmount(tx.remaining_debt_amount),
+                    columns,
+                ),
+            )
+            .bold(false);
+    }
+
+    return encoder
         .rule()
 
         .align('center')
@@ -194,14 +259,29 @@ export function buildReceipt(
             `METODE: ${tx.payment_method === 'cash' ? 'TUNAI' : 'TRANSFER BANK'}`,
         )
 
-        .newline()
-        .newline()
-
         .align('left')
+        .text('')
+        .text(
+            justify(
+                'KASIR: ',
+                fit(tx.cashier_name_snapshot || '-', columns - 7),
+                columns,
+            ),
+        )
+        .text(
+            justify(
+                'PETANI: ',
+                fit(tx.farmer_name_snapshot || '-', columns - 8),
+                columns,
+            ),
+        )
+        .text('')
         .text(fit('NB: Harap hitung kembali uang', columns))
         .text(fit('anda, kami tidak menerima', columns))
         .text(fit('komplain saat sudah keluar', columns))
         .text(fit('dari RAMP.', columns))
+        .text(fit('Terima kasih atas kepercayaannya', columns))
+        .text('')
 
         .newline()
         .newline()
