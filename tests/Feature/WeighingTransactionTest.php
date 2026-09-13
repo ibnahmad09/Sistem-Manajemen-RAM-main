@@ -73,7 +73,7 @@ test('multi load finalizes as one nota with per-load totals', function () {
     expect($transaction->farmer->balance)->toBe('0.00');
 });
 
-test('sorting net weight is deducted from netto before palm pricing', function () {
+test('sorting weight is deducted from netto before palm pricing', function () {
     $cashier = User::factory()->create(['role' => 'cashier']);
     $farmer = createTestFarmer();
 
@@ -94,15 +94,15 @@ test('sorting net weight is deducted from netto before palm pricing', function (
     expect($transaction)->not->toBeNull()
         ->and($transaction->initial_weight)->toBe('900.00')
         ->and($transaction->deduction_weight)->toBe('45.00')
-        ->and($transaction->net_weight)->toBe('807.50')
+        ->and($transaction->net_weight)->toBe('805.00')
         ->and($transaction->sorting_deduction_weight)->toBe('2.50')
         ->and($transaction->sorting_net_weight)->toBe('47.50')
         ->and($transaction->sorting_total_amount)->toBe('23750.00')
-        ->and($transaction->palm_total_amount)->toBe('1615000.00')
-        ->and($transaction->gross_total_amount)->toBe('1638750.00')
-        ->and($transaction->final_paid_amount_rounded)->toBe('1638750.00');
+        ->and($transaction->palm_total_amount)->toBe('1610000.00')
+        ->and($transaction->gross_total_amount)->toBe('1633750.00')
+        ->and($transaction->final_paid_amount_rounded)->toBe('1633750.00');
 
-    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('1638750.00');
+    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('1633750.00');
 });
 
 test('draft can be saved without nota number or cash entry', function () {
