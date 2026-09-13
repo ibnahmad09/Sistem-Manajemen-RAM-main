@@ -144,7 +144,6 @@ export function calculateLoads(
         const deductionWeight = data.hasDeduction
             ? initial * (data.deductionPercentage / 100)
             : 0;
-        const net = initial - deductionWeight;
         const loadHasSorting = load.has_sorting;
         const sortingWeight = load.sorting_weight || 0;
         const sortingPricePerKg = data.sortingPricePerKg;
@@ -152,6 +151,7 @@ export function calculateLoads(
             ? sortingWeight * (sortingDeductionPercentage / 100)
             : 0;
         const sortingNetWeight = sortingWeight - sortingDeductionWeight;
+        const net = initial - deductionWeight - sortingNetWeight;
         const sortingTotal = loadHasSorting
             ? sortingNetWeight * sortingPricePerKg
             : 0;

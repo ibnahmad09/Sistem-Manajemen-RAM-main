@@ -93,7 +93,10 @@ describe('calculateLoads', () => {
         expect(result.sortingDeductionWeight).toBe(5);
         expect(result.sortingNetWeight).toBe(95);
         expect(result.sortingTotalAmount).toBe(47500);
-        expect(result.grossTotalAmount).toBe(2049580);
+        expect(result.perLoad[0].netWeight).toBe(681);
+        expect(result.netWeight).toBe(681);
+        expect(result.palmTotalAmount).toBe(1756980);
+        expect(result.grossTotalAmount).toBe(1804480);
     });
 
     it('keeps legacy behavior when sorting deduction percentage is zero', () => {
@@ -113,5 +116,32 @@ describe('calculateLoads', () => {
         expect(result.perLoad[0].sortingDeductionWeight).toBe(0);
         expect(result.perLoad[0].sortingNetWeight).toBe(100);
         expect(result.perLoad[0].sortingTotalAmount).toBe(50000);
+    });
+
+    it('subtracts sorting net weight from net to calculate palm amount (user scenario)', () => {
+        const userLoads = [
+            {
+                gross_weight: 1000,
+                tare_weight: 100,
+                has_sorting: true,
+                sorting_weight: 50,
+            },
+        ];
+        const result = calculateLoads(userLoads, {
+            ...baseData,
+            hasDeduction: true,
+            deductionPercentage: 5,
+            palmPricePerKg: 2000,
+            sortingDeductionPercentage: 5,
+            sortingPricePerKg: 500,
+        });
+
+        // gross 1000 - tare 100 = 900; 5% deduction = 45; net = 900 - 45 = 855
+        // sorting: 50 - 5% = 47.5 net; net toto = 855 - 47.5 = 807.5
+        expect(result.perLoad[0].netWeight).toBe(807.5);
+        expect(result.sortingNetWeight).toBe(47.5);
+        expect(result.sortingTotalAmount).toBe(23750);
+        expect(result.palmTotalAmount).toBe(1615000);
+        expect(result.grossTotalAmount).toBe(1638750);
     });
 });
