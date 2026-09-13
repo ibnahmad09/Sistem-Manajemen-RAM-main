@@ -812,7 +812,46 @@ export default function WeighingForm({
                                 </div>
 
                                 <div className="space-y-3 p-5 font-mono text-sm">
-                                    <div className="space-y-1 border-b border-sidebar-border/30 pb-2">
+                                    {/* ── HARGA ── */}
+                                    <div className="space-y-1">
+                                        <p className="border-b border-sidebar-border/30 pb-1 text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                                            Harga
+                                        </p>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground italic">
+                                                Harga Sawit
+                                                <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                    /kg
+                                                </span>
+                                            </span>
+                                            <span className="font-bold">
+                                                {formatRupiah(
+                                                    data.palm_price_per_kg,
+                                                )}
+                                            </span>
+                                        </div>
+                                        {calc.hasSorting && (
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground italic">
+                                                    Harga Sortiran
+                                                    <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                        /kg
+                                                    </span>
+                                                </span>
+                                                <span className="font-bold">
+                                                    {formatRupiah(
+                                                        data.sorting_price_per_kg,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* ── BERAT ── */}
+                                    <div className="space-y-1">
+                                        <p className="border-b border-sidebar-border/30 pb-1 text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                                            Berat
+                                        </p>
                                         {calc.perLoad.map((pl) => (
                                             <div
                                                 key={pl.seqNo}
@@ -824,6 +863,9 @@ export default function WeighingForm({
                                                         pl.netWeight,
                                                     )}
                                                     )
+                                                    <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                        netto sawit
+                                                    </span>
                                                 </span>
                                                 <span className="font-bold">
                                                     {formatRupiah(
@@ -834,98 +876,150 @@ export default function WeighingForm({
                                                 </span>
                                             </div>
                                         ))}
-                                    </div>
-                                    <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
-                                        <span className="text-muted-foreground italic">
-                                            Netto Kotor (total)
-                                        </span>
-                                        <span className="font-bold">
-                                            {formatKgTrimmed(
-                                                calc.initialWeight,
-                                            )}
-                                        </span>
-                                    </div>
-                                    {data.has_deduction && (
-                                        <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
-                                            <span className="text-red-500 italic">
-                                                Potongan{' '}
-                                                {data.deduction_percentage}%
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground italic">
+                                                Netto Kotor (total)
+                                                <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                    Σ Bruto − Tara
+                                                </span>
                                             </span>
-                                            <span className="font-bold text-red-500">
-                                                -
+                                            <span className="font-bold">
                                                 {formatKgTrimmed(
-                                                    calc.deductionWeight,
+                                                    calc.initialWeight,
                                                 )}
                                             </span>
                                         </div>
-                                    )}
-                                    <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
-                                        <span className="text-emerald-600 italic">
-                                            Netto Bersih
-                                        </span>
-                                        <span className="font-bold text-emerald-600">
-                                            {formatKgTrimmed(calc.netWeight)}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
-                                        <span className="text-muted-foreground italic">
-                                            Total Sawit
-                                        </span>
-                                        <span className="font-bold">
-                                            {formatRupiah(calc.palmTotalAmount)}
-                                        </span>
-                                    </div>
-                                    {calc.hasSorting &&
-                                        data.sorting_deduction_percentage >
-                                            0 && (
-                                            <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
+                                        {data.has_deduction && (
+                                            <div className="flex justify-between">
                                                 <span className="text-red-500 italic">
-                                                    Potongan Sortiran (
-                                                    {
-                                                        data.sorting_deduction_percentage
-                                                    }
-                                                    %)
+                                                    Potongan{' '}
+                                                    {data.deduction_percentage}%
                                                 </span>
                                                 <span className="font-bold text-red-500">
                                                     -
                                                     {formatKgTrimmed(
-                                                        calc.sortingDeductionWeight,
+                                                        calc.deductionWeight,
                                                     )}
                                                 </span>
                                             </div>
                                         )}
-                                    {calc.hasSorting && (
-                                        <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
-                                            <span className="text-muted-foreground italic">
-                                                Total Sortiran
+                                        {calc.hasSorting && (
+                                            <div className="flex justify-between">
+                                                <span className="text-red-500 italic">
+                                                    Sortiran (gross)
+                                                    <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                        dikeluarkan dari kolom
+                                                        sawit
+                                                    </span>
+                                                </span>
+                                                <span className="font-bold text-red-500">
+                                                    -
+                                                    {formatKgTrimmed(
+                                                        calc.sortingWeight,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between">
+                                            <span className="text-emerald-600 italic">
+                                                Netto Bersih
+                                                <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                    dasar harga sawit
+                                                </span>
                                             </span>
                                             <span className="font-bold text-emerald-600">
-                                                +
-                                                {formatRupiah(
-                                                    calc.sortingTotalAmount,
+                                                {formatKgTrimmed(
+                                                    calc.netWeight,
                                                 )}
                                             </span>
                                         </div>
-                                    )}
-                                    <div className="-mx-5 flex justify-between bg-muted/40 px-5 py-2 font-bold">
-                                        <span>Total Kotor</span>
-                                        <span>
-                                            {formatRupiah(
-                                                calc.grossTotalAmount,
-                                            )}
-                                        </span>
                                     </div>
-                                    {data.debt_paid_amount > 0 && (
-                                        <div className="flex justify-between border-b border-sidebar-border/30 pb-2">
-                                            <span className="text-red-600 italic">
-                                                Bayar Hutang
+
+                                    {/* ── NILAI ── */}
+                                    <div className="space-y-1">
+                                        <p className="border-b border-sidebar-border/30 pb-1 text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                                            Nilai
+                                        </p>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground italic">
+                                                Total Sawit
+                                                <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                    netto bersih × harga sawit
+                                                </span>
                                             </span>
-                                            <span className="font-bold text-red-600">
-                                                -
+                                            <span className="font-bold">
                                                 {formatRupiah(
-                                                    data.debt_paid_amount,
+                                                    calc.palmTotalAmount,
                                                 )}
                                             </span>
+                                        </div>
+                                        {calc.hasSorting &&
+                                            data.sorting_deduction_percentage >
+                                                0 && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-red-500 italic">
+                                                        Potongan Sortiran (
+                                                        {
+                                                            data.sorting_deduction_percentage
+                                                        }
+                                                        %)
+                                                        <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                            potongan mutu
+                                                            sortiran
+                                                        </span>
+                                                    </span>
+                                                    <span className="font-bold text-red-500">
+                                                        -
+                                                        {formatKgTrimmed(
+                                                            calc.sortingDeductionWeight,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        {calc.hasSorting && (
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground italic">
+                                                    Total Sortiran
+                                                    <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                        net sortiran × harga
+                                                        sortiran
+                                                    </span>
+                                                </span>
+                                                <span className="font-bold text-emerald-600">
+                                                    +
+                                                    {formatRupiah(
+                                                        calc.sortingTotalAmount,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="-mx-5 flex justify-between bg-muted/40 px-5 py-2 font-bold">
+                                            <span>Total Kotor</span>
+                                            <span>
+                                                {formatRupiah(
+                                                    calc.grossTotalAmount,
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* ── PEMBAYARAN ── */}
+                                    {data.debt_paid_amount > 0 && (
+                                        <div className="space-y-1">
+                                            <p className="border-b border-sidebar-border/30 pb-1 text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                                                Pembayaran
+                                            </p>
+                                            <div className="flex justify-between">
+                                                <span className="text-red-600 italic">
+                                                    Bayar Hutang
+                                                </span>
+                                                <span className="font-bold text-red-600">
+                                                    -
+                                                    {formatRupiah(
+                                                        data.debt_paid_amount,
+                                                    )}
+                                                </span>
+                                            </div>
                                         </div>
                                     )}
 
