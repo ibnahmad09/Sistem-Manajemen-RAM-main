@@ -75,6 +75,10 @@ function Divider() {
     return <div className="my-2 border-b border-dashed border-black" />;
 }
 
+function SolidDivider() {
+    return <div className="my-2 border-b border-solid border-black" />;
+}
+
 function NotaThermal({
     id,
     paper,
@@ -86,6 +90,8 @@ function NotaThermal({
 }) {
     const c = PAPER_CLASSES[paper];
     const pct = transaction.sorting_deduction_percentage ?? 0;
+    // prettier-ignore
+    const showDebt = transaction.previous_debt_amount > 0 || transaction.debt_paid_amount > 0;
 
     return (
         <div
@@ -136,132 +142,172 @@ function NotaThermal({
                 />
             </div>
 
-            <Divider />
+            <SolidDivider />
 
             {/* Weights */}
             {transaction.loads?.length ? (
-                <div className="mb-3 space-y-0.5">
-                    <p className={cn('font-bold', c.heading)}>
-                        RINCIAN MUATAN:
-                    </p>
-                    {transaction.loads.map((load, i) => (
-                        <div
-                            key={load.id}
-                            className={
-                                i > 0
-                                    ? 'mt-1 space-y-0.5 border-t border-dotted border-black pt-1'
-                                    : 'space-y-0.5'
-                            }
-                        >
-                            <p className={cn('font-bold', c.heading)}>
-                                MUATAN #{load.seq_no}
-                            </p>
-                            <Row
-                                label="BRUTO:"
-                                value={formatKg(load.gross_weight)}
-                            />
-                            <Row
-                                label="TARE:"
-                                value={formatKg(load.tare_weight)}
-                            />
-                            {load.has_sorting && (
+                <>
+                    <div className="mb-3 space-y-0.5">
+                        <p className={cn('font-bold', c.heading)}>
+                            RINCIAN MUATAN:
+                        </p>
+                        {transaction.loads.map((load, i) => (
+                            <div
+                                key={load.id}
+                                className={
+                                    i > 0
+                                        ? 'mt-1 space-y-0.5 border-t border-dotted border-black pt-1'
+                                        : 'space-y-0.5'
+                                }
+                            >
+                                <p className={cn('font-bold', c.heading)}>
+                                    MUATAN #{load.seq_no}
+                                </p>
                                 <Row
-                                    label={
-                                        pct > 0
-                                            ? `SORTIRAN ${pct}%:`
-                                            : 'SORTIRAN:'
-                                    }
-                                    value={`-${formatKg(load.sorting_weight)}`}
+                                    label="BRUTO:"
+                                    value={formatKg(load.gross_weight)}
                                 />
-                            )}
-                            <Row
-                                label="NETTO:"
-                                value={formatKg(load.net_weight)}
-                                bold
-                            />
-                        </div>
-                    ))}
-                    {transaction.has_deduction && (
+                                <Row
+                                    label="TARE:"
+                                    value={formatKg(load.tare_weight)}
+                                />
+                                {load.has_sorting && (
+                                    <Row
+                                        label={
+                                            pct > 0
+                                                ? `SORTIRAN ${pct}%:`
+                                                : 'SORTIRAN:'
+                                        }
+                                        value={`-${formatKg(load.sorting_weight)}`}
+                                    />
+                                )}
+                                <Row
+                                    label="NETTO:"
+                                    value={formatKg(load.net_weight)}
+                                    bold
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    <Divider />
+                    <div className="mb-3 space-y-0.5">
+                        <p className={cn('font-bold', c.heading)}>BERAT (KG)</p>
                         <Row
-                            label={`POTONGAN (${transaction.deduction_percentage}%):`}
-                            value={`-${formatKg(transaction.deduction_weight)}`}
+                            label="BRUTO:"
+                            value={formatKg(transaction.gross_weight)}
+                            bold={false}
                         />
-                    )}
-                    <div className="border-t border-dotted border-black pt-1">
                         <Row
-                            label="NETTO BERSIH:"
+                            label="TARE (MOBIL):"
+                            value={formatKg(transaction.tare_weight)}
+                            bold={false}
+                        />
+                        <Row
+                            label="NETTO AWAL:"
+                            value={formatKg(transaction.initial_weight)}
+                            bold={false}
+                        />
+                        {transaction.has_deduction && (
+                            <Row
+                                label={`POTONGAN (${transaction.deduction_percentage}%):`}
+                                value={`-${formatKg(transaction.deduction_weight)}`}
+                                bold={false}
+                            />
+                        )}
+                        {transaction.has_sorting && (
+                            <Row
+                                label={
+                                    pct > 0
+                                        ? `SORTIRAN (${pct}%):`
+                                        : 'SORTIRAN:'
+                                }
+                                value={`-${formatKg(transaction.sorting_weight)}`}
+                                bold={false}
+                            />
+                        )}
+                        <Row
+                            label="NETTO SAWIT:"
                             value={formatKg(transaction.net_weight)}
                             bold
                         />
                     </div>
-                </div>
+                </>
             ) : (
                 <div className="mb-3 space-y-0.5">
+                    <p className={cn('font-bold', c.heading)}>BERAT (KG)</p>
                     <Row
                         label="BRUTO:"
                         value={formatKg(transaction.gross_weight)}
+                        bold={false}
                     />
                     <Row
                         label="TARE (MOBIL):"
                         value={formatKg(transaction.tare_weight)}
+                        bold={false}
                     />
                     <Row
-                        label="NETTO KOTOR:"
+                        label="NETTO AWAL:"
                         value={formatKg(transaction.initial_weight)}
-                        bold
+                        bold={false}
                     />
                     {transaction.has_deduction && (
                         <Row
                             label={`POTONGAN (${transaction.deduction_percentage}%):`}
                             value={`-${formatKg(transaction.deduction_weight)}`}
+                            bold={false}
                         />
                     )}
-                    <div className="border-t border-dotted border-black pt-1">
+                    {transaction.has_sorting && (
                         <Row
-                            label="NETTO BERSIH:"
-                            value={formatKg(transaction.net_weight)}
-                            bold
+                            label={
+                                pct > 0 ? `SORTIRAN (${pct}%):` : 'SORTIRAN:'
+                            }
+                            value={`-${formatKg(transaction.sorting_weight)}`}
+                            bold={false}
                         />
-                    </div>
+                    )}
+                    <Row
+                        label="NETTO SAWIT:"
+                        value={formatKg(transaction.net_weight)}
+                        bold
+                    />
                 </div>
             )}
 
-            <Divider />
+            <SolidDivider />
 
             {/* Prices */}
             <div className="mb-3 space-y-0.5">
+                <p className={cn('font-bold', c.heading)}>HARGA (RP)</p>
                 <Row
-                    label="HARGA/KG:"
+                    label="HARGA SAWIT:"
                     value={new Intl.NumberFormat('id-ID').format(
                         transaction.palm_price_per_kg,
                     )}
+                    bold={false}
                 />
                 <Row
                     label="TOTAL SAWIT:"
                     value={new Intl.NumberFormat('id-ID').format(
                         transaction.palm_total_amount,
                     )}
-                    bold
+                    bold={false}
                 />
                 {transaction.has_sorting && (
                     <>
-                        {pct > 0 && (
-                            <Row
-                                label={`POTONGAN SORTIRAN (${pct}%):`}
-                                value={`-${formatKg(
-                                    transaction.sorting_deduction_weight,
-                                )}`}
-                            />
-                        )}
                         <Row
-                            label={`SORTIRAN (${formatKg(
-                                pct > 0
-                                    ? transaction.sorting_net_weight
-                                    : transaction.sorting_weight,
-                            )}):`}
+                            label="HARGA SORTIRAN:"
+                            value={new Intl.NumberFormat('id-ID').format(
+                                transaction.sorting_price_per_kg,
+                            )}
+                            bold={false}
+                        />
+                        <Row
+                            label="TOTAL SORTIRAN:"
                             value={new Intl.NumberFormat('id-ID').format(
                                 transaction.sorting_total_amount,
                             )}
+                            bold={false}
                         />
                     </>
                 )}
@@ -277,22 +323,24 @@ function NotaThermal({
             </div>
 
             {/* Debt section - only if applicable */}
-            {transaction.debt_paid_amount > 0 && (
+            {showDebt && (
                 <>
-                    <Divider />
+                    <SolidDivider />
                     <div className="mb-3 space-y-0.5">
+                        <p className={cn('font-bold', c.heading)}>HUTANG</p>
                         <Row
                             label="HUTANG SEBELUMNYA:"
                             value={new Intl.NumberFormat('id-ID').format(
                                 transaction.previous_debt_amount,
                             )}
+                            bold={false}
                         />
                         <Row
                             label="BAYAR HUTANG (-):"
                             value={new Intl.NumberFormat('id-ID').format(
                                 transaction.debt_paid_amount,
                             )}
-                            bold
+                            bold={false}
                         />
                         <Row
                             label="SISA HUTANG:"
@@ -303,6 +351,8 @@ function NotaThermal({
                     </div>
                 </>
             )}
+
+            <SolidDivider />
 
             {/* Final Amount */}
             <div
