@@ -53,6 +53,7 @@ function NumberInput({
     required = false,
     className = '',
     error,
+    dataTest,
 }: {
     label: string;
     value: number;
@@ -61,6 +62,7 @@ function NumberInput({
     required?: boolean;
     className?: string;
     error?: string;
+    dataTest?: string;
 }) {
     return (
         <div className="space-y-1.5">
@@ -76,6 +78,7 @@ function NumberInput({
                     onChange(parseNumber(sanitizeCurrencyInput(e.target.value)))
                 }
                 placeholder={placeholder}
+                data-test={dataTest}
                 className={`h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 font-mono text-sm transition outline-none focus:ring-2 focus:ring-primary ${className}`}
             />
             {error && <p className="text-xs text-red-500">{error}</p>}
@@ -290,6 +293,7 @@ export default function WeighingForm({
                                                 setData('debt_paid_amount', 0);
                                                 fetchDebt(e.target.value);
                                             }}
+                                            data-test="weighing-farmer"
                                             className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm transition outline-none focus:ring-2 focus:ring-primary"
                                         >
                                             <option value="">
@@ -404,6 +408,7 @@ export default function WeighingForm({
                                                                 gross_weight: v,
                                                             })
                                                         }
+                                                        dataTest={`bruto-${i}`}
                                                         required
                                                         className="text-lg font-bold"
                                                     />
@@ -415,6 +420,7 @@ export default function WeighingForm({
                                                                 tare_weight: v,
                                                             })
                                                         }
+                                                        dataTest={`tara-${i}`}
                                                         required
                                                         className="text-lg font-bold"
                                                     />
@@ -1080,6 +1086,7 @@ export default function WeighingForm({
                                         type="button"
                                         onClick={() => submit('finalize')}
                                         disabled={submitDisabled}
+                                        data-test="weighing-finalize"
                                         className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-black text-primary-foreground shadow transition hover:bg-primary/90 disabled:opacity-50"
                                     >
                                         <Save className="h-4 w-4" />
@@ -1091,6 +1098,7 @@ export default function WeighingForm({
                                         type="button"
                                         onClick={() => submit('save_draft')}
                                         disabled={processing || !data.farmer_id}
+                                        data-test="weighing-save-draft"
                                         className="flex w-full items-center justify-center gap-2 rounded-lg border border-sidebar-border/50 py-2.5 text-sm font-bold text-foreground transition hover:bg-muted/30 disabled:opacity-50"
                                     >
                                         <FileText className="h-4 w-4" />

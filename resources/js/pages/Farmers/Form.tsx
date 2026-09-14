@@ -82,6 +82,7 @@ export default function FarmerForm({ farmer }: Props) {
                                     setData('name', e.target.value)
                                 }
                                 placeholder="Masukkan nama lengkap..."
+                                data-test="farmer-name"
                                 className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm transition outline-none focus:ring-2 focus:ring-primary"
                             />
                             {errors.name && (
@@ -103,6 +104,7 @@ export default function FarmerForm({ farmer }: Props) {
                                     setData('phone', e.target.value)
                                 }
                                 placeholder="0812xxxx..."
+                                data-test="farmer-phone"
                                 className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm transition outline-none focus:ring-2 focus:ring-primary"
                             />
                             {errors.phone && (
@@ -124,6 +126,7 @@ export default function FarmerForm({ farmer }: Props) {
                                 }
                                 placeholder="Alamat lengkap petani..."
                                 rows={3}
+                                data-test="farmer-address"
                                 className="w-full resize-none rounded-lg border border-sidebar-border/50 bg-background px-3 py-2 text-sm transition outline-none focus:ring-2 focus:ring-primary"
                             />
                             {errors.address && (
@@ -176,6 +179,7 @@ export default function FarmerForm({ farmer }: Props) {
                             <button
                                 type="submit"
                                 disabled={processing}
+                                data-test="farmer-submit"
                                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground shadow transition hover:bg-primary/90 disabled:opacity-60"
                             >
                                 <Save className="h-4 w-4" />

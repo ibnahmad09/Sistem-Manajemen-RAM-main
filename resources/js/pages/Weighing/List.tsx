@@ -104,6 +104,7 @@ export default function WeighingList({
                             {activeDrafts.map((draft) => (
                                 <div
                                     key={draft.id}
+                                    data-test="draft-card"
                                     className="flex items-center justify-between gap-3 rounded-lg border border-yellow-200/70 bg-card p-3 dark:border-yellow-900/30"
                                 >
                                     <div className="min-w-0">
@@ -129,6 +130,7 @@ export default function WeighingList({
                                             href={weighingRoute.create({
                                                 query: { draft: draft.id },
                                             })}
+                                            data-test="draft-resume"
                                             className="inline-flex h-8 items-center rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
                                         >
                                             Lanjutkan
@@ -147,6 +149,7 @@ export default function WeighingList({
                                                     );
                                                 }
                                             }}
+                                            data-test="draft-cancel"
                                             className="inline-flex h-8 items-center rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium text-muted-foreground transition hover:border-red-400/60 hover:text-red-500"
                                         >
                                             Batal

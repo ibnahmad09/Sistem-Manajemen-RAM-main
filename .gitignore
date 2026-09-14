@@ -11,6 +11,22 @@
 /resources/js/routes
 /resources/js/wayfinder
 /vendor
+/test-results
+/playwright-report
+/blob-report
+/tests/e2e/.auth
+/database/e2e.sqlite
+/database/e2e-empty.sqlite
+
+# E2E Playwright — local only, jangan pernah di-commit/push
+/.env.e2e
+/.env.e2e-empty
+/playwright.config.ts
+/playwright.empty.config.ts
+/tests/e2e
+/database/seeders/E2eSeeder.php
+/database/seeders/E2eEmptyStateSeeder.php
+/.github/workflows/e2e.yml
 .DS_Store
 .env
 .env.backup

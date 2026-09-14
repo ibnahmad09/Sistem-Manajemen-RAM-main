@@ -11,6 +11,8 @@ interface CurrencyInputProps {
     error?: string;
     /** When false, decimal values are dropped from display (e.g. "1750.00" -> "1.750"). Defaults to true. */
     allowDecimals?: boolean;
+    /** data-test attribute for E2E selectors. */
+    dataTest?: string;
 }
 
 export default function CurrencyInput({
@@ -22,6 +24,7 @@ export default function CurrencyInput({
     label,
     error,
     allowDecimals = true,
+    dataTest,
 }: CurrencyInputProps) {
     const raw = useMemo(() => {
         if (typeof value === 'number') {
@@ -52,6 +55,7 @@ export default function CurrencyInput({
                     onChange(sanitizeCurrencyInput(e.target.value))
                 }
                 placeholder={placeholder}
+                data-test={dataTest}
                 className={`h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 font-mono text-sm transition outline-none focus:ring-2 focus:ring-primary ${className}`}
             />
             {error && <p className="text-xs text-red-500">{error}</p>}

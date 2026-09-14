@@ -67,6 +67,7 @@ export default function FarmersIndex({ farmers }: Props) {
                         placeholder="Cari nama atau alamat..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        data-test="farmer-search"
                         className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background pr-4 pl-10 text-sm outline-none focus:ring-2 focus:ring-primary"
                     />
                 </div>
@@ -171,6 +172,7 @@ export default function FarmersIndex({ farmers }: Props) {
                                                     href={farmersRoute.edit({
                                                         farmer: farmer.id,
                                                     })}
+                                                    data-test="farmer-edit"
                                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
                                                 >
                                                     <Pencil className="h-3.5 w-3.5" />
@@ -179,6 +181,7 @@ export default function FarmersIndex({ farmers }: Props) {
                                                     onClick={() =>
                                                         handleDelete(farmer)
                                                     }
+                                                    data-test="farmer-delete"
                                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sidebar-border/50 text-muted-foreground transition-colors hover:border-red-500/50 hover:text-red-600"
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />

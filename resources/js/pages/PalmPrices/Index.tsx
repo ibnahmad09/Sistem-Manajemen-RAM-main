@@ -93,6 +93,7 @@ export default function PalmPricesIndex({ prices }: Props) {
                     </div>
                     <button
                         onClick={openAddModal}
+                        data-test="palm-price-add"
                         className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow transition hover:bg-primary/90"
                     >
                         <Plus className="h-4 w-4" />
@@ -275,6 +276,7 @@ export default function PalmPricesIndex({ prices }: Props) {
                                     }
                                     required
                                     placeholder="0"
+                                    dataTest="palm-price-value"
                                 />
                                 {errors.price_per_kg && (
                                     <p className="text-xs text-red-500">
@@ -298,6 +300,7 @@ export default function PalmPricesIndex({ prices }: Props) {
                                         )
                                     }
                                     required
+                                    data-test="palm-price-date"
                                     className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                                 />
                             </div>
@@ -313,6 +316,7 @@ export default function PalmPricesIndex({ prices }: Props) {
                                         setData('note', e.target.value)
                                     }
                                     placeholder="Keterangan harga ini..."
+                                    data-test="palm-price-note"
                                     className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                                 />
                             </div>
@@ -328,6 +332,7 @@ export default function PalmPricesIndex({ prices }: Props) {
                                 <button
                                     type="submit"
                                     disabled={processing}
+                                    data-test="palm-price-save"
                                     className="flex-1 rounded-lg bg-primary py-2 text-sm font-bold text-primary-foreground shadow transition hover:bg-primary/90 disabled:opacity-60"
                                 >
                                     {processing
