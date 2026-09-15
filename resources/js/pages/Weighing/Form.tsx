@@ -1,7 +1,15 @@
+import {
+    Combobox,
+    ComboboxButton,
+    ComboboxInput,
+    ComboboxOption,
+    ComboboxOptions,
+} from '@headlessui/react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     Calculator,
+    ChevronsUpDown,
     FileText,
     Plus,
     Save,
@@ -13,6 +21,7 @@ import CurrencyInput from '@/components/currency-input';
 import AppLayout from '@/layouts/app-layout';
 import {
     calculateLoads,
+    cn,
     formatCurrencyDisplay,
     formatKgTrimmed,
     formatRupiah,
@@ -98,6 +107,7 @@ export default function WeighingForm({
 }: Props) {
     const [currentDebt, setCurrentDebt] = useState(0);
     const [loadingDebt, setLoadingDebt] = useState(false);
+    const [farmerQuery, setFarmerQuery] = useState('');
     const actionRef = useRef<'save_draft' | 'finalize'>('finalize');
 
     const form = useForm(
@@ -146,6 +156,20 @@ export default function WeighingForm({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const filteredFarmers = useMemo(() => {
+        const q = farmerQuery.trim().toLowerCase();
+
+        if (!q) {
+            return farmers;
+        }
+
+        return farmers.filter(
+            (f) =>
+                f.name.toLowerCase().includes(q) ||
+                (f.address ?? '').toLowerCase().includes(q),
+        );
+    }, [farmers, farmerQuery]);
 
     const calc = useMemo(
         () =>
@@ -332,31 +356,81 @@ export default function WeighingForm({
                                                 *
                                             </span>
                                         </label>
-                                        <select
+                                        <Combobox
                                             value={data.farmer_id}
-                                            onChange={(e) => {
-                                                setData(
-                                                    'farmer_id',
-                                                    e.target.value,
-                                                );
+                                            onChange={(value) => {
+                                                const farmerId = value ?? '';
+
+                                                setData('farmer_id', farmerId);
                                                 setData('debt_paid_amount', 0);
-                                                fetchDebt(e.target.value);
+                                                fetchDebt(farmerId);
+                                                setFarmerQuery('');
                                             }}
-                                            data-test="weighing-farmer"
-                                            className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm transition outline-none focus:ring-2 focus:ring-primary"
                                         >
-                                            <option value="">
-                                                -- Pilih Petani --
-                                            </option>
-                                            {farmers.map((f) => (
-                                                <option key={f.id} value={f.id}>
-                                                    {f.name}
-                                                    {f.address
-                                                        ? ` — ${f.address}`
-                                                        : ''}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            <div className="relative">
+                                                <ComboboxInput
+                                                    data-test="weighing-farmer"
+                                                    displayValue={(id: string) => {
+                                                        const f = farmers.find(
+                                                            (x) =>
+                                                                String(x.id) ===
+                                                                String(id),
+                                                        );
+
+                                                        return f
+                                                            ? f.address
+                                                                ? `${f.name} — ${f.address}`
+                                                                : f.name
+                                                            : '';
+                                                    }}
+                                                    onChange={(e) =>
+                                                        setFarmerQuery(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="-- Pilih Petani --"
+                                                    className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm transition outline-none focus:ring-2 focus:ring-primary"
+                                                />
+                                                <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                                    <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                                                </ComboboxButton>
+                                                <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-sidebar-border/50 bg-popover p-1 shadow-lg">
+                                                    {filteredFarmers.length ===
+                                                    0 ? (
+                                                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                                                            Tidak ada petani
+                                                            ditemukan
+                                                        </div>
+                                                    ) : (
+                                                        filteredFarmers.map(
+                                                            (f) => (
+                                                                <ComboboxOption
+                                                                    key={f.id}
+                                                                    value={String(
+                                                                        f.id,
+                                                                    )}
+                                                                    className={({
+                                                                        focus,
+                                                                    }) =>
+                                                                        cn(
+                                                                            'flex cursor-pointer items-center rounded-md px-3 py-2 text-sm',
+                                                                            focus
+                                                                                ? 'bg-primary text-primary-foreground'
+                                                                                : 'text-foreground',
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {f.name}
+                                                                    {f.address
+                                                                        ? ` — ${f.address}`
+                                                                        : ''}
+                                                                </ComboboxOption>
+                                                            ),
+                                                        )
+                                                    )}
+                                                </ComboboxOptions>
+                                            </div>
+                                        </Combobox>
                                         {errors.farmer_id && (
                                             <p className="text-xs text-red-500">
                                                 {errors.farmer_id}
