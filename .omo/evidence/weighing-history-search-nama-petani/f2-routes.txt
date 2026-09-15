@@ -1,0 +1,32 @@
+F2 — Route & Wayfinder Verification
+====================================
+Plan: .omo/plans/weighing-history-search-nama-petani.md
+Date: 2026-09-15
+
+CHECK 1: php artisan route:list --path=weighing
+------------------------------------------------
+GET|HEAD weighing weighing.index › WeighingTransactionController@ind…
+POST weighing weighing.store › WeighingTransactionController@sto…
+GET|HEAD weighing/create weighing.create › WeighingTransactionContro…
+GET|HEAD weighing/success weighing.success › WeighingTransactionCont…
+GET|HEAD weighing/{weighing} weighing.show › WeighingTransactionCont…
+PUT|PATCH weighing/{weighing} weighing.update › WeighingTransactionCo…
+POST weighing/{weighing}/cancel weighing.cancel › WeighingTransa…
+GET|HEAD weighing/{weighing}/edit weighing.edit › WeighingTransactio…
+POST weighing/{weighing}/finalize weighing.finalize › WeighingTr…
+
+Showing [9] routes
+
+=> PASS: GET|HEAD weighing/{weighing}/edit weighing.edit terdaftar.
+   Route ordering OK: weighing/success (line 4) sebelum weighing/{weighing} (line 5).
+
+CHECK 2: grep 'export const edit' resources/js/routes/weighing/index.ts
+---------------------------------------------------------------------
+resources/js/routes/weighing/index.ts:411:
+  export const edit = (args: { weighing: number | { id: number } } | [weighing: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+
+=> PASS: Wayfinder TS route `edit` ada di line 411.
+
+RESULT
+------
+VERDICT: APPROVE

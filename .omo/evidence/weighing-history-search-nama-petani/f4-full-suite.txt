@@ -1,0 +1,35 @@
+# F4 — Full Suite Regression (Final Verification Wave)
+
+Date: 2026-09-15
+Command: `php artisan test --compact`
+Working dir: /Users/assistmac2026/Documents/code/Sistem-Manajemen-RAM-main
+
+## Raw output
+
+{"tool":"pest","result":"passed","tests":135,"passed":135,"assertions":743,"duration_ms":13031}
+
+## Summary
+
+- Result: PASSED
+- Tests: 135 / 135 passed
+- Assertions: 743
+- Failures: 0
+- Errors: 0
+- Duration: ~13.0 s
+- Exit code: 0
+
+## Coverage notes
+
+- Suite includes WeighingRevisionVoidTest (8 tests, 71 assertions) — revision/void
+  feature tests covering: edit page render, revisi final → nota baru + arsip lama +
+  reversal cash/debt, revisi tanpa revision_reason ditolak, revisi non-latest ditolak,
+  void final → cancelled + reversal + balance terkoreksi, void draft tanpa reversal,
+  void non-latest → 422, dan regression revisi debt_paid_amount sama → balance benar.
+- Refactor `finalizeDraft` → `createFinancialEntries` + `reverseTransactionFinancials`
+  dikunci oleh test existing (WeighingTransactionTest, CashFlowTest, FarmerDebtBindingTest,
+  DebtExceedsGrossTest) — semua hijau.
+- Feature tests memakai RefreshDatabase otomatis dari Pest.php.
+
+## Verdict
+
+VERDICT: APPROVE

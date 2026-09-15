@@ -47,5 +47,6 @@ export function buildInitialWeighingFormState({
         payment_method: (draft ? draft.payment_method : 'cash') as
             | 'cash'
             | 'transfer',
+        revision_reason: '',
     };
 }

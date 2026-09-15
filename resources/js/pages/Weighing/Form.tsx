@@ -42,6 +42,7 @@ interface Props {
     deductionConfig: DeductionConfig | null;
     roundingMode: string;
     draft?: WeighingTransaction | null;
+    transaction?: WeighingTransaction | null;
     activeDrafts?: WeighingTransaction[];
 }
 
@@ -92,6 +93,7 @@ export default function WeighingForm({
     deductionConfig,
     roundingMode,
     draft = null,
+    transaction = null,
     activeDrafts = [],
 }: Props) {
     const [currentDebt, setCurrentDebt] = useState(0);
@@ -99,7 +101,11 @@ export default function WeighingForm({
     const actionRef = useRef<'save_draft' | 'finalize'>('finalize');
 
     const form = useForm(
-        buildInitialWeighingFormState({ draft, latestPrice, deductionConfig }),
+        buildInitialWeighingFormState({
+            draft: transaction ?? draft,
+            latestPrice,
+            deductionConfig,
+        }),
     );
 
     useEffect(() => {
@@ -132,8 +138,11 @@ export default function WeighingForm({
     };
 
     useEffect(() => {
-        if (draft) {
-            setTimeout(() => fetchDebt(String(draft.farmer_id)), 0);
+        if (draft || transaction) {
+            setTimeout(
+                () => fetchDebt(String((transaction ?? draft)?.farmer_id)),
+                0,
+            );
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -160,6 +169,7 @@ export default function WeighingForm({
         (d) => d.farmer_id === Number(data.farmer_id),
     );
     const isEditingDraft = !!draft;
+    const isRevising = !!transaction;
     const showDraftConflict =
         !isEditingDraft &&
         !!draftOfSelectedFarmer &&
@@ -190,7 +200,9 @@ export default function WeighingForm({
     const submit = (action: 'save_draft' | 'finalize') => {
         actionRef.current = action;
 
-        if (draft) {
+        if (transaction) {
+            put(weighingRoute.update(transaction.id).url);
+        } else if (draft) {
             put(weighingRoute.update(draft.id).url);
         } else {
             post(weighingRoute.store().url);
@@ -214,9 +226,11 @@ export default function WeighingForm({
                     <div>
                         <h1 className="flex items-center gap-2 text-xl font-bold text-foreground">
                             <Scale className="h-5 w-5 text-primary" />
-                            {isEditingDraft
-                                ? 'Lanjutkan Draft'
-                                : 'Input Timbangan Baru'}
+                            {isRevising
+                                ? `Revisi Nota #${transaction?.nota_number}`
+                                : isEditingDraft
+                                  ? 'Lanjutkan Draft'
+                                  : 'Input Timbangan Baru'}
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             Harga aktif:{' '}
@@ -240,6 +254,41 @@ export default function WeighingForm({
                             <b>Selesai &amp; Cetak</b> untuk menyelesaikan dan
                             mencetak nota.
                         </p>
+                    </div>
+                )}
+
+                {isRevising && (
+                    <div className="mb-6 flex items-start gap-3 rounded-xl border border-purple-200 bg-purple-50 p-4 dark:border-purple-900/40 dark:bg-purple-900/10">
+                        <FileText className="mt-0.5 h-4 w-4 shrink-0 text-purple-600 dark:text-purple-400" />
+                        <p className="text-sm text-purple-800 dark:text-purple-200">
+                            Merevisi nota <b>#{transaction?.nota_number}</b>{' '}
+                            milik <b>{transaction?.farmer_name_snapshot}</b>.
+                            Perubahan akan membuat nota <b>BARU</b> dan
+                            mengarsipkan nota lama.
+                        </p>
+                    </div>
+                )}
+
+                {isRevising && (
+                    <div className="mb-6 space-y-1.5">
+                        <label className="text-sm font-semibold text-foreground">
+                            Alasan Revisi{' '}
+                            <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                            value={data.revision_reason ?? ''}
+                            onChange={(e) =>
+                                setData('revision_reason', e.target.value)
+                            }
+                            placeholder="Jelaskan alasan revisi..."
+                            required
+                            className="h-20 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        {errors.revision_reason && (
+                            <p className="text-xs text-red-500">
+                                {errors.revision_reason}
+                            </p>
+                        )}
                     </div>
                 )}
 
@@ -1092,18 +1141,24 @@ export default function WeighingForm({
                                         <Save className="h-4 w-4" />
                                         {processing
                                             ? 'Menyimpan...'
-                                            : 'SELESAI & CETAK'}
+                                            : isRevising
+                                              ? 'Revisi & Cetak Nota Baru'
+                                              : 'SELESAI & CETAK'}
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => submit('save_draft')}
-                                        disabled={processing || !data.farmer_id}
-                                        data-test="weighing-save-draft"
-                                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-sidebar-border/50 py-2.5 text-sm font-bold text-foreground transition hover:bg-muted/30 disabled:opacity-50"
-                                    >
-                                        <FileText className="h-4 w-4" />
-                                        SIMPAN DRAFT
-                                    </button>
+                                    {!isRevising && (
+                                        <button
+                                            type="button"
+                                            onClick={() => submit('save_draft')}
+                                            disabled={
+                                                processing || !data.farmer_id
+                                            }
+                                            data-test="weighing-save-draft"
+                                            className="flex w-full items-center justify-center gap-2 rounded-lg border border-sidebar-border/50 py-2.5 text-sm font-bold text-foreground transition hover:bg-muted/30 disabled:opacity-50"
+                                        >
+                                            <FileText className="h-4 w-4" />
+                                            SIMPAN DRAFT
+                                        </button>
+                                    )}
                                     {!data.farmer_id || hasInvalidLoad ? (
                                         <p className="text-center text-[10px] text-muted-foreground italic">
                                             {!data.farmer_id

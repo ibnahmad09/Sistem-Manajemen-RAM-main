@@ -25,9 +25,11 @@ class WeighingTransactionController extends Controller
             ->where('status', '!=', 'draft')
             ->orderBy('transaction_date', 'desc');
 
-        // Filter by farmer
-        if ($request->has('farmer_id')) {
-            $query->where('farmer_id', $request->farmer_id);
+        // Filter by farmer name search
+        if ($request->filled('farmer_name')) {
+            $query->whereHas('farmer', function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->farmer_name.'%');
+            });
         }
 
         // Filter by date range
@@ -53,14 +55,11 @@ class WeighingTransactionController extends Controller
             ->orderBy('updated_at', 'desc')
             ->get();
 
-        $farmers = Farmer::orderBy('name', 'asc')->get(['id', 'name']);
-
         return Inertia::render('Weighing/List', [
             'transactions' => $transactions,
             'summary' => $summary,
             'activeDrafts' => $activeDrafts,
-            'farmers' => $farmers,
-            'filters' => $request->only(['farmer_id', 'date_start', 'date_end']),
+            'filters' => $request->only(['farmer_name', 'date_start', 'date_end']),
         ]);
     }
 
@@ -95,6 +94,31 @@ class WeighingTransactionController extends Controller
             'roundingMode' => 'none', // TODO: Get from settings
             'draft' => $draft,
             'activeDrafts' => $activeDrafts,
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(WeighingTransaction $weighing)
+    {
+        abort_unless($weighing->is_latest_version && in_array($weighing->status, ['printed', 'revised']), 404);
+
+        $weighing->load(['farmer', 'loads']);
+
+        $farmers = Farmer::where('status', 'active')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $latestPrice = PalmPrice::getLatestPrice();
+        $deductionConfig = DeductionConfig::getActiveConfig();
+
+        return Inertia::render('Weighing/Form', [
+            'transaction' => $weighing,
+            'farmers' => $farmers,
+            'latestPrice' => $latestPrice,
+            'deductionConfig' => $deductionConfig,
+            'roundingMode' => 'none', // TODO: Get from settings
         ]);
     }
 
@@ -186,9 +210,59 @@ class WeighingTransactionController extends Controller
             $weighing = WeighingTransaction::query()->whereKey($weighing->id)->lockForUpdate()->firstOrFail();
 
             if ($weighing->status !== 'draft') {
-                DB::rollBack();
+                abort_unless($weighing->is_latest_version && in_array($weighing->status, ['printed', 'revised']), 422);
 
-                return back()->withErrors(['error' => 'Hanya transaksi draft yang bisa diubah.']);
+                $request->validate(['revision_reason' => 'required|string|max:255']);
+
+                $action = 'finalize';
+
+                $currentDebt = $farmer->calculateDebtBalance();
+                $calculation = $this->calculate($validated, $loads, $currentDebt, $action);
+
+                if (($validated['debt_paid_amount'] ?? 0) > $calculation['gross_total_amount']) {
+                    throw new \InvalidArgumentException('Pembayaran hutang tidak boleh melebihi total bruto.');
+                }
+
+                // Archive old transaction
+                $weighing->update([
+                    'is_latest_version' => false,
+                    'status' => 'revised',
+                    'cashier_balance_deducted' => false,
+                ]);
+
+                // Create new revision row
+                $txn = new WeighingTransaction;
+                $this->fillTransactionData($txn, $farmer, $user, $validated, $loads, $calculation, $currentDebt, 'finalize');
+                $txn->status = 'printed';
+                $txn->printed_at = now();
+                $txn->is_latest_version = true;
+                $txn->cashier_balance_deducted = true;
+                $txn->revision_of = $weighing->id;
+                $txn->revision_number = $weighing->revision_number + 1;
+                $txn->revision_reason = $request->revision_reason;
+                $txn->save();
+
+                $this->storeLoads($txn, $loads, $calculation);
+
+                // Reverse old transaction's financials BEFORE generating nota
+                $this->reverseTransactionFinancials($weighing, $user);
+
+                // Generate nota number
+                $today = new \DateTime($validated['transaction_date']);
+                $seq = WeighingTransaction::whereDate('transaction_date', $today->format('Y-m-d'))
+                    ->where('status', '!=', 'draft')
+                    ->where('id', '!=', $txn->id)
+                    ->count();
+                $nota = WeighingTransaction::generateNotaNumber($today, $seq + 1);
+                $txn->update(['nota_number' => $nota]);
+
+                // Create financial entries for the new transaction
+                $this->createFinancialEntries($txn, $farmer, $user, $validated);
+
+                DB::commit();
+
+                return redirect()->route('weighing.success', ['nota' => $txn->nota_number])
+                    ->with('success', 'Revisi transaksi berhasil disimpan.');
             }
 
             $currentDebt = $farmer->calculateDebtBalance();
@@ -304,18 +378,40 @@ class WeighingTransactionController extends Controller
     }
 
     /**
-     * Cancel an abandoned draft.
+     * Cancel a weighing transaction — draft or final (void).
      */
-    public function cancel(WeighingTransaction $weighing)
+    public function cancel(Request $request, WeighingTransaction $weighing)
     {
-        abort_unless($weighing->status === 'draft', 422, 'Hanya transaksi draft yang bisa dibatalkan.');
+        $user = $request->user();
 
-        $weighing->update([
-            'status' => 'cancelled',
-            'is_latest_version' => false,
-        ]);
+        if ($weighing->status === 'draft') {
+            $weighing->update([
+                'status' => 'cancelled',
+                'is_latest_version' => false,
+            ]);
 
-        return back()->with('success', 'Draft dibatalkan.');
+            return back()->with('success', 'Draft dibatalkan.');
+        }
+
+        abort_unless($weighing->is_latest_version && in_array($weighing->status, ['printed', 'revised']), 422, 'Hanya transaksi final terbaru yang bisa dibatalkan.');
+
+        DB::beginTransaction();
+        try {
+            $this->reverseTransactionFinancials($weighing, $user);
+            $weighing->update([
+                'status' => 'cancelled',
+                'is_latest_version' => false,
+                'cashier_balance_deducted' => false,
+            ]);
+            $weighing->farmer->syncBalance();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->withErrors(['error' => 'Gagal membatalkan transaksi: '.$e->getMessage()]);
+        }
+
+        return back()->with('success', 'Transaksi dibatalkan. Saldo kasir & petani dikoreksi otomatis.');
     }
 
     /**
@@ -550,6 +646,14 @@ class WeighingTransactionController extends Controller
             'cashier_balance_deducted' => true,
         ]);
 
+        $this->createFinancialEntries($transaction, $farmer, $user, $validated);
+    }
+
+    /**
+     * Create financial entries (FarmerDebt + CashierCashEntry) for a finalized transaction.
+     */
+    private function createFinancialEntries(WeighingTransaction $transaction, Farmer $farmer, $user, array $validated): void
+    {
         if (($validated['debt_paid_amount'] ?? 0) > 0) {
             FarmerDebt::create([
                 'farmer_id' => $farmer->id,
@@ -557,7 +661,7 @@ class WeighingTransactionController extends Controller
                 'type' => 'payment',
                 'amount' => $validated['debt_paid_amount'],
                 'debt_date' => $validated['transaction_date'],
-                'description' => "Pelunasan via Nota #{$notaNumber}",
+                'description' => "Pelunasan via Nota #{$transaction->nota_number}",
                 'transaction_id' => $transaction->id,
                 'created_by' => $user->id,
             ]);
@@ -570,12 +674,47 @@ class WeighingTransactionController extends Controller
             'amount' => $transaction->final_paid_amount_rounded,
             'payment_method' => $validated['payment_method'],
             'category' => 'bayar_petani',
-            'description' => "Pembayaran Nota #{$notaNumber} - {$farmer->name}",
+            'description' => "Pembayaran Nota #{$transaction->nota_number} - {$farmer->name}",
             'transaction_id' => $transaction->id,
             'entry_date' => $validated['transaction_date'],
             'created_by' => $user->id,
         ]);
 
-        $farmer->syncBalance();
+        Farmer::find($transaction->farmer_id)->syncBalance();
+    }
+
+    /**
+     * Reverse financial entries for a transaction being revised.
+     * Creates negative CashierCashEntry and FarmerDebt entries to undo the original.
+     */
+    private function reverseTransactionFinancials(WeighingTransaction $transaction, $user): void
+    {
+        CashierCashEntry::create([
+            'cashier_id' => $transaction->cashier_id,
+            'cashier_name_snapshot' => $transaction->cashier_name_snapshot,
+            'type' => 'farmer_payment',
+            'amount' => -$transaction->final_paid_amount_rounded,
+            'payment_method' => $transaction->payment_method,
+            'category' => 'bayar_petani',
+            'description' => "Pembatalan Nota #{$transaction->nota_number} - {$transaction->farmer_name_snapshot}",
+            'transaction_id' => $transaction->id,
+            'entry_date' => $transaction->transaction_date,
+            'created_by' => $user->id,
+        ]);
+
+        if ($transaction->debt_paid_amount > 0) {
+            FarmerDebt::create([
+                'farmer_id' => $transaction->farmer_id,
+                'farmer_name_snapshot' => $transaction->farmer_name_snapshot,
+                'type' => 'payment',
+                'amount' => -$transaction->debt_paid_amount,
+                'debt_date' => $transaction->transaction_date,
+                'description' => "Pembatalan pelunasan via Nota #{$transaction->nota_number}",
+                'transaction_id' => $transaction->id,
+                'created_by' => $user->id,
+            ]);
+        }
+
+        Farmer::find($transaction->farmer_id)->syncBalance();
     }
 }

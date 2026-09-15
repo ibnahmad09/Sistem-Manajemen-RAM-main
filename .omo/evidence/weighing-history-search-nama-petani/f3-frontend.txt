@@ -1,0 +1,21 @@
+F3 — Frontend Gate (Final Verification Wave)
+=============================================
+Plan: .omo/plans/weighing-history-search-nama-petani.md
+Date: 2026-09-15
+Command: npm run types:check && npm run lint
+
+1) npm run types:check
+-----------------------
+> types:check
+> tsc --noEmit
+
+EXIT_CODE=0
+
+2) npm run lint
+---------------
+> lint
+> eslint . --fix
+
+EXIT_CODE=0
+
+VERDICT: APPROVE

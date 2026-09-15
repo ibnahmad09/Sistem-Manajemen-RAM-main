@@ -56,7 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('weighing.success');
 
         Route::resource('weighing', WeighingTransactionController::class)
-            ->except(['edit', 'destroy']);
+            ->except(['destroy']);
 
         Route::post('weighing/{weighing}/finalize', [WeighingTransactionController::class, 'finalize'])
             ->name('weighing.finalize');

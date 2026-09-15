@@ -18,7 +18,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Props {
     transactions: PaginatedData<WeighingTransaction & { farmer: Farmer }>;
-    filters: { farmer_id?: string; date_start?: string; date_end?: string };
+    filters: { farmer_name?: string; date_start?: string; date_end?: string };
     summary: { total_bruto: number; total_neto: number };
     activeDrafts: (WeighingTransaction & {
         farmer?: Farmer;
@@ -49,18 +49,32 @@ export default function WeighingList({
 }: Props) {
     const [dateStart, setDateStart] = useState(filters.date_start ?? '');
     const [dateEnd, setDateEnd] = useState(filters.date_end ?? '');
+    const [farmerName, setFarmerName] = useState(filters.farmer_name ?? '');
 
     const applyFilter = () => {
-        router.get(
-            weighingRoute.index().url,
-            { date_start: dateStart, date_end: dateEnd },
-            { preserveState: true },
-        );
+        const params: Record<string, string> = {};
+
+        if (dateStart) {
+            params.date_start = dateStart;
+        }
+
+        if (dateEnd) {
+            params.date_end = dateEnd;
+        }
+
+        if (farmerName) {
+            params.farmer_name = farmerName;
+        }
+
+        router.get(weighingRoute.index().url, params, {
+            preserveState: true,
+        });
     };
 
     const clearFilter = () => {
         setDateStart('');
         setDateEnd('');
+        setFarmerName('');
         router.get(weighingRoute.index().url, {}, { preserveState: false });
     };
 
@@ -189,6 +203,21 @@ export default function WeighingList({
                             className="h-9 rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                         />
                     </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-muted-foreground">
+                            Petani
+                        </label>
+                        <input
+                            type="text"
+                            value={farmerName}
+                            onChange={(e) => setFarmerName(e.target.value)}
+                            onKeyDown={(e) =>
+                                e.key === 'Enter' && applyFilter()
+                            }
+                            placeholder="Cari nama petani..."
+                            className="h-9 rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                    </div>
                     <button
                         onClick={applyFilter}
                         className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
@@ -196,7 +225,9 @@ export default function WeighingList({
                         <Search className="h-3.5 w-3.5" />
                         Cari
                     </button>
-                    {(filters.date_start || filters.date_end) && (
+                    {(filters.date_start ||
+                        filters.date_end ||
+                        filters.farmer_name) && (
                         <button
                             onClick={clearFilter}
                             className="h-9 rounded-lg border border-sidebar-border/50 px-4 text-sm text-muted-foreground transition hover:text-foreground"
@@ -346,18 +377,44 @@ export default function WeighingList({
                                                 </span>
                                             </td>
                                             <td className="px-5 py-3 text-center">
-                                                <Link
-                                                    href={
-                                                        weighingRoute.success({
-                                                            query: {
-                                                                nota: tx.nota_number,
-                                                            },
-                                                        }).url
-                                                    }
-                                                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium transition-colors hover:border-primary/50 hover:text-primary"
-                                                >
-                                                    Nota
-                                                </Link>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Link
+                                                        href={weighingRoute.edit(tx.id)}
+                                                        data-test="tx-edit"
+                                                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium transition-colors hover:border-primary/50 hover:text-primary"
+                                                    >
+                                                        Edit
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (
+                                                                confirm(
+                                                                    `Batalkan nota ${tx.nota_number} untuk ${tx.farmer_name_snapshot}? Saldo kasir dan petani akan dikoreksi otomatis.`,
+                                                                )
+                                                            ) {
+                                                                router.post(
+                                                                    weighingRoute.cancel(tx.id).url,
+                                                                );
+                                                            }
+                                                        }}
+                                                        data-test="tx-void"
+                                                        className="inline-flex h-8 items-center rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium text-muted-foreground transition hover:border-red-400/60 hover:text-red-500"
+                                                    >
+                                                        Hapus
+                                                    </button>
+                                                    <Link
+                                                        href={
+                                                            weighingRoute.success({
+                                                                query: {
+                                                                    nota: tx.nota_number,
+                                                                },
+                                                            }).url
+                                                        }
+                                                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium transition-colors hover:border-primary/50 hover:text-primary"
+                                                    >
+                                                        Nota
+                                                    </Link>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

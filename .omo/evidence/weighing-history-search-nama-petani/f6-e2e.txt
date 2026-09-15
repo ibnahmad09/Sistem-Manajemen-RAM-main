@@ -1,0 +1,75 @@
+# F6 — E2E Verification (Final Wave)
+
+Date: 2026-09-15
+Plan: .omo/plans/weighing-history-search-nama-petani.md
+Gate: F6 (approval gate keenam — terakhir)
+
+## Setup
+
+- Build: `npm run build` fresh (public/build 17:23, source List.tsx 16:57 / Form.tsx 16:43) — built assets verified to include new features:
+  - `List-9YLTWv21.js` contains `tx-edit`/`tx-void` + "Cari nama petani" (farmer_name search)
+  - `Form-DCxXDYNb.js` contains `revision_reason`/"Alasan Revisi"
+- Seed: `php artisan --env=e2e migrate:fresh --seed --seeder=E2eSeeder --force` ✅
+- Seed: `php artisan --env=e2e-empty migrate:fresh --seed --seeder=E2eEmptyStateSeeder --force` ✅
+- Servers: `php artisan --env=e2e serve` :8010 (PID 50794) + `--env=e2e-empty serve` :8011 (PID 50795) — both /login → 200
+- Playwright: `reuseExistingServer` reused both servers; `channel: 'chrome'` (macOS 12 workaround)
+
+## Main suite (:8010) — `npx playwright test`
+
+Running 27 tests using 1 worker
+
+  ✓  1 [setup] authenticate as super-admin (3.3s)
+  ✓  2 [setup] authenticate as cashier (2.7s)
+  ✓  3 [setup] authenticate as owner (2.1s)
+  ✓  4 auth J1: login super admin diarahkan ke Dashboard Super Admin (2.6s)
+  ✓  5 auth J1: login kasir diarahkan ke Dashboard Kasir (2.2s)
+  ✓  6 auth J1: login owner diarahkan ke Dashboard Owner (2.2s)
+  ✓  7 auth J1: password salah menampilkan error kredensial (1.8s)
+  ✓  8 auth J1: akun nonaktif ditolak dan dikembalikan ke login (2.1s)
+  ✓  9 auth J1: logout dari menu sidebar kembali ke halaman login (3.0s)
+  ✓ 10 draft J3: simpan draft muncul sebagai kartu di daftar timbangan (4.0s)
+  ✓ 11 draft J3: lanjutkan draft lalu finalisasi jadi nota (5.4s)
+  ✓ 12 draft J3: batal draft menghapus kartu dari daftar (4.3s)
+  ✓ 13 farmers J4: daftar petani menampilkan data dan pencarian berfungsi (2.3s)
+  ✓ 14 farmers J4: validasi form petani - nama wajib diisi (2.4s)
+  ✓ 15 farmers J4: tambah petani baru (2.9s)
+  ✓ 16 farmers J4: edit data petani (3.5s)
+  ✓ 17 farmers J4: hapus petani via dialog konfirmasi (3.9s)
+  ✓ 18 palm-prices J5: daftar harga menampilkan 3 riwayat dan harga aktif terbaru (2.2s)
+  ✓ 19 palm-prices J5: validasi harga - nominal wajib diisi (2.9s)
+  ✓ 20 palm-prices J5: tambah harga sawit baru (2.9s)
+  ✓ 21 palm-prices J5: edit harga sawit (3.5s)
+  ✓ 22 palm-prices J5: hapus harga sawit via dialog konfirmasi (3.4s)
+  ✓ 23 weighing J2: timbang muatan baru dan finalisasi jadi nota (3.5s)
+  ✓ 24 weighing J2: validasi input salah - tombol finalisasi nonaktif dan pesan error (2.6s)
+  ✓ 25 weighing J2: draft aktif memunculkan peringatan untuk petani yang sama (3.8s)
+  ✓ 26 weighing J2: revisi nota final menghasilkan nota baru (5.4s)   ← NEW
+  ✓ 27 weighing J2: void nota final menghapus baris dari daftar (5.2s) ← NEW
+
+  27 passed (1.6m)
+
+## Empty-state suite (:8011) — `npx playwright test --config=playwright.empty.config.ts`
+
+Running 6 tests using 1 worker
+
+  ✓  1 [setup] authenticate as super-admin on empty DB (3.2s)
+  ✓  2 S1: halaman transaksi menampilkan kondisi kosong (2.8s)
+  ✓  3 S1: form timbangan tanpa petani dan harga (2.6s)
+  ✓  4 S1: halaman petani menampilkan kondisi kosong (2.1s)
+  ✓  5 S1: halaman harga menampilkan kondisi kosong (1.9s)
+  ✓  6 S1: laporan menampilkan kondisi belum digenerate (2.1s)
+
+  6 passed (25.0s)
+
+## Cleanup
+
+- Servers killed (PID 50794, 50795); `lsof -i :8010 -i :8011` → ports clean
+- Temp logs /tmp/e2e-8010.log, /tmp/e2e-8011.log removed
+
+## Result
+
+- Main (:8010): 27/27 PASS (3 setup + 24 chromium, incl. 2 new: revisi + void)
+- Empty (:8011): 6/6 PASS
+- Total: 33/33 PASS
+
+VERDICT: APPROVE

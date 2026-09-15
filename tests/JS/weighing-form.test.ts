@@ -152,4 +152,18 @@ describe('buildInitialWeighingFormState', () => {
         expect(withDraft.payment_method).toBe('transfer');
         expect(withoutDraft.payment_method).toBe('cash');
     });
+
+    it('defaults revision_reason to empty string', () => {
+        const withDraft = buildInitialWeighingFormState({
+            draft: draftWithDebt,
+            ...baseOptions,
+        });
+        const withoutDraft = buildInitialWeighingFormState({
+            draft: null,
+            ...baseOptions,
+        });
+
+        expect(withDraft.revision_reason).toBe('');
+        expect(withoutDraft.revision_reason).toBe('');
+    });
 });
