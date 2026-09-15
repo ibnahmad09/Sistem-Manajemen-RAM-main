@@ -370,7 +370,9 @@ export default function WeighingForm({
                                             <div className="relative">
                                                 <ComboboxInput
                                                     data-test="weighing-farmer"
-                                                    displayValue={(id: string) => {
+                                                    displayValue={(
+                                                        id: string,
+                                                    ) => {
                                                         const f = farmers.find(
                                                             (x) =>
                                                                 String(x.id) ===

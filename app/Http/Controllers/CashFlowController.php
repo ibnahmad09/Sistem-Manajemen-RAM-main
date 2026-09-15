@@ -38,33 +38,44 @@ class CashFlowController extends Controller
 
         $entries = $query->orderBy('entry_date', 'desc')->paginate(50);
 
-        // Calculate balance
-        $cashInQuery = CashierCashEntry::where('type', 'cash_in');
-        $cashOutQuery = CashierCashEntry::whereIn('type', ['expense', 'farmer_payment']);
+        // Scope totals to the selected range — or "today" when no range is
+        // set.  Each new day therefore starts from Rp0 while the table below
+        // keeps the full history visible.
+        $scoped = function (array $types) use ($user, $request) {
+            return CashierCashEntry::whereIn('type', $types)
+                ->when(
+                    $user->role !== 'super_admin',
+                    fn ($q) => $q->where('cashier_id', $user->id),
+                )
+                ->when(
+                    $request->has('date_start') || $request->has('date_end'),
+                    fn ($q) => $q
+                        ->when(
+                            $request->has('date_start'),
+                            fn ($q2) => $q2->whereDate('entry_date', '>=', $request->date_start),
+                        )
+                        ->when(
+                            $request->has('date_end'),
+                            fn ($q2) => $q2->whereDate('entry_date', '<=', $request->date_end),
+                        ),
+                    fn ($q) => $q->whereDate('entry_date', now()->toDateString()),
+                );
+        };
 
-        if ($user->role !== 'super_admin') {
-            $cashInQuery->where('cashier_id', $user->id);
-            $cashOutQuery->where('cashier_id', $user->id);
-        }
-
-        $cashIn = $cashInQuery->sum('amount');
-        $cashOut = $cashOutQuery->sum('amount');
+        $cashIn = $scoped(['cash_in'])->sum('amount');
+        $cashOut = $scoped(['expense', 'farmer_payment'])->sum('amount');
         $balance = $cashIn - $cashOut;
 
-        // Summary by category
-        $summaryQuery = CashierCashEntry::select(
-            'category',
-            'type',
-            DB::raw('SUM(amount) as total'),
-            DB::raw('COUNT(*) as count')
-        )
-            ->groupBy('category', 'type');
-
-        if ($user->role !== 'super_admin') {
-            $summaryQuery->where('cashier_id', $user->id);
-        }
-
-        $summary = $summaryQuery->get();
+        // Summary by category — same cashier + date scope as the balance.
+        $summary = $scoped(['cash_in', 'expense', 'farmer_payment'])
+            ->select(
+                'category',
+                'type',
+                DB::raw('SUM(amount) as total'),
+                DB::raw('COUNT(*) as count'),
+            )
+            ->groupBy('category', 'type')
+            ->get();
 
         return Inertia::render('CashFlow/Index', [
             'entries' => $entries,

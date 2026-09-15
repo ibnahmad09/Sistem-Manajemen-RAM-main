@@ -1,5 +1,13 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { DollarSign, Minus, Pencil, Plus, Trash2, X } from 'lucide-react';
+import {
+    DollarSign,
+    Minus,
+    Pencil,
+    Plus,
+    Search,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
 import CurrencyInput from '@/components/currency-input';
 import AppLayout from '@/layouts/app-layout';
@@ -29,10 +37,12 @@ interface Props {
         CashierCashEntry & { cashier: { id: number; name: string } }
     >;
     balance: { cash_in: number; cash_out: number; balance: number };
-    filters: Record<string, string>;
+    filters: { date_start?: string; date_end?: string; type?: string };
 }
 
-export default function CashFlowIndex({ entries, balance }: Props) {
+export default function CashFlowIndex({ entries, balance, filters }: Props) {
+    const [dateStart, setDateStart] = useState(filters.date_start ?? '');
+    const [dateEnd, setDateEnd] = useState(filters.date_end ?? '');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [entryType, setEntryType] = useState<
         'cash_in' | 'expense' | 'farmer_payment'
@@ -62,6 +72,23 @@ export default function CashFlowIndex({ entries, balance }: Props) {
             entry_date: new Date().toISOString().split('T')[0],
         });
         setIsModalOpen(true);
+    };
+
+    const hasFilter = !!(filters.date_start || filters.date_end);
+
+    const periodLabel = hasFilter
+        ? `${filters.date_start ?? '...'} s/d ${filters.date_end ?? '...'}`
+        : 'Hari ini';
+
+    const runFilter = () => {
+        router.get(
+            cashFlowRoute.index().url,
+            {
+                ...(dateStart ? { date_start: dateStart } : {}),
+                ...(dateEnd ? { date_end: dateEnd } : {}),
+            },
+            { preserveState: true },
+        );
     };
 
     const openEditModal = (entry: CashierCashEntry) => {
@@ -126,6 +153,7 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                     <div className="flex gap-2">
                         <button
                             onClick={() => openModal('cash_in')}
+                            data-test="cash-flow-add-cash-in"
                             className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-700"
                         >
                             <Plus className="h-4 w-4" />
@@ -133,6 +161,7 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                         </button>
                         <button
                             onClick={() => openModal('expense')}
+                            data-test="cash-flow-add-expense"
                             className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-red-700"
                         >
                             <Minus className="h-4 w-4" />
@@ -141,52 +170,106 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                     </div>
                 </div>
 
-                {/* Balance Cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/40 dark:bg-emerald-900/10">
-                        <p className="text-xs font-bold tracking-widest text-emerald-700 uppercase dark:text-emerald-400">
-                            Total Kas Masuk
-                        </p>
-                        <p className="mt-1 font-mono text-2xl font-black text-emerald-800 dark:text-emerald-300">
-                            {formatRupiah(balance.cash_in)}
-                        </p>
+                {/* Filter */}
+                <div
+                    className="flex flex-wrap items-end gap-3 rounded-xl border border-sidebar-border/50 bg-card p-4 print:hidden"
+                    data-test="cash-flow-filter"
+                >
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-muted-foreground">
+                            Dari Tanggal
+                        </label>
+                        <input
+                            type="date"
+                            value={dateStart}
+                            onChange={(e) => setDateStart(e.target.value)}
+                            data-test="cash-flow-date-start"
+                            className="h-9 rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
                     </div>
-                    <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/10">
-                        <p className="text-xs font-bold tracking-widest text-red-700 uppercase dark:text-red-400">
-                            Total Kas Keluar
-                        </p>
-                        <p className="mt-1 font-mono text-2xl font-black text-red-800 dark:text-red-300">
-                            {formatRupiah(balance.cash_out)}
-                        </p>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-muted-foreground">
+                            Sampai
+                        </label>
+                        <input
+                            type="date"
+                            value={dateEnd}
+                            onChange={(e) => setDateEnd(e.target.value)}
+                            data-test="cash-flow-date-end"
+                            className="h-9 rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
                     </div>
-                    <div
-                        className={cn(
-                            'rounded-xl border p-4',
-                            balance.balance >= 0
-                                ? 'border-blue-200 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10'
-                                : 'border-red-300 bg-red-100 dark:border-red-900/40 dark:bg-red-900/20',
-                        )}
+                    <button
+                        onClick={runFilter}
+                        data-test="cash-flow-apply-filter"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                     >
-                        <p
+                        <Search className="h-3.5 w-3.5" />
+                        Terapkan
+                    </button>
+                </div>
+
+                {/* Balance Cards */}
+                <div>
+                    <p
+                        className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                        data-test="cash-flow-period"
+                    >
+                        Periode: {periodLabel}
+                    </p>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/40 dark:bg-emerald-900/10">
+                            <p className="text-xs font-bold tracking-widest text-emerald-700 uppercase dark:text-emerald-400">
+                                Total Kas Masuk
+                            </p>
+                            <p
+                                className="mt-1 font-mono text-2xl font-black text-emerald-800 dark:text-emerald-300"
+                                data-test="cash-flow-cash-in"
+                            >
+                                {formatRupiah(balance.cash_in)}
+                            </p>
+                        </div>
+                        <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/40 dark:bg-red-900/10">
+                            <p className="text-xs font-bold tracking-widest text-red-700 uppercase dark:text-red-400">
+                                Total Kas Keluar
+                            </p>
+                            <p
+                                className="mt-1 font-mono text-2xl font-black text-red-800 dark:text-red-300"
+                                data-test="cash-flow-cash-out"
+                            >
+                                {formatRupiah(balance.cash_out)}
+                            </p>
+                        </div>
+                        <div
                             className={cn(
-                                'text-xs font-bold tracking-widest uppercase',
+                                'rounded-xl border p-4',
                                 balance.balance >= 0
-                                    ? 'text-blue-700 dark:text-blue-400'
-                                    : 'text-red-700 dark:text-red-400',
+                                    ? 'border-blue-200 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10'
+                                    : 'border-red-300 bg-red-100 dark:border-red-900/40 dark:bg-red-900/20',
                             )}
                         >
-                            Saldo Bersih
-                        </p>
-                        <p
-                            className={cn(
-                                'mt-1 font-mono text-2xl font-black',
-                                balance.balance >= 0
-                                    ? 'text-blue-800 dark:text-blue-300'
-                                    : 'text-red-800 dark:text-red-300',
-                            )}
-                        >
-                            {formatRupiah(balance.balance)}
-                        </p>
+                            <p
+                                className={cn(
+                                    'text-xs font-bold tracking-widest uppercase',
+                                    balance.balance >= 0
+                                        ? 'text-blue-700 dark:text-blue-400'
+                                        : 'text-red-700 dark:text-red-400',
+                                )}
+                            >
+                                Saldo Bersih
+                            </p>
+                            <p
+                                className={cn(
+                                    'mt-1 font-mono text-2xl font-black',
+                                    balance.balance >= 0
+                                        ? 'text-blue-800 dark:text-blue-300'
+                                        : 'text-red-800 dark:text-red-300',
+                                )}
+                                data-test="cash-flow-balance"
+                            >
+                                {formatRupiah(balance.balance)}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -352,7 +435,10 @@ export default function CashFlowIndex({ entries, balance }: Props) {
             {/* ── Add Entry Modal ── */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-md rounded-2xl bg-card shadow-2xl">
+                    <div
+                        className="w-full max-w-md rounded-2xl bg-card shadow-2xl"
+                        data-test="cash-flow-modal"
+                    >
                         <div className="flex items-center justify-between border-b border-sidebar-border/30 px-6 py-4">
                             <div className="flex items-center gap-2">
                                 <DollarSign
@@ -424,6 +510,7 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                                     onChange={(raw) => setData('amount', raw)}
                                     required
                                     placeholder="0"
+                                    dataTest="cash-flow-amount"
                                 />
                                 {errors.amount && (
                                     <p className="text-xs text-red-500">
@@ -491,6 +578,7 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                                         setData('description', e.target.value)
                                     }
                                     placeholder="Contoh: Modal awal shift pagi..."
+                                    data-test="cash-flow-description"
                                     className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary"
                                 />
                             </div>
@@ -506,6 +594,7 @@ export default function CashFlowIndex({ entries, balance }: Props) {
                                 <button
                                     type="submit"
                                     disabled={processing}
+                                    data-test="cash-flow-submit"
                                     className={cn(
                                         'flex-1 rounded-lg py-2 text-sm font-bold text-white shadow transition disabled:opacity-60',
                                         entryType === 'cash_in'

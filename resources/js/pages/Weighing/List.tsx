@@ -379,7 +379,9 @@ export default function WeighingList({
                                             <td className="px-5 py-3 text-center">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <Link
-                                                        href={weighingRoute.edit(tx.id)}
+                                                        href={weighingRoute.edit(
+                                                            tx.id,
+                                                        )}
                                                         data-test="tx-edit"
                                                         className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium transition-colors hover:border-primary/50 hover:text-primary"
                                                     >
@@ -393,7 +395,9 @@ export default function WeighingList({
                                                                 )
                                                             ) {
                                                                 router.post(
-                                                                    weighingRoute.cancel(tx.id).url,
+                                                                    weighingRoute.cancel(
+                                                                        tx.id,
+                                                                    ).url,
                                                                 );
                                                             }
                                                         }}
@@ -404,11 +408,13 @@ export default function WeighingList({
                                                     </button>
                                                     <Link
                                                         href={
-                                                            weighingRoute.success({
-                                                                query: {
-                                                                    nota: tx.nota_number,
+                                                            weighingRoute.success(
+                                                                {
+                                                                    query: {
+                                                                        nota: tx.nota_number,
+                                                                    },
                                                                 },
-                                                            }).url
+                                                            ).url
                                                         }
                                                         className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sidebar-border/50 px-3 text-xs font-medium transition-colors hover:border-primary/50 hover:text-primary"
                                                     >
