@@ -1082,4 +1082,52 @@ describe('PrinterService reconnect dedupe & teardown', () => {
 
         expect(mockPrinterInstances).toHaveLength(2);
     });
+
+    it('rejects with a clear error when getDevices is unavailable and no user gesture', async () => {
+        (globalThis as any).localStorage = createLocalStorageStub({
+            paired_printers: JSON.stringify(paired),
+            active_printer_id: 'printer-1',
+        });
+        setupNavigator(null);
+
+        const service = await importService();
+        const p = service.reconnect('printer-1');
+
+        await expect(p).rejects.toThrow(
+            'Browser tidak mendukung auto-reconnect. Pilih printer untuk menyambungkan.',
+        );
+        expect(service.currentStatus).toBe('disconnected');
+        expect(mockPrinterInstances).toHaveLength(0);
+    });
+
+    it('falls back to connect() when getDevices is unavailable but a user gesture is active', async () => {
+        (globalThis as any).localStorage = createLocalStorageStub({
+            paired_printers: JSON.stringify(paired),
+            active_printer_id: 'printer-1',
+        });
+        Object.defineProperty(globalThis, 'navigator', {
+            value: {
+                ...originalNavigator,
+                bluetooth: {},
+                userActivation: { isActive: true },
+            },
+            configurable: true,
+            writable: true,
+        });
+
+        const service = await importService();
+
+        vi.useFakeTimers();
+        const p = service.reconnect('printer-1');
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(mockPrinterInstances).toHaveLength(1);
+        const instance = mockPrinterInstances.at(-1)!;
+        expect(instance.connect).toHaveBeenCalled();
+
+        instance.emit('connected', connectedDevice);
+        await p;
+
+        expect(service.currentStatus).toBe('connected');
+    });
 });

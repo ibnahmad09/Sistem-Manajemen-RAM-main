@@ -46,17 +46,20 @@ class WeighingTransactionController extends Controller
             'total_neto' => (float) (clone $query)->sum('initial_weight'),
         ];
 
-        $transactions = $query->paginate(20);
+        $transactions = $query->paginate(20)->withQueryString();
 
         $activeDrafts = WeighingTransaction::activeDraft()
             ->with(['farmer', 'loads'])
             ->orderBy('updated_at', 'desc')
             ->get();
 
+        $farmers = Farmer::orderBy('name', 'asc')->get(['id', 'name']);
+
         return Inertia::render('Weighing/List', [
             'transactions' => $transactions,
             'summary' => $summary,
             'activeDrafts' => $activeDrafts,
+            'farmers' => $farmers,
             'filters' => $request->only(['farmer_id', 'date_start', 'date_end']),
         ]);
     }

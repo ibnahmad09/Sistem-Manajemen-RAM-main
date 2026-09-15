@@ -259,7 +259,17 @@ class PrinterService {
         }
 
         if (!navigator.bluetooth.getDevices) {
-            return;
+            // Windows tidak punya getDevices() (persistent permissions backend
+            // tidak pernah aktif di sana). Auto-reconnect silent tidak mungkin;
+            // kalau dipanggil dari klik user (pilih printer di dropdown),
+            // fallback ke alur chooser. Kalau dari page-load, gagal jujur.
+            if (navigator.userActivation?.isActive === true) {
+                return this.connect();
+            }
+
+            throw new Error(
+                'Browser tidak mendukung auto-reconnect. Pilih printer untuk menyambungkan.',
+            );
         }
 
         const device = this.pairedDevices.find((d) => d.id === deviceId);
