@@ -1,0 +1,86 @@
+F1: Plan Compliance Audit — fix-dashboard-inflated-stats
+========================================================
+Auditor: opencode agent (big-pickle)
+Date: 2026-09-15
+Plan: .omo/plans/fix-dashboard-inflated-stats.md
+
+Check 1: is_latest_version in DashboardController.php (expect 8)
+----------------------------------------------------------------
+Command: grep -n "is_latest_version" app/Http/Controllers/DashboardController.php
+Raw output:
+25:            ->where('is_latest_version', true)
+36:            ->where('is_latest_version', true)
+48:            ->where('is_latest_version', true)
+99:            ->where('is_latest_version', true)
+138:            ->where('is_latest_version', true)
+145:        $totalScope = WeighingTransaction::where('is_latest_version', true)
+152:        $totalTransactions = (clone $totalScope)->where('is_latest_version', true)->count();
+162:            ->where('is_latest_version', true)
+
+Result: 8 occurrences ✓
+
+Breakdown (verified by reading method bodies):
+  4 PRE-EXISTING (untouched):
+    L36  recentTransactions superAdmin
+    L99  recentTransactions cashier
+    L152 totalTransactions owner
+    L162 topFarmers owner
+  4 NEW (added by todos 1+2):
+    L25  superAdmin → $todayScope (after whereDate, before status != draft) ✓
+    L48  superAdmin → $monthlyRevenue (after transaction_date >=, before status != draft) ✓
+    L138 owner → $monthlyRevenue (after transaction_date >=, before status != draft) ✓
+    L145 owner → $totalScope (first filter in new chain) ✓
+
+New filters in correct chains:
+  superAdmin() → $todayScope + $monthlyRevenue — CORRECT ✓
+  owner() → $monthlyRevenue + $totalScope — CORRECT ✓
+
+PASS ✓
+
+
+Check 2: Test count in DashboardTest.php (expect 9)
+----------------------------------------------------
+Command: grep -cE "^\s*(test|it)\(" tests/Feature/DashboardTest.php
+Raw output: 9
+
+Result: 9 occurrences (5 existing + 4 new) ✓
+PASS ✓
+
+
+Check 3: All 4 new test names present
+--------------------------------------
+Command: grep -n "mengecualikan" tests/Feature/DashboardTest.php
+Raw output:
+126:test('super admin dashboard mengecualikan transaksi yang telah direvisi dari statistik hari ini', function () {
+160:test('super admin dashboard mengecualikan transaksi yang dibatalkan dari statistik hari ini', function () {
+182:test('owner dashboard mengecualikan transaksi yang direvisi dari total dan laporan bulanan', function () {
+205:test('owner dashboard mengecualikan transaksi yang dibatalkan dari total', function () {
+
+T-a: "super admin ... mengecualikan ... direvisi" ✓
+T-b: "super admin ... mengecualikan ... dibatalkan" ✓
+T-c: "owner ... mengecualikan ... direvisi" ✓
+T-d: "owner ... mengecualikan ... dibatalkan" ✓
+PASS ✓
+
+
+Check 4: No scope creep (git diff --stat)
+------------------------------------------
+Command: git diff --stat
+Raw output:
+ .omo/boulder.json                            |  24 ++++++-
+ app/Http/Controllers/DashboardController.php |   6 +-
+ tests/Feature/DashboardTest.php              | 101 +++++++++++++++++++++++++++
+ 3 files changed, 128 insertions(+), 3 deletions(-)
+
+Source files changed: DashboardController.php + DashboardTest.php ONLY ✓
+.boulder.json is .omo/ artifact (allowed) ✓
+No changes to: cashier(), ReportsController, frontend, WeighingTransactionController, migrations ✓
+PASS ✓
+
+
+Verdict: APPROVE
+=================
+All 4 checks pass. Plan deliverables are correctly installed:
+  - 4 new is_latest_version filters in correct query chains (superAdmin: $todayScope + $monthlyRevenue; owner: $monthlyRevenue + $totalScope)
+  - 4 regression tests appended (T-a through T-d)
+  - No scope creep — only 2 source files modified

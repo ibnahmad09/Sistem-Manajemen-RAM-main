@@ -1,0 +1,119 @@
+# F3 — Manual QA (Browser)
+
+Date: 2026-09-15
+Plan: .omo/plans/fix-dashboard-inflated-stats.md
+Gate: F3 (approval gate — real browser verification)
+
+## Setup
+
+- Seed: `php artisan --env=e2e migrate:fresh --seed --seeder=E2eSeeder --force` ✅
+- Server: `php artisan --env=e2e serve --host=127.0.0.1 --port=8010` (PID 64268)
+- Browser: agent-browser (system Chrome via AGENT_BROWSER_EXECUTABLE_PATH, macOS 12 x86_64)
+- Credentials: admin@sisawit.com / password (super_admin), owner@sisawit.com / password (owner)
+
+## Scenario 1: Create + Finalize Weighing
+
+- Logged in as super admin
+- Navigated to Input Timbangan (/weighing/create)
+- Selected farmer: Budi Santoso (id=1)
+- Bruto: 1000 kg, Tara: 100 kg → Net: 855 kg × Rp 1.750 = Rp 1.496.250
+- Finalized → created HND-20260915-0001
+- **Dashboard (super admin) after first transaction:**
+  - TRANSAKSI HARI INI: 1
+  - TIMBANGAN KOTOR HARI INI: 900 kg
+  - TIMBANGAN BERSIH HARI INI: 855 kg
+  - REVENUE HARI INI: Rp 1.496.250
+
+## Scenario 2: Revise Nota → Revenue Must NOT Double
+
+- Revise HND-20260915-0001 (Budi Santoso):
+  - Revision reason: "Koreksi berat bruto muatan"
+  - Changed bruto: 1000 → 1100 kg
+  - New calculation: (1100 − 100) × 95% × Rp 1.750 = Rp 1.662.500
+  - Finalized → created HND-20260915-0002
+- **DB state after revision:**
+  - id=1 HND-20260915-0001: status=revised, is_latest_version=false
+  - id=2 HND-20260915-0002: status=printed, is_latest_version=true
+- **Dashboard (super admin) after revision:**
+  - TRANSAKSI HARI INI: 1 ← CORRECT (not 2)
+  - TIMBANGAN KOTOR HARI INI: 1.000 kg ← CORRECT (new value only)
+  - TIMBANGAN BERSIH HARI INI: 950 kg ← CORRECT (new value only)
+  - REVENUE HARI INI: Rp 1.662.500 ← CORRECT (new value only, NOT 3.158.750)
+- ✅ Revenue did NOT double. Only the latest version (is_latest_version=true) is counted.
+
+## Scenario 3: Cancel Nota → Revenue Drops
+
+- Created second transaction (Siti Aminah, id=2):
+  - Bruto: 1000 kg, Tara: 100 kg → Rp 1.496.250
+  - Finalized → created HND-20260915-0003
+  - Dashboard showed: 2 transaksi, Rp 3.158.750
+- Cancelled HND-20260915-0003 via Riwayat Timbangan → tx-void → confirm dialog
+- **DB state after cancel:**
+  - id=3 HND-20260915-0003: status=cancelled, is_latest_version=false
+- **Dashboard (super admin) after cancel:**
+  - TRANSAKSI HARI INI: 1 ← CORRECT (cancelled excluded)
+  - REVENUE HARI INI: Rp 1.662.500 ← CORRECT (cancelled excluded, back to pre-cancel value)
+- ✅ Cancelled nota excluded from statistics.
+
+## Scenario 4: Owner Dashboard Consistency
+
+- Logged out, logged in as owner (owner@sisawit.com)
+- **Owner dashboard (all-time):**
+  - TOTAL REVENUE: Rp 1.662.500 ← CORRECT (only latest valid nota)
+  - TOTAL DIBAYARKAN: Rp 1.662.500
+  - TOTAL TRANSAKSI: 1 ← CORRECT (only 1 valid latest version)
+  - TIMBANGAN KOTOR: 1.000 kg
+  - TIMBANGAN BERSIH: 950 kg
+  - TOTAL PIUTANG: Rp 0
+- **Laporan Bulanan (owner):**
+  - 2026-09: 1×, Rp 1.662.500, Rp 1.662.500 ← CORRECT
+- **Top Petani (owner):**
+  - Budi Santoso: 1 transaksi, Rp 1.662.500 ← CORRECT
+- ✅ Owner dashboard consistent with super admin — no double count, excludes cancelled.
+
+## Scenario 5: Super Admin Monthly Revenue Chart
+
+- Re-logged in as super admin
+- Dashboard "Revenue 6 Bulan Terakhir": 2026-09 → Rp 1.662.500
+- ✅ Monthly chart matches the latest valid nota, not the inflated sum.
+
+## Numbers Summary
+
+| Scenario | Metric | Expected | Actual | Status |
+|----------|--------|----------|--------|--------|
+| After 1st txn | Revenue Hari Ini | Rp 1.496.250 | Rp 1.496.250 | ✅ |
+| After revision | Revenue Hari Ini | Rp 1.662.500 (not 3.158.750) | Rp 1.662.500 | ✅ |
+| After revision | Transaksi Hari Ini | 1 (not 2) | 1 | ✅ |
+| After cancel | Revenue Hari Ini | Rp 1.662.500 (not 3.158.750) | Rp 1.662.500 | ✅ |
+| After cancel | Transaksi Hari Ini | 1 | 1 | ✅ |
+| Owner dashboard | Total Revenue | Rp 1.662.500 | Rp 1.662.500 | ✅ |
+| Owner dashboard | Total Transaksi | 1 | 1 | ✅ |
+| Owner Laporan Bulanan | Revenue September | Rp 1.662.500 | Rp 1.662.500 | ✅ |
+| Admin Monthly Chart | Revenue September | Rp 1.662.500 | Rp 1.662.500 | ✅ |
+
+## Screenshots
+
+1. `.omo/evidence/fix-dashboard-inflated-stats/f3-superadmin-after-revision.png`
+   - Super admin dashboard showing TRANSAKSI HARI INI = 1, REVENUE HARI INI = Rp 1.662.500
+2. `.omo/evidence/fix-dashboard-inflated-stats/f3-owner-dashboard.png`
+   - Owner dashboard showing TOTAL REVENUE = Rp 1.662.500, TOTAL TRANSAKSI = 1
+
+## Bug Hypothesis Verification
+
+If the `is_latest_version` filter were MISSING (the original bug), the dashboard would have shown:
+- After revision: 2 transaksi, Rp 3.158.750 (1.496.250 + 1.662.500) — DOUBLE COUNTED
+- After cancel: still showing cancelled nota revenue
+
+Actual behavior: all 9 scenarios passed. The bug is fixed.
+
+## Cleanup
+
+- Browser closed (agent-browser close --all)
+- Server stopped (kill PID 64268, lsof -i :8010 → clean)
+
+## VERDICT: APPROVE
+
+The bug is FIXED in the real browser. Both super admin and owner dashboards correctly:
+1. Count only the latest version (is_latest_version=true) — no double-counting after revision
+2. Exclude cancelled transactions (status=cancelled) from all statistics
+3. Show consistent numbers across all stat cards, monthly chart, and top farmers

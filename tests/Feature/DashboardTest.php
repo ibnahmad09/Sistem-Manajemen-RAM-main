@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\WeighingTransaction;
 
 test('guests are redirected to the login page', function () {
     $response = $this->get(route('dashboard'));
@@ -120,4 +121,104 @@ test('owner dashboard shows all-time timbangan kotor and bersih weight excluding
             ->component('Dashboard/Owner')
             ->where('stats.totalTimbanganKotor', fn ($value) => $value == 1200.0)
             ->where('stats.totalTimbanganBersih', fn ($value) => $value == 1164.0));
+});
+
+test('super admin dashboard mengecualikan transaksi yang telah direvisi dari statistik hari ini', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer) + ['action' => 'finalize']);
+
+    $old = WeighingTransaction::first();
+
+    $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+    $this->actingAs($superAdmin)
+        ->get(route('dashboard.super-admin'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Dashboard/SuperAdmin')
+            ->where('stats.totalTransactionsToday', 1)
+            ->where('stats.totalRevenueToday', fn ($v) => $v == WeighingTransaction::where('is_latest_version', true)->value('gross_total_amount')));
+
+    $this->actingAs($cashier)->put(route('weighing.update', $old), weighingFormData($farmer) + ['revision_reason' => 'Koreksi berat muatan']);
+
+    $old->refresh();
+
+    expect($old->status)->toBe('revised')
+        ->and($old->is_latest_version)->toBeFalse();
+
+    $this->actingAs($superAdmin)
+        ->get(route('dashboard.super-admin'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Dashboard/SuperAdmin')
+            ->where('stats.totalTransactionsToday', 1)
+            ->where('stats.totalRevenueToday', fn ($v) => $v == WeighingTransaction::where('is_latest_version', true)->value('gross_total_amount')));
+});
+
+test('super admin dashboard mengecualikan transaksi yang dibatalkan dari statistik hari ini', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer) + ['action' => 'finalize']);
+
+    $tx = WeighingTransaction::first();
+
+    $this->actingAs($cashier)->post(route('weighing.cancel', $tx));
+
+    $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+    $this->actingAs($superAdmin)
+        ->get(route('dashboard.super-admin'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Dashboard/SuperAdmin')
+            ->where('stats.totalTransactionsToday', 0)
+            ->where('stats.totalRevenueToday', fn ($v) => $v == 0)
+            ->where('stats.timbanganKotorToday', fn ($v) => $v == 0.0));
+});
+
+test('owner dashboard mengecualikan transaksi yang direvisi dari total dan laporan bulanan', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer) + ['action' => 'finalize']);
+
+    $old = WeighingTransaction::first();
+
+    $this->actingAs($cashier)->put(route('weighing.update', $old), weighingFormData($farmer) + ['revision_reason' => 'Koreksi berat muatan']);
+
+    $owner = User::factory()->create(['role' => 'owner']);
+
+    $this->actingAs($owner)
+        ->get(route('dashboard.owner'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Dashboard/Owner')
+            ->where('stats.totalTransactions', 1)
+            ->where('stats.totalRevenue', fn ($v) => $v == WeighingTransaction::where('is_latest_version', true)->value('gross_total_amount'))
+            ->where('stats.totalTimbanganKotor', fn ($v) => $v == 800.0)
+            ->where('monthlyRevenue.0.revenue', fn ($v) => $v == WeighingTransaction::where('is_latest_version', true)->value('gross_total_amount')));
+});
+
+test('owner dashboard mengecualikan transaksi yang dibatalkan dari total', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer) + ['action' => 'finalize']);
+
+    $tx = WeighingTransaction::first();
+
+    $this->actingAs($cashier)->post(route('weighing.cancel', $tx));
+
+    $owner = User::factory()->create(['role' => 'owner']);
+
+    $this->actingAs($owner)
+        ->get(route('dashboard.owner'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Dashboard/Owner')
+            ->where('stats.totalRevenue', fn ($v) => $v == 0)
+            ->where('stats.totalTransactions', 0));
 });

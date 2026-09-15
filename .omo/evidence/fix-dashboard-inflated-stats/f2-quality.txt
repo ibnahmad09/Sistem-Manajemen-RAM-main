@@ -1,0 +1,108 @@
+F2 — Code Quality Review
+========================
+Reviewer: Independent (automated)
+Date: 2026-09-15
+Plan: .omo/plans/fix-dashboard-inflated-stats.md (section "Final verification wave F2")
+
+CHECK 1: Pint formatting
+-------------------------
+Command: vendor/bin/pint --dirty --format agent
+Raw output: {"tool":"pint","result":"passed"}
+Result: PASS
+
+CHECK 2: Full test suite
+-------------------------
+Command: php artisan test --compact
+Raw output: {"tool":"pest","result":"passed","tests":139,"passed":139,"assertions":811,"duration_ms":14771}
+Expected: baseline 135 + 4 new = 139
+Result: PASS (139 passed, 0 failed)
+
+CHECK 3: DashboardTest.php specific
+------------------------------------
+Command: php artisan test --compact tests/Feature/DashboardTest.php
+Raw output: {"tool":"pest","result":"passed","tests":9,"passed":9,"assertions":111,"duration_ms":2994}
+Expected: 5 existing + 4 new = 9
+Result: PASS (9 passed, 0 failed)
+
+CHECK 4: Code review — 4 new filter placements
+-----------------------------------------------
+Reference pattern (ReportsController.php:27-28):
+  WeighingTransaction::where('is_latest_version', true)
+      ->where('status', '!=', 'draft');
+
+Filter 1 — superAdmin() $todayScope (DashboardController.php:25):
+  ->where('is_latest_version', true) placed after whereDate('transaction_date', today()),
+  before where('status', '!=', 'draft'). Correct chain placement. ✓
+
+Filter 2 — superAdmin() $monthlyRevenue (DashboardController.php:48):
+  ->where('is_latest_version', true) placed after where('transaction_date', '>=', ...),
+  before where('status', '!=', 'draft'). Correct chain placement. ✓
+
+Filter 3 — owner() $monthlyRevenue (DashboardController.php:138):
+  ->where('is_latest_version', true) placed after where('transaction_date', '>=', ...),
+  before where('status', '!=', 'draft'). Correct chain placement. ✓
+
+Filter 4 — owner() $totalScope (DashboardController.php:145):
+  WeighingTransaction::where('is_latest_version', true)->where('status', '!=', 'draft')
+  New base query replacing bare WeighingTransaction::where. Correct. ✓
+
+Total is_latest_version occurrences: 8 (4 existing + 4 new). Confirmed via grep.
+- Line 36: recentTransactions superAdmin (existing)
+- Line 99: recentTransactions cashier (existing)
+- Line 152: totalTransactions owner clone (existing, now redundant but harmless)
+- Line 162: topFarmers owner (existing)
+- Line 25: todayScope superAdmin (NEW)
+- Line 48: monthlyRevenue superAdmin (NEW)
+- Line 138: monthlyRevenue owner (NEW)
+- Line 145: totalScope owner (NEW)
+
+No duplicated logic. No over-refactoring. No unrelated changes.
+cashier() correctly left unchanged (out of scope).
+Line 152 redundant is_latest_version on $totalScope clone is harmless, out of scope per plan.
+
+Result: PASS
+
+CHECK 5: Code review — 4 new tests quality
+-------------------------------------------
+T-a (line 126): 'super admin dashboard mengecualikan transaksi yang telah direvisi dari statistik hari ini'
+  - Uses test() style ✓
+  - Creates finalized transaction, asserts dashboard shows 1 transaction + correct revenue
+  - Revises transaction, asserts old status='revised' and is_latest_version=false
+  - Re-fetches dashboard, asserts still 1 transaction with correct revenue from DB
+  - Revenue assertion: closure reads from WeighingTransaction DB query (not hardcoded) ✓
+  - Would fail if old version double-counted ✓
+
+T-b (line 160): 'super admin dashboard mengecualikan transaksi yang dibatalkan dari statistik hari ini'
+  - Uses test() style ✓
+  - Creates finalized transaction, cancels it
+  - Asserts dashboard shows 0 transactions, $0 revenue, 0.0 timbanganKotor
+  - All assertions are real DB-backed values ✓
+
+T-c (line 182): 'owner dashboard mengecualikan transaksi yang direvisi dari total dan laporan bulanan'
+  - Uses test() style ✓
+  - Creates finalized transaction, revises it
+  - Asserts totalTransactions=1, totalRevenue via DB closure, totalTimbanganKotor=800.0
+  - Asserts monthlyRevenue[0].revenue via DB closure (not hardcoded)
+  - 800.0 assertion catches double-count (would be 1600.0 if bug present) ✓
+
+T-d (line 205): 'owner dashboard mengecualikan transaksi yang dibatalkan dari total'
+  - Uses test() style ✓
+  - Creates finalized transaction, cancels it
+  - Asserts totalRevenue=0, totalTransactions=0 ✓
+
+All 4 tests use real behavioral assertions with DB-backed closures.
+No trivial expect(true) patterns. All verify actual dashboard stats.
+Result: PASS
+
+VERDICT: APPROVE
+================
+All 5 checks pass:
+- Check 1 (Pint): PASS
+- Check 2 (Full suite 139/139): PASS
+- Check 3 (DashboardTest 9/9): PASS
+- Check 4 (Code review filters): PASS
+- Check 5 (Code review tests): PASS
+
+Risks:
+- Line 152 redundant is_latest_version on owner totalTransactions clone — harmless, documented
+- cashier() dashboard has same bug pattern — out of scope, documented in plan findings

@@ -22,6 +22,7 @@ class DashboardController extends Controller
         $totalFarmers = Farmer::where('status', 'active')->count();
 
         $todayScope = WeighingTransaction::whereDate('transaction_date', today())
+            ->where('is_latest_version', true)
             ->where('status', '!=', 'draft');
 
         $totalTransactionsToday = (clone $todayScope)->count();
@@ -44,6 +45,7 @@ class DashboardController extends Controller
             DB::raw('SUM(gross_total_amount) as total')
         )
             ->where('transaction_date', '>=', now()->subMonths(6))
+            ->where('is_latest_version', true)
             ->where('status', '!=', 'draft')
             ->groupBy('month')
             ->orderBy('month', 'asc')
@@ -133,13 +135,15 @@ class DashboardController extends Controller
             DB::raw('COUNT(*) as transactions')
         )
             ->where('transaction_date', '>=', now()->subMonths(12))
+            ->where('is_latest_version', true)
             ->where('status', '!=', 'draft')
             ->groupBy('month')
             ->orderBy('month', 'desc')
             ->get();
 
         // Total statistics
-        $totalScope = WeighingTransaction::where('status', '!=', 'draft');
+        $totalScope = WeighingTransaction::where('is_latest_version', true)
+            ->where('status', '!=', 'draft');
 
         $totalRevenue = (clone $totalScope)->sum('gross_total_amount');
         $totalPaidOut = (clone $totalScope)->sum('final_paid_amount_rounded');

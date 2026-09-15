@@ -1,0 +1,50 @@
+F4 SCOPE FIDELITY — fix-dashboard-inflated-stats
+Date: 2026-09-15
+Reviewer: independent (F4 gate)
+
+=== CHECK 1: git diff --stat ===
+ .omo/boulder.json                            |  24 ++++++-
+ app/Http/Controllers/DashboardController.php |   6 +-
+ tests/Feature/DashboardTest.php              | 101 +++++++++++++++++++++++++++
+ 3 files changed, 128 insertions(+), 3 deletions(-)
+
+=== CHECK 1: git status --short (tracked modifications) ===
+ M .omo/boulder.json
+ M app/Http/Controllers/DashboardController.php
+ M tests/Feature/DashboardTest.php
+ (untracked: only .omo/ artifacts — drafts, evidence, notepads, plans, run-continuation, start-work)
+
+=== CHECK 1: git diff --name-only ===
+.omo/boulder.json
+app/Http/Controllers/DashboardController.php
+tests/Feature/DashboardTest.php
+
+RESULT: Source-file changes are ONLY DashboardController.php + DashboardTest.php.
+.omo/boulder.json is a plan artifact (allowed). No other source files touched. PASS
+
+=== CHECK 2: out-of-scope files untouched ===
+- cashier() in DashboardController: NOT in diff (diff hunks only superAdmin + owner) — PASS
+- ReportsController.php: not in git status/diff — PASS
+- resources/js/pages/Dashboard/* (frontend): not in git status/diff — PASS
+- WeighingTransactionController.php: not in git status/diff — PASS
+- migrations: not in git status/diff — PASS
+- tests/Pest.php: not in git status/diff — PASS
+
+=== CHECK 3: DashboardController.php diff content ===
+4 hunks, +6/-1 lines. Exactly 4 additions of ->where('is_latest_version', true):
+  1. superAdmin() $todayScope (after whereDate transaction_date)
+  2. superAdmin() $monthlyRevenue (after where transaction_date >= subMonths(6))
+  3. owner() $monthlyRevenue (after where transaction_date >= subMonths(12))
+  4. owner() $totalScope (replaces single-line where status != draft with 2-line chain)
+No other changes in the file. PASS
+
+=== CHECK 4: DashboardTest.php diff content ===
+2 hunks: (1) +use App\Models\WeighingTransaction; import line;
+(2) +101 lines appended at end of file = exactly 4 new test() blocks (T-a revisi superAdmin,
+T-b batal superAdmin, T-c revisi owner, T-d batal owner).
+Existing 5 tests untouched (no deletions/modifications in diff). PASS
+
+=== VERDICT: APPROVE ===
+Scope is clean. All changes confined to the 2 allowed source files;
+controller diff is exactly the 4 is_latest_version filters; test diff is exactly
+1 import + 4 appended tests. No out-of-scope modifications.
