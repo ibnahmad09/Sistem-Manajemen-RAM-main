@@ -613,11 +613,33 @@ export default function WeighingForm({
                                                         Hasil Hitung
                                                     </p>
                                                     <div className="mt-2 space-y-1 font-mono text-xs">
+                                                        {perLoad?.hasSorting && (
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground italic">
+                                                                    Bruto
+                                                                    Tersortir
+                                                                    <span className="block text-[10px] text-muted-foreground/60 not-italic">
+                                                                        Bruto −
+                                                                        Sortiran
+                                                                    </span>
+                                                                </span>
+                                                                <span className="font-bold">
+                                                                    {formatKgTrimmed(
+                                                                        (perLoad?.grossWeight ??
+                                                                            0) -
+                                                                            (perLoad?.sortingWeight ??
+                                                                                0),
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                         <div className="flex justify-between">
                                                             <span className="text-muted-foreground italic">
-                                                                Netto Kotor
+                                                                Berat Sawit
                                                                 <span className="block text-[10px] text-muted-foreground/60 not-italic">
-                                                                    Bruto − Tara
+                                                                    (Bruto −
+                                                                    Sortiran) −
+                                                                    Tara
                                                                 </span>
                                                             </span>
                                                             <span className="font-bold">
@@ -640,27 +662,6 @@ export default function WeighingForm({
                                                                     -
                                                                     {formatKgTrimmed(
                                                                         perLoad?.deductionWeight ??
-                                                                            0,
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                        {perLoad?.hasSorting && (
-                                                            <div className="flex justify-between">
-                                                                <span className="text-red-500 italic">
-                                                                    Sortiran
-                                                                    (gross)
-                                                                    <span className="block text-[10px] text-muted-foreground/60 not-italic">
-                                                                        dikeluarkan
-                                                                        dari
-                                                                        kolom
-                                                                        sawit
-                                                                    </span>
-                                                                </span>
-                                                                <span className="font-bold text-red-500">
-                                                                    -
-                                                                    {formatKgTrimmed(
-                                                                        perLoad?.sortingWeight ??
                                                                             0,
                                                                     )}
                                                                 </span>
@@ -1007,11 +1008,27 @@ export default function WeighingForm({
                                                 </span>
                                             </div>
                                         ))}
+                                        {calc.hasSorting && (
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground italic">
+                                                    Bruto Tersortir (total)
+                                                    <span className="block text-[10px] text-muted-foreground/70 italic">
+                                                        Σ Bruto − Sortiran
+                                                    </span>
+                                                </span>
+                                                <span className="font-bold">
+                                                    {formatKgTrimmed(
+                                                        calc.grossWeight -
+                                                            calc.sortingWeight,
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground italic">
-                                                Netto Kotor (total)
+                                                Berat Sawit (total)
                                                 <span className="block text-[10px] text-muted-foreground/70 italic">
-                                                    Σ Bruto − Tara
+                                                    Σ (Bruto − Sortiran) − Tara
                                                 </span>
                                             </span>
                                             <span className="font-bold">
@@ -1030,23 +1047,6 @@ export default function WeighingForm({
                                                     -
                                                     {formatKgTrimmed(
                                                         calc.deductionWeight,
-                                                    )}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {calc.hasSorting && (
-                                            <div className="flex justify-between">
-                                                <span className="text-red-500 italic">
-                                                    Sortiran (gross)
-                                                    <span className="block text-[10px] text-muted-foreground/70 italic">
-                                                        dikeluarkan dari kolom
-                                                        sawit
-                                                    </span>
-                                                </span>
-                                                <span className="font-bold text-red-500">
-                                                    -
-                                                    {formatKgTrimmed(
-                                                        calc.sortingWeight,
                                                     )}
                                                 </span>
                                             </div>

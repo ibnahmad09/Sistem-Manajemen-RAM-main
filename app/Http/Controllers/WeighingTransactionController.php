@@ -45,7 +45,7 @@ class WeighingTransactionController extends Controller
         // dihitung setelahnya, total di halaman 2+ akan salah (0).
         $summary = [
             'total_bruto' => (float) (clone $query)->sum('gross_weight'),
-            'total_neto' => (float) (clone $query)->sum('initial_weight'),
+            'total_timbangan_kotor' => (float) (clone $query)->sum('initial_weight'),
         ];
 
         $transactions = $query->paginate(20)->withQueryString();

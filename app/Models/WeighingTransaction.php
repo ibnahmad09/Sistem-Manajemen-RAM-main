@@ -185,7 +185,7 @@ class WeighingTransaction extends Model
     /**
      * Calculate a multi-load transaction (one nota = many loads).
      *
-     * Each load is calculated individually (netto kotor, potongan, netto bersih,
+     * Each load is calculated individually (berat sawit, potongan, netto bersih,
      * sortiran), then aggregated. Debt and final payment are computed from the total.
      *
      * @param  array  $loads  List of loads, each with gross_weight, tare_weight,
@@ -218,14 +218,14 @@ class WeighingTransaction extends Model
         foreach ($loads as $i => $load) {
             $gross = (float) ($load['gross_weight'] ?? 0);
             $tare = (float) ($load['tare_weight'] ?? 0);
-            $initial = $gross - $tare;
-            $deductionWeight = $hasDeduction ? $initial * ($deductionPercentage / 100) : 0;
             $loadHasSorting = (bool) ($load['has_sorting'] ?? false);
             $sortingWeight = (float) ($load['sorting_weight'] ?? 0);
+            $initial = ($gross - $sortingWeight) - $tare;
+            $deductionWeight = $hasDeduction ? $initial * ($deductionPercentage / 100) : 0;
             $sortingPricePerKg = (float) ($load['sorting_price_per_kg'] ?? 0);
             $sortingDeductionWeight = $loadHasSorting ? $sortingWeight * ($sortingDeductionPercentage / 100) : 0;
             $sortingNetWeight = $sortingWeight - $sortingDeductionWeight;
-            $net = $initial - $deductionWeight - $sortingWeight;
+            $net = $initial - $deductionWeight;
             $sortingTotal = $loadHasSorting ? $sortingNetWeight * $sortingPricePerKg : 0;
 
             $totalGross += $gross;

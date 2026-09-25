@@ -23,7 +23,7 @@ return new class extends Migration
             // Weight measurements
             $table->decimal('gross_weight', 10, 2)->comment('Berat Bruto');
             $table->decimal('tare_weight', 10, 2)->comment('Berat Tara');
-            $table->decimal('initial_weight', 10, 2)->comment('Netto Kotor (Bruto - Tara)');
+            $table->decimal('initial_weight', 10, 2)->comment('Berat Sawit ((Bruto - Sortiran) - Tara)');
 
             // Deduction
             $table->boolean('has_deduction')->default(true);

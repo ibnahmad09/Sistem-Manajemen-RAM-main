@@ -53,27 +53,27 @@ test('multi load finalizes as one nota with per-load totals', function () {
     expect($transaction->nota_number)->toBe('HND-'.now()->format('Ymd').'-0001')
         ->and($transaction->gross_weight)->toBe('1800.00')
         ->and($transaction->tare_weight)->toBe('350.00')
-        ->and($transaction->net_weight)->toBe('1356.50')
+        ->and($transaction->net_weight)->toBe('1358.00')
         ->and($transaction->sorting_weight)->toBe('50.00')
         ->and($transaction->sorting_total_amount)->toBe('25000.00')
-        ->and($transaction->palm_total_amount)->toBe('3499770.00')
-        ->and($transaction->gross_total_amount)->toBe('3524770.00')
-        ->and($transaction->final_paid_amount_rounded)->toBe('3524770.00');
+        ->and($transaction->palm_total_amount)->toBe('3503640.00')
+        ->and($transaction->gross_total_amount)->toBe('3528640.00')
+        ->and($transaction->final_paid_amount_rounded)->toBe('3528640.00');
 
     expect($transaction->loads->count())->toBe(2);
 
     $secondLoad = $transaction->loads->firstWhere('seq_no', 2);
 
-    expect($secondLoad->initial_weight)->toBe('650.00')
-        ->and($secondLoad->net_weight)->toBe('580.50')
+    expect($secondLoad->initial_weight)->toBe('600.00')
+        ->and($secondLoad->net_weight)->toBe('582.00')
         ->and($secondLoad->sorting_total_amount)->toBe('25000.00');
 
-    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('3524770.00');
+    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('3528640.00');
 
     expect($transaction->farmer->balance)->toBe('0.00');
 });
 
-test('sorting weight is deducted from netto before palm pricing', function () {
+test('sorting weight is excluded from initial weight before palm pricing', function () {
     $cashier = User::factory()->create(['role' => 'cashier']);
     $farmer = createTestFarmer();
 
@@ -92,17 +92,17 @@ test('sorting weight is deducted from netto before palm pricing', function () {
     $transaction = WeighingTransaction::first();
 
     expect($transaction)->not->toBeNull()
-        ->and($transaction->initial_weight)->toBe('900.00')
-        ->and($transaction->deduction_weight)->toBe('45.00')
-        ->and($transaction->net_weight)->toBe('805.00')
+        ->and($transaction->initial_weight)->toBe('850.00')
+        ->and($transaction->deduction_weight)->toBe('42.50')
+        ->and($transaction->net_weight)->toBe('807.50')
         ->and($transaction->sorting_deduction_weight)->toBe('2.50')
         ->and($transaction->sorting_net_weight)->toBe('47.50')
         ->and($transaction->sorting_total_amount)->toBe('23750.00')
-        ->and($transaction->palm_total_amount)->toBe('1610000.00')
-        ->and($transaction->gross_total_amount)->toBe('1633750.00')
-        ->and($transaction->final_paid_amount_rounded)->toBe('1633750.00');
+        ->and($transaction->palm_total_amount)->toBe('1615000.00')
+        ->and($transaction->gross_total_amount)->toBe('1638750.00')
+        ->and($transaction->final_paid_amount_rounded)->toBe('1638750.00');
 
-    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('1633750.00');
+    expect(CashierCashEntry::where('type', 'farmer_payment')->first()->amount)->toBe('1638750.00');
 });
 
 test('draft can be saved without nota number or cash entry', function () {
@@ -315,7 +315,7 @@ test('weighing list summary stays correct on later pages', function () {
             ->component('Weighing/List')
             ->has('transactions.data', 1)
             ->where('summary.total_bruto', fn ($value) => $value == 21000.0)
-            ->where('summary.total_neto', fn ($value) => $value == 16800.0));
+            ->where('summary.total_timbangan_kotor', fn ($value) => $value == 16800.0));
 });
 
 test('draft does not affect reports', function () {
@@ -380,7 +380,7 @@ test('weighing list summary follows filters and excludes drafts', function () {
             ->component('Weighing/List')
             ->has('transactions.data', 2)
             ->where('summary.total_bruto', fn ($value) => $value == 1500.0)
-            ->where('summary.total_neto', fn ($value) => $value == 1200.0));
+            ->where('summary.total_timbangan_kotor', fn ($value) => $value == 1200.0));
 
     // Filtered to today only
     $this->actingAs($cashier)
@@ -393,7 +393,7 @@ test('weighing list summary follows filters and excludes drafts', function () {
             ->component('Weighing/List')
             ->has('transactions.data', 1)
             ->where('summary.total_bruto', fn ($value) => $value == 1000.0)
-            ->where('summary.total_neto', fn ($value) => $value == 800.0));
+            ->where('summary.total_timbangan_kotor', fn ($value) => $value == 800.0));
 });
 
 test('reports export pdf returns valid PDF', function () {
@@ -565,7 +565,7 @@ test('rejects sorting weight exceeding gross netto on store', function () {
     expect(WeighingTransaction::count())->toBe(0);
 });
 
-test('accepts sorting weight within gross netto and deducts it from netto', function () {
+test('accepts sorting weight within gross netto and nets it into initial weight', function () {
     $cashier = User::factory()->create(['role' => 'cashier']);
     $farmer = createTestFarmer();
 
@@ -580,7 +580,7 @@ test('accepts sorting weight within gross netto and deducts it from netto', func
     $transaction = WeighingTransaction::first();
 
     expect($transaction)->not->toBeNull()
-        ->and($transaction->net_weight)->toBe('26.00');
+        ->and($transaction->net_weight)->toBe('48.50');
 });
 
 test('finalize rejects old draft with sorting weight exceeding gross netto', function () {

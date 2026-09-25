@@ -140,18 +140,18 @@ export function calculateLoads(
     const perLoad = loads.map((load, i) => {
         const gross = load.gross_weight || 0;
         const tare = load.tare_weight || 0;
-        const initial = gross - tare;
+        const loadHasSorting = load.has_sorting;
+        const sortingWeight = load.sorting_weight || 0;
+        const initial = gross - sortingWeight - tare;
         const deductionWeight = data.hasDeduction
             ? initial * (data.deductionPercentage / 100)
             : 0;
-        const loadHasSorting = load.has_sorting;
-        const sortingWeight = load.sorting_weight || 0;
         const sortingPricePerKg = data.sortingPricePerKg;
         const sortingDeductionWeight = loadHasSorting
             ? sortingWeight * (sortingDeductionPercentage / 100)
             : 0;
         const sortingNetWeight = sortingWeight - sortingDeductionWeight;
-        const net = initial - deductionWeight - sortingWeight;
+        const net = initial - deductionWeight;
         const sortingTotal = loadHasSorting
             ? sortingNetWeight * sortingPricePerKg
             : 0;
@@ -239,7 +239,10 @@ export function calculateTransaction(data: {
     debtPaidAmount: number;
     roundingMode?: string;
 }) {
-    const initialWeight = data.grossWeight - data.tareWeight;
+    const initialWeight =
+        data.grossWeight -
+        (data.hasSorting ? data.sortingWeight : 0) -
+        data.tareWeight;
     const deductionWeight = data.hasDeduction
         ? initialWeight * (data.deductionPercentage / 100)
         : 0;

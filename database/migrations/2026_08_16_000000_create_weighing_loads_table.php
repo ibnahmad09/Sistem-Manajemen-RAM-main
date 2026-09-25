@@ -20,7 +20,7 @@ return new class extends Migration
             // Weight measurements (per load)
             $table->decimal('gross_weight', 10, 2)->comment('Berat Bruto muatan');
             $table->decimal('tare_weight', 10, 2)->comment('Berat Tara muatan');
-            $table->decimal('initial_weight', 10, 2)->comment('Netto Kotor (Bruto - Tara)');
+            $table->decimal('initial_weight', 10, 2)->comment('Berat Sawit ((Bruto - Sortiran) - Tara) muatan');
             $table->decimal('deduction_weight', 10, 2)->default(0)->comment('Potongan (kg) muatan');
             $table->decimal('net_weight', 10, 2)->comment('Berat Bersih muatan');
 

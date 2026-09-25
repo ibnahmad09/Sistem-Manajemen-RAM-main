@@ -4,6 +4,7 @@ use App\Models\CashierCashEntry;
 use App\Models\Farmer;
 use App\Models\User;
 use App\Models\WeighingTransaction;
+use Inertia\Testing\AssertableInertia as Assert;
 
 function createCashEntry(User $cashier, array $overrides = []): CashierCashEntry
 {
@@ -145,4 +146,78 @@ test('cash entry linked to a transaction cannot be destroyed', function () {
         ->assertSessionHasErrors('error');
 
     expect(CashierCashEntry::count())->toBe(1);
+});
+
+// ── Daily balance reset tests ────────────────────────────────────────────────
+
+test('balance cards default to today when no date filter is provided', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+
+    createCashEntry($cashier, [
+        'type' => 'cash_in',
+        'amount' => 500000,
+        'description' => 'Modal hari ini',
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    createCashEntry($cashier, [
+        'type' => 'cash_in',
+        'amount' => 999999,
+        'description' => 'Modal kemarin — diabaikan dari balance',
+        'entry_date' => now()->subDay()->toDateString(),
+    ]);
+
+    $this->actingAs($cashier)
+        ->get(route('cash-flow.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('CashFlow/Index')
+            ->where('balance.cash_in', fn ($v) => (float) $v === 500000.0)
+            ->where('balance.cash_out', fn ($v) => (float) $v === 0.0)
+            ->where('balance.balance', fn ($v) => (float) $v === 500000.0)
+        );
+});
+
+test('balance cards respect the selected date range filter', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+
+    // 4 days ago — outside range
+    createCashEntry($cashier, ['type' => 'cash_in', 'amount' => 100000, 'entry_date' => now()->subDays(4)->toDateString()]);
+
+    // 2 days ago — inside range
+    createCashEntry($cashier, ['type' => 'cash_in', 'amount' => 200000, 'entry_date' => now()->subDays(2)->toDateString()]);
+
+    // yesterday — inside range
+    createCashEntry($cashier, ['type' => 'expense', 'amount' => 50000, 'entry_date' => now()->subDay()->toDateString()]);
+
+    $start = now()->subDays(2)->format('Y-m-d');
+    $end = now()->subDay()->format('Y-m-d');
+
+    $this->actingAs($cashier)
+        ->get(route('cash-flow.index', ['date_start' => $start, 'date_end' => $end]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('CashFlow/Index')
+            ->where('balance.cash_in', fn ($v) => (float) $v === 200000.0)
+            ->where('balance.cash_out', fn ($v) => (float) $v === 50000.0)
+            ->where('balance.balance', fn ($v) => (float) $v === 150000.0)
+        );
+});
+
+test('balance defaults to today only with partial date filter', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+
+    // Today
+    createCashEntry($cashier, ['type' => 'cash_in', 'amount' => 750000, 'entry_date' => now()->toDateString()]);
+
+    // Yesterday
+    createCashEntry($cashier, ['type' => 'cash_in', 'amount' => 100000, 'entry_date' => now()->subDay()->toDateString()]);
+
+    // Only date_start provided (no date_end) → balance scoped to date_start..today
+    $start = now()->subDays(1)->format('Y-m-d');
+
+    $this->actingAs($cashier)
+        ->get(route('cash-flow.index', ['date_start' => $start]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('CashFlow/Index')
+            ->where('balance.cash_in', fn ($v) => (float) $v === 850000.0)
+        );
 });

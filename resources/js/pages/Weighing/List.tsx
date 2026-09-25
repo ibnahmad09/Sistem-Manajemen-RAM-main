@@ -19,7 +19,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface Props {
     transactions: PaginatedData<WeighingTransaction & { farmer: Farmer }>;
     filters: { farmer_name?: string; date_start?: string; date_end?: string };
-    summary: { total_bruto: number; total_neto: number };
+    summary: { total_bruto: number; total_timbangan_kotor: number };
     activeDrafts: (WeighingTransaction & {
         farmer?: Farmer;
         loads?: WeighingLoad[];
@@ -249,10 +249,10 @@ export default function WeighingList({
                     </div>
                     <div className="rounded-xl border border-sidebar-border/50 bg-card p-4 shadow-sm">
                         <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                            Total Neto
+                            Total Timbangan Kotor
                         </p>
                         <p className="mt-1 font-mono text-xl font-bold text-foreground">
-                            {formatKg(summary.total_neto)}
+                            {formatKg(summary.total_timbangan_kotor)}
                         </p>
                     </div>
                 </div>
@@ -276,7 +276,7 @@ export default function WeighingList({
                                         Bruto
                                     </th>
                                     <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                                        Neto
+                                        Timbangan Kotor
                                     </th>
                                     <th className="px-5 py-3 text-right text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                                         Berat Bersih

@@ -144,20 +144,9 @@ export function buildReceipt(
         .text('BERAT (KG)')
         .bold(false)
         .text(justify('BRUTO: ', `${fmtKg(tx.gross_weight)} kg`, columns))
-        .text(justify('TARE (MOBIL): ', `${fmtKg(tx.tare_weight)} kg`, columns))
         .text(
-            justify('NETTO AWAL: ', `${fmtKg(tx.initial_weight)} kg`, columns),
+            justify('TARE (MOBIL): ', `${fmtKg(tx.tare_weight)} kg`, columns),
         );
-
-    if (tx.has_deduction) {
-        encoder.text(
-            justify(
-                `POTONGAN (${tx.deduction_percentage}%): `,
-                `-${fmtKg(tx.deduction_weight)} kg`,
-                columns,
-            ),
-        );
-    }
 
     if (tx.has_sorting) {
         const pct = tx.sorting_deduction_percentage ?? 0;
@@ -166,6 +155,20 @@ export function buildReceipt(
             justify(
                 pct > 0 ? `SORTIRAN (${pct}%): ` : 'SORTIRAN: ',
                 `-${fmtKg(tx.sorting_weight)} kg`,
+                columns,
+            ),
+        );
+    }
+
+    encoder.text(
+        justify('BERAT SAWIT: ', `${fmtKg(tx.initial_weight)} kg`, columns),
+    );
+
+    if (tx.has_deduction) {
+        encoder.text(
+            justify(
+                `POTONGAN (${tx.deduction_percentage}%): `,
+                `-${fmtKg(tx.deduction_weight)} kg`,
                 columns,
             ),
         );

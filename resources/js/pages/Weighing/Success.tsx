@@ -202,18 +202,6 @@ function NotaThermal({
                             value={formatKg(transaction.tare_weight)}
                             bold={false}
                         />
-                        <Row
-                            label="NETTO AWAL:"
-                            value={formatKg(transaction.initial_weight)}
-                            bold={false}
-                        />
-                        {transaction.has_deduction && (
-                            <Row
-                                label={`POTONGAN (${transaction.deduction_percentage}%):`}
-                                value={`-${formatKg(transaction.deduction_weight)}`}
-                                bold={false}
-                            />
-                        )}
                         {transaction.has_sorting && (
                             <Row
                                 label={
@@ -222,6 +210,18 @@ function NotaThermal({
                                         : 'SORTIRAN:'
                                 }
                                 value={`-${formatKg(transaction.sorting_weight)}`}
+                                bold={false}
+                            />
+                        )}
+                        <Row
+                            label="BERAT SAWIT:"
+                            value={formatKg(transaction.initial_weight)}
+                            bold={false}
+                        />
+                        {transaction.has_deduction && (
+                            <Row
+                                label={`POTONGAN (${transaction.deduction_percentage}%):`}
+                                value={`-${formatKg(transaction.deduction_weight)}`}
                                 bold={false}
                             />
                         )}
@@ -245,8 +245,17 @@ function NotaThermal({
                         value={formatKg(transaction.tare_weight)}
                         bold={false}
                     />
+                    {transaction.has_sorting && (
+                        <Row
+                            label={
+                                pct > 0 ? `SORTIRAN (${pct}%):` : 'SORTIRAN:'
+                            }
+                            value={`-${formatKg(transaction.sorting_weight)}`}
+                            bold={false}
+                        />
+                    )}
                     <Row
-                        label="NETTO AWAL:"
+                        label="BERAT SAWIT:"
                         value={formatKg(transaction.initial_weight)}
                         bold={false}
                     />
@@ -254,15 +263,6 @@ function NotaThermal({
                         <Row
                             label={`POTONGAN (${transaction.deduction_percentage}%):`}
                             value={`-${formatKg(transaction.deduction_weight)}`}
-                            bold={false}
-                        />
-                    )}
-                    {transaction.has_sorting && (
-                        <Row
-                            label={
-                                pct > 0 ? `SORTIRAN (${pct}%):` : 'SORTIRAN:'
-                            }
-                            value={`-${formatKg(transaction.sorting_weight)}`}
                             bold={false}
                         />
                     )}
