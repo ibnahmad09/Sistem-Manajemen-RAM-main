@@ -608,6 +608,96 @@ test('finalize rejects old draft with sorting weight exceeding gross netto', fun
     expect(CashierCashEntry::count())->toBe(0);
 });
 
+test('a draft keeps its sorting order and finalize respects it', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_order' => 'potongan_dulu',
+        'deduction_percentage' => 5,
+        'palm_price_per_kg' => 2000,
+        'sorting_price_per_kg' => 500,
+        'sorting_deduction_percentage' => 5,
+    ]) + ['action' => 'save_draft']);
+
+    $draft = WeighingTransaction::first();
+
+    expect($draft->status)->toBe('draft')
+        ->and($draft->sorting_order)->toBe(SortingOrder::PotonganDulu);
+
+    // Finalize from the running-weighing list: this path rebuilds the payload
+    // from stored columns instead of from the form, so it must pick the mode
+    // back up from the draft row rather than falling back to the default.
+    $this->actingAs($cashier)->post(route('weighing.finalize', $draft));
+
+    $draft->refresh();
+
+    expect($draft->status)->toBe('printed')
+        ->and($draft->sorting_order)->toBe(SortingOrder::PotonganDulu)
+        ->and($draft->initial_weight)->toBe('800.00')
+        ->and($draft->deduction_weight)->toBe('40.00')
+        ->and($draft->net_weight)->toBe('660.00');
+});
+
+test('a revision stores the sorting order on the new row', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'deduction_percentage' => 5,
+        'palm_price_per_kg' => 2000,
+        'sorting_price_per_kg' => 500,
+        'sorting_deduction_percentage' => 5,
+    ]) + ['action' => 'finalize']);
+
+    $original = WeighingTransaction::first();
+
+    expect($original->sorting_order)->toBe(SortingOrder::SortiranDulu);
+
+    $this->actingAs($cashier)->put(route('weighing.update', $original), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_order' => 'potongan_dulu',
+        'deduction_percentage' => 5,
+        'palm_price_per_kg' => 2000,
+        'sorting_price_per_kg' => 500,
+        'sorting_deduction_percentage' => 5,
+        'revision_reason' => 'Rekonsiliasi dengan timbang lapangan',
+    ]) + ['action' => 'finalize']);
+
+    $revision = WeighingTransaction::where('revision_of', $original->id)->first();
+
+    expect($revision)->not->toBeNull()
+        ->and($revision->sorting_order)->toBe(SortingOrder::PotonganDulu)
+        ->and($revision->net_weight)->toBe('660.00');
+
+    // The archived original keeps its own mode: a revision must not rewrite it.
+    $original->refresh();
+
+    expect($original->sorting_order)->toBe(SortingOrder::SortiranDulu)
+        ->and($original->net_weight)->toBe('665.00');
+});
+
+test('an unknown sorting order is rejected', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'sorting_order' => 'ngawur',
+    ]) + ['action' => 'finalize']);
+
+    $response->assertSessionHasErrors('sorting_order');
+
+    expect(WeighingTransaction::count())->toBe(0);
+});
+
 test('sortiran_dulu deducts sorting weight before the mandatory deduction', function () {
     $cashier = User::factory()->create(['role' => 'cashier']);
     $farmer = createTestFarmer();
