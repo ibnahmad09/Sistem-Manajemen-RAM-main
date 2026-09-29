@@ -137,6 +137,8 @@ export function buildReceipt(
         encoder.newline();
     }
 
+    const isPotonganDulu = tx.sorting_order === 'potongan_dulu';
+
     encoder
         .rule()
 
@@ -148,7 +150,11 @@ export function buildReceipt(
             justify('TARE (MOBIL): ', `${fmtKg(tx.tare_weight)} kg`, columns),
         );
 
-    if (tx.has_sorting) {
+    const sortingLine = () => {
+        if (!tx.has_sorting) {
+            return;
+        }
+
         const pct = tx.sorting_deduction_percentage ?? 0;
 
         encoder.text(
@@ -158,13 +164,13 @@ export function buildReceipt(
                 columns,
             ),
         );
-    }
+    };
 
-    encoder.text(
-        justify('BERAT SAWIT: ', `${fmtKg(tx.initial_weight)} kg`, columns),
-    );
+    const deductionLine = () => {
+        if (!tx.has_deduction) {
+            return;
+        }
 
-    if (tx.has_deduction) {
         encoder.text(
             justify(
                 `POTONGAN (${tx.deduction_percentage}%): `,
@@ -172,6 +178,20 @@ export function buildReceipt(
                 columns,
             ),
         );
+    };
+
+    if (isPotonganDulu) {
+        encoder.text(
+            justify('NETTO KOTOR: ', `${fmtKg(tx.initial_weight)} kg`, columns),
+        );
+        deductionLine();
+        sortingLine();
+    } else {
+        sortingLine();
+        encoder.text(
+            justify('BERAT SAWIT: ', `${fmtKg(tx.initial_weight)} kg`, columns),
+        );
+        deductionLine();
     }
 
     encoder

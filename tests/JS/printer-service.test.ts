@@ -415,6 +415,51 @@ describe('buildReceipt', () => {
         expect(sortiran).toContain('-100 kg');
     });
 
+    it('prints deduction-first line order for a potongan_dulu transaction', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            sorting_order: 'potongan_dulu',
+            has_sorting: true,
+            sorting_weight: 100,
+            initial_weight: 800,
+            deduction_weight: 40,
+            net_weight: 660,
+            gross_weight: 1000,
+            tare_weight: 200,
+        });
+        buildReceipt(encoder, tx);
+        const output = getTexts(encoder).join('\n');
+
+        const nettoKotorIndex = output.indexOf('NETTO KOTOR');
+        const potonganIndex = output.indexOf('POTONGAN');
+        const sortiranIndex = output.indexOf('SORTIRAN');
+        const nettoSawitIndex = output.indexOf('NETTO SAWIT');
+
+        expect(nettoKotorIndex).toBeGreaterThan(-1);
+        expect(potonganIndex).toBeGreaterThan(nettoKotorIndex);
+        expect(sortiranIndex).toBeGreaterThan(potonganIndex);
+        expect(nettoSawitIndex).toBeGreaterThan(sortiranIndex);
+    });
+
+    it('prints sorting-first line order for a sortiran_dulu transaction', () => {
+        const encoder = createMockEncoder();
+        const tx = createSampleTransaction({
+            sorting_order: 'sortiran_dulu',
+            has_sorting: true,
+            sorting_weight: 100,
+        });
+        buildReceipt(encoder, tx);
+        const output = getTexts(encoder).join('\n');
+
+        const sortiranIndex = output.indexOf('SORTIRAN');
+        const beratSawitIndex = output.indexOf('BERAT SAWIT');
+        const potonganIndex = output.indexOf('POTONGAN');
+
+        expect(sortiranIndex).toBeGreaterThan(-1);
+        expect(beratSawitIndex).toBeGreaterThan(sortiranIndex);
+        expect(potonganIndex).toBeGreaterThan(beratSawitIndex);
+    });
+
     it('should render the HUTANG section when previous and paid debt exist', () => {
         const encoder = createMockEncoder();
         const tx = createSampleTransaction({
