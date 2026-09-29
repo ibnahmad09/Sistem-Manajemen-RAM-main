@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SortingOrder;
 use App\Models\CashierCashEntry;
 use App\Models\DeductionConfig;
 use App\Models\Farmer;
@@ -11,6 +12,7 @@ use App\Models\WeighingLoad;
 use App\Models\WeighingTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class WeighingTransactionController extends Controller
@@ -337,6 +339,7 @@ class WeighingTransactionController extends Controller
                 'deduction_percentage' => $weighing->deduction_percentage,
                 'palm_price_per_kg' => $weighing->palm_price_per_kg,
                 'sorting_price_per_kg' => $weighing->sorting_price_per_kg,
+                'sorting_order' => $weighing->sorting_order,
                 'sorting_deduction_percentage' => $weighing->sorting_deduction_percentage,
                 'debt_paid_amount' => $weighing->debt_paid_amount,
                 'payment_method' => $weighing->payment_method,
@@ -469,6 +472,7 @@ class WeighingTransactionController extends Controller
             'palm_price_per_kg' => 'required|numeric|min:0',
             'sorting_price_per_kg' => 'nullable|numeric|min:0',
             'sorting_deduction_percentage' => 'nullable|numeric|min:0|max:100',
+            'sorting_order' => ['required', Rule::enum(SortingOrder::class)],
             'debt_paid_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'required|in:cash,transfer',
         ]);
@@ -548,6 +552,7 @@ class WeighingTransactionController extends Controller
             'deduction_percentage' => $validated['deduction_percentage'],
             'palm_price_per_kg' => $validated['palm_price_per_kg'],
             'sorting_deduction_percentage' => $validated['sorting_deduction_percentage'] ?? 0,
+            'sorting_order' => $validated['sorting_order'],
             'previous_debt_amount' => $currentDebt,
             'debt_paid_amount' => $validated['debt_paid_amount'] ?? 0,
         ], 'none'); // TODO: Get rounding mode from settings
@@ -584,6 +589,7 @@ class WeighingTransactionController extends Controller
             'has_sorting' => $calculation['has_sorting'],
             'sorting_weight' => $calculation['sorting_weight'],
             'sorting_price_per_kg' => $validated['sorting_price_per_kg'] ?? 0,
+            'sorting_order' => $validated['sorting_order'],
             'sorting_deduction_percentage' => $validated['sorting_deduction_percentage'] ?? 0,
             'sorting_deduction_weight' => $calculation['sorting_deduction_weight'],
             'sorting_net_weight' => $calculation['sorting_net_weight'],

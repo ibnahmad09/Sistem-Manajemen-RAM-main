@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SortingOrder;
 use App\Models\CashierCashEntry;
 use App\Models\FarmerDebt;
 use App\Models\User;
@@ -605,4 +606,58 @@ test('finalize rejects old draft with sorting weight exceeding gross netto', fun
     expect($draft->refresh()->status)->toBe('draft');
 
     expect(CashierCashEntry::count())->toBe(0);
+});
+
+test('sortiran_dulu deducts sorting weight before the mandatory deduction', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_order' => 'sortiran_dulu',
+        'deduction_percentage' => 5,
+        'palm_price_per_kg' => 2000,
+        'sorting_price_per_kg' => 500,
+        'sorting_deduction_percentage' => 5,
+    ]) + ['action' => 'finalize']);
+
+    $response->assertRedirect();
+
+    $transaction = WeighingTransaction::first();
+
+    expect($transaction->sorting_order)->toBe(SortingOrder::SortiranDulu)
+        ->and($transaction->initial_weight)->toBe('700.00')
+        ->and($transaction->deduction_weight)->toBe('35.00')
+        ->and($transaction->net_weight)->toBe('665.00')
+        ->and($transaction->sorting_net_weight)->toBe('95.00')
+        ->and($transaction->sorting_total_amount)->toBe('47500.00');
+});
+
+test('potongan_dulu applies the deduction before subtracting sorting weight', function () {
+    $cashier = User::factory()->create(['role' => 'cashier']);
+    $farmer = createTestFarmer();
+
+    $response = $this->actingAs($cashier)->post(route('weighing.store'), weighingFormData($farmer, [
+        'loads' => [
+            ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => true, 'sorting_weight' => 100],
+        ],
+        'sorting_order' => 'potongan_dulu',
+        'deduction_percentage' => 5,
+        'palm_price_per_kg' => 2000,
+        'sorting_price_per_kg' => 500,
+        'sorting_deduction_percentage' => 5,
+    ]) + ['action' => 'finalize']);
+
+    $response->assertRedirect();
+
+    $transaction = WeighingTransaction::first();
+
+    expect($transaction->sorting_order)->toBe(SortingOrder::PotonganDulu)
+        ->and($transaction->initial_weight)->toBe('800.00')
+        ->and($transaction->deduction_weight)->toBe('40.00')
+        ->and($transaction->net_weight)->toBe('660.00')
+        ->and($transaction->sorting_net_weight)->toBe('95.00')
+        ->and($transaction->sorting_total_amount)->toBe('47500.00');
 });

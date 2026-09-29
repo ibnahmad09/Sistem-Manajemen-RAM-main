@@ -54,6 +54,7 @@ function weighingFormData(Farmer $farmer, array $overrides = []): array
             ['gross_weight' => 1000, 'tare_weight' => 200, 'has_sorting' => false, 'sorting_weight' => 0],
         ],
         'has_deduction' => true,
+        'sorting_order' => 'sortiran_dulu',
         'deduction_percentage' => 3,
         'palm_price_per_kg' => 2580,
         'sorting_price_per_kg' => 500,

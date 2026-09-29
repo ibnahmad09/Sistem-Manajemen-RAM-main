@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SortingOrder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,6 +29,7 @@ class WeighingTransaction extends Model
         'has_sorting',
         'sorting_weight',
         'sorting_price_per_kg',
+        'sorting_order',
         'sorting_total_amount',
         'sorting_deduction_percentage',
         'sorting_deduction_weight',
@@ -63,6 +65,7 @@ class WeighingTransaction extends Model
         'has_sorting' => 'boolean',
         'sorting_weight' => 'decimal:2',
         'sorting_price_per_kg' => 'decimal:2',
+        'sorting_order' => SortingOrder::class,
         'sorting_total_amount' => 'decimal:2',
         'sorting_deduction_percentage' => 'decimal:2',
         'sorting_deduction_weight' => 'decimal:2',
@@ -201,6 +204,7 @@ class WeighingTransaction extends Model
         $deductionPercentage = $data['deduction_percentage'] ?? 5;
         $palmPricePerKg = $data['palm_price_per_kg'];
         $sortingDeductionPercentage = $data['sorting_deduction_percentage'] ?? 0;
+        $sortingOrder = self::resolveSortingOrder($data['sorting_order'] ?? null);
 
         $loadResults = [];
         $totalGross = 0;
@@ -220,12 +224,18 @@ class WeighingTransaction extends Model
             $tare = (float) ($load['tare_weight'] ?? 0);
             $loadHasSorting = (bool) ($load['has_sorting'] ?? false);
             $sortingWeight = (float) ($load['sorting_weight'] ?? 0);
-            $initial = ($gross - $sortingWeight) - $tare;
-            $deductionWeight = $hasDeduction ? $initial * ($deductionPercentage / 100) : 0;
+            if ($sortingOrder === SortingOrder::PotonganDulu) {
+                $initial = $gross - $tare;
+                $deductionWeight = $hasDeduction ? $initial * ($deductionPercentage / 100) : 0;
+                $net = $initial - $deductionWeight - $sortingWeight;
+            } else {
+                $initial = ($gross - $sortingWeight) - $tare;
+                $deductionWeight = $hasDeduction ? $initial * ($deductionPercentage / 100) : 0;
+                $net = $initial - $deductionWeight;
+            }
             $sortingPricePerKg = (float) ($load['sorting_price_per_kg'] ?? 0);
             $sortingDeductionWeight = $loadHasSorting ? $sortingWeight * ($sortingDeductionPercentage / 100) : 0;
             $sortingNetWeight = $sortingWeight - $sortingDeductionWeight;
-            $net = $initial - $deductionWeight;
             $sortingTotal = $loadHasSorting ? $sortingNetWeight * $sortingPricePerKg : 0;
 
             $totalGross += $gross;
@@ -284,6 +294,24 @@ class WeighingTransaction extends Model
             'final_paid_amount' => round($finalPaidAmount, 2),
             'final_paid_amount_rounded' => round($finalPaidAmountRounded, 2),
         ];
+    }
+
+    /**
+     * Resolve the sorting order, accepting either a raw string or an enum instance.
+     *
+     * A string arrives from request validation; an enum instance arrives when the
+     * value is read back from the model's `sorting_order` cast (e.g. when finalizing
+     * a stored draft).
+     *
+     * @param  SortingOrder|string|null  $value
+     */
+    private static function resolveSortingOrder($value): SortingOrder
+    {
+        if ($value instanceof SortingOrder) {
+            return $value;
+        }
+
+        return SortingOrder::tryFrom((string) $value) ?? SortingOrder::SortiranDulu;
     }
 
     /**
