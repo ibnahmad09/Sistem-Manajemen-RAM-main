@@ -150,4 +150,47 @@ describe('calculateLoads', () => {
         expect(result.palmTotalAmount).toBe(1615000);
         expect(result.grossTotalAmount).toBe(1638750);
     });
+
+    const sortingBaseData = {
+        hasDeduction: true,
+        deductionPercentage: 5,
+        palmPricePerKg: 2000,
+        sortingPricePerKg: 500,
+        sortingDeductionPercentage: 5,
+        previousDebtAmount: 0,
+        debtPaidAmount: 0,
+    };
+
+    it('sortiran_dulu deducts sorting weight before the mandatory deduction', () => {
+        const result = calculateLoads(loads, {
+            ...sortingBaseData,
+            sortingOrder: 'sortiran_dulu',
+        });
+
+        expect(result.perLoad[0].initialWeight).toBe(700);
+        expect(result.perLoad[0].deductionWeight).toBe(35);
+        expect(result.perLoad[0].netWeight).toBe(665);
+        expect(result.perLoad[0].sortingNetWeight).toBe(95);
+        expect(result.sortingTotalAmount).toBe(47500);
+    });
+
+    it('potongan_dulu applies the deduction before subtracting sorting weight', () => {
+        const result = calculateLoads(loads, {
+            ...sortingBaseData,
+            sortingOrder: 'potongan_dulu',
+        });
+
+        expect(result.perLoad[0].initialWeight).toBe(800);
+        expect(result.perLoad[0].deductionWeight).toBe(40);
+        expect(result.perLoad[0].netWeight).toBe(660);
+        expect(result.perLoad[0].sortingNetWeight).toBe(95);
+        expect(result.sortingTotalAmount).toBe(47500);
+    });
+
+    it('defaults to sortiran_dulu when sortingOrder is omitted', () => {
+        const result = calculateLoads(loads, sortingBaseData);
+
+        expect(result.perLoad[0].initialWeight).toBe(700);
+        expect(result.perLoad[0].netWeight).toBe(665);
+    });
 });

@@ -121,6 +121,13 @@ export interface LoadInput {
     sorting_weight: number;
 }
 
+/**
+ * Order in which the sorting weight is taken off, mirrored from PHP's
+ * `App\Enums\SortingOrder`. Defaults to `sortiran_dulu` (the pre-`ba5ef1c`
+ * behaviour is `potongan_dulu`).
+ */
+export type SortingOrder = 'sortiran_dulu' | 'potongan_dulu';
+
 /** Calculate a multi-load transaction client-side, mirroring WeighingTransaction::calculateLoads() */
 export function calculateLoads(
     loads: LoadInput[],
@@ -130,19 +137,23 @@ export function calculateLoads(
         palmPricePerKg: number;
         sortingPricePerKg: number;
         sortingDeductionPercentage?: number;
+        sortingOrder?: SortingOrder;
         previousDebtAmount: number;
         debtPaidAmount: number;
         roundingMode?: string;
     },
 ) {
     const sortingDeductionPercentage = data.sortingDeductionPercentage ?? 0;
+    const isPotonganDulu = data.sortingOrder === 'potongan_dulu';
 
     const perLoad = loads.map((load, i) => {
         const gross = load.gross_weight || 0;
         const tare = load.tare_weight || 0;
         const loadHasSorting = load.has_sorting;
         const sortingWeight = load.sorting_weight || 0;
-        const initial = gross - sortingWeight - tare;
+        const initial = isPotonganDulu
+            ? gross - tare
+            : gross - sortingWeight - tare;
         const deductionWeight = data.hasDeduction
             ? initial * (data.deductionPercentage / 100)
             : 0;
@@ -151,7 +162,9 @@ export function calculateLoads(
             ? sortingWeight * (sortingDeductionPercentage / 100)
             : 0;
         const sortingNetWeight = sortingWeight - sortingDeductionWeight;
-        const net = initial - deductionWeight;
+        const net = isPotonganDulu
+            ? initial - deductionWeight - sortingWeight
+            : initial - deductionWeight;
         const sortingTotal = loadHasSorting
             ? sortingNetWeight * sortingPricePerKg
             : 0;
