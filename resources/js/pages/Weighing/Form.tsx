@@ -29,7 +29,11 @@ import {
     sanitizeCurrencyInput,
 } from '@/lib/utils';
 import type { LoadInput } from '@/lib/utils';
-import { buildInitialWeighingFormState, emptyLoad } from '@/lib/weighing-form';
+import {
+    buildInitialWeighingFormState,
+    emptyLoad,
+    SORTING_ORDER_STORAGE_KEY,
+} from '@/lib/weighing-form';
 import * as farmersRoute from '@/routes/farmers';
 import * as weighingRoute from '@/routes/weighing';
 import type {
@@ -157,6 +161,17 @@ export default function WeighingForm({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+        if (draft || transaction) {
+            return;
+        }
+
+        window.localStorage.setItem(
+            SORTING_ORDER_STORAGE_KEY,
+            data.sorting_order,
+        );
+    }, [data.sorting_order, draft, transaction]);
+
     const filteredFarmers = useMemo(() => {
         const q = farmerQuery.trim().toLowerCase();
 
@@ -179,6 +194,7 @@ export default function WeighingForm({
                 palmPricePerKg: data.palm_price_per_kg,
                 sortingPricePerKg: data.sorting_price_per_kg,
                 sortingDeductionPercentage: data.sorting_deduction_percentage,
+                sortingOrder: data.sorting_order,
                 previousDebtAmount: currentDebt,
                 debtPaidAmount: data.debt_paid_amount,
                 roundingMode,
@@ -456,6 +472,53 @@ export default function WeighingForm({
                                             className="h-10 w-full rounded-lg border border-sidebar-border/50 bg-background px-3 text-sm transition outline-none focus:ring-2 focus:ring-primary"
                                         />
                                     </div>
+
+                                    <div className="space-y-2 md:col-span-2">
+                                        <p className="text-sm font-semibold text-foreground">
+                                            Logika Pengimputan
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {(
+                                                [
+                                                    'sortiran_dulu',
+                                                    'potongan_dulu',
+                                                ] as const
+                                            ).map((mode) => (
+                                                <button
+                                                    key={mode}
+                                                    type="button"
+                                                    data-test={`sorting-order-${mode}`}
+                                                    onClick={() =>
+                                                        setData(
+                                                            'sorting_order',
+                                                            mode,
+                                                        )
+                                                    }
+                                                    className={`rounded-lg border py-2.5 text-sm font-bold transition ${
+                                                        data.sorting_order ===
+                                                        mode
+                                                            ? 'border-primary bg-primary text-primary-foreground'
+                                                            : 'border-sidebar-border/50 text-muted-foreground hover:bg-muted/30'
+                                                    }`}
+                                                >
+                                                    {mode === 'sortiran_dulu'
+                                                        ? 'Sortiran Dulu'
+                                                        : 'Potongan Dulu'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            {data.sorting_order ===
+                                            'potongan_dulu'
+                                                ? 'Potongan dihitung dari Bruto − Tara, lalu dikurangi Sortiran. Sortiran ikut dipotong.'
+                                                : 'Berat Sawit = (Bruto − Sortiran) − Tara, lalu dipotong persentase. Sortiran tidak ikut dipotong.'}
+                                        </p>
+                                        {errors.sorting_order && (
+                                            <p className="text-xs text-red-500">
+                                                {errors.sorting_order}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -613,33 +676,40 @@ export default function WeighingForm({
                                                         Hasil Hitung
                                                     </p>
                                                     <div className="mt-2 space-y-1 font-mono text-xs">
-                                                        {perLoad?.hasSorting && (
-                                                            <div className="flex justify-between">
-                                                                <span className="text-muted-foreground italic">
-                                                                    Bruto
-                                                                    Tersortir
-                                                                    <span className="block text-[10px] text-muted-foreground/60 not-italic">
-                                                                        Bruto −
-                                                                        Sortiran
+                                                        {perLoad?.hasSorting &&
+                                                            data.sorting_order !==
+                                                                'potongan_dulu' && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground italic">
+                                                                        Bruto
+                                                                        Tersortir
+                                                                        <span className="block text-[10px] text-muted-foreground/60 not-italic">
+                                                                            Bruto
+                                                                            −
+                                                                            Sortiran
+                                                                        </span>
                                                                     </span>
-                                                                </span>
-                                                                <span className="font-bold">
-                                                                    {formatKgTrimmed(
-                                                                        (perLoad?.grossWeight ??
-                                                                            0) -
-                                                                            (perLoad?.sortingWeight ??
-                                                                                0),
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                        )}
+                                                                    <span className="font-bold">
+                                                                        {formatKgTrimmed(
+                                                                            (perLoad?.grossWeight ??
+                                                                                0) -
+                                                                                (perLoad?.sortingWeight ??
+                                                                                    0),
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         <div className="flex justify-between">
                                                             <span className="text-muted-foreground italic">
-                                                                Berat Sawit
+                                                                {data.sorting_order ===
+                                                                'potongan_dulu'
+                                                                    ? 'Netto Kotor'
+                                                                    : 'Berat Sawit'}
                                                                 <span className="block text-[10px] text-muted-foreground/60 not-italic">
-                                                                    (Bruto −
-                                                                    Sortiran) −
-                                                                    Tara
+                                                                    {data.sorting_order ===
+                                                                    'potongan_dulu'
+                                                                        ? 'Bruto − Tara'
+                                                                        : '(Bruto − Sortiran) − Tara'}
                                                                 </span>
                                                             </span>
                                                             <span className="font-bold">
@@ -671,8 +741,10 @@ export default function WeighingForm({
                                                             <span className="text-emerald-600 italic">
                                                                 Netto
                                                                 <span className="block text-[10px] text-muted-foreground/60 not-italic">
-                                                                    dasar harga
-                                                                    sawit
+                                                                    {data.sorting_order ===
+                                                                    'potongan_dulu'
+                                                                        ? 'Netto Kotor − Potongan − Sortiran'
+                                                                        : 'dasar harga sawit'}
                                                                 </span>
                                                             </span>
                                                             <span className="font-bold text-emerald-600">
