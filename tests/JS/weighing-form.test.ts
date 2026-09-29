@@ -22,6 +22,7 @@ const draftWithDebt: WeighingTransaction = {
     has_sorting: true,
     sorting_weight: 100,
     sorting_price_per_kg: 500,
+    sorting_order: 'sortiran_dulu',
     sorting_deduction_percentage: 5,
     sorting_deduction_weight: 5,
     sorting_net_weight: 95,
@@ -165,5 +166,42 @@ describe('buildInitialWeighingFormState', () => {
 
         expect(withDraft.revision_reason).toBe('');
         expect(withoutDraft.revision_reason).toBe('');
+    });
+});
+
+describe('sorting_order initialization', () => {
+    it('keeps the mode stored on the draft instead of the default', () => {
+        const state = buildInitialWeighingFormState({
+            draft: {
+                ...draftWithDebt,
+                sorting_order: 'potongan_dulu',
+            },
+            ...baseOptions,
+        });
+
+        expect(state.sorting_order).toBe('potongan_dulu');
+    });
+
+    it('defaults to sortiran_dulu when there is no draft', () => {
+        const state = buildInitialWeighingFormState({
+            draft: null,
+            ...baseOptions,
+        });
+
+        expect(state.sorting_order).toBe('sortiran_dulu');
+    });
+
+    it('falls back to sortiran_dulu when the draft carries an unknown mode', () => {
+        // Older payloads may reach the client without a usable mode; the form
+        // must still produce a value the backend enum validation accepts.
+        const state = buildInitialWeighingFormState({
+            draft: {
+                ...draftWithDebt,
+                sorting_order: 'ngawur',
+            } as unknown as WeighingTransaction,
+            ...baseOptions,
+        });
+
+        expect(state.sorting_order).toBe('sortiran_dulu');
     });
 });

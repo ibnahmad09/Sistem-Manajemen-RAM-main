@@ -1,5 +1,34 @@
-import type { LoadInput } from '@/lib/utils';
+import type { LoadInput, SortingOrder } from '@/lib/utils';
 import type { DeductionConfig, PalmPrice, WeighingTransaction } from '@/types';
+
+export const SORTING_ORDER_STORAGE_KEY = 'weighing.sortingOrder';
+
+function isSortingOrder(value: unknown): value is SortingOrder {
+    return value === 'sortiran_dulu' || value === 'potongan_dulu';
+}
+
+/**
+ * Resolve the initial sorting order for the form.
+ *
+ * A stored draft or revision always wins — its mode is part of the transaction.
+ * For a new transaction we fall back to whatever the cashier last chose, so the
+ * common case does not need re-picking on every weighing.
+ */
+export function resolveInitialSortingOrder(
+    draft?: WeighingTransaction | null,
+): SortingOrder {
+    if (isSortingOrder(draft?.sorting_order)) {
+        return draft.sorting_order;
+    }
+
+    if (typeof window === 'undefined') {
+        return 'sortiran_dulu';
+    }
+
+    const remembered = window.localStorage.getItem(SORTING_ORDER_STORAGE_KEY);
+
+    return isSortingOrder(remembered) ? remembered : 'sortiran_dulu';
+}
 
 export function emptyLoad(): LoadInput {
     return {
@@ -33,6 +62,7 @@ export function buildInitialWeighingFormState({
               }))
             : [emptyLoad()],
         has_deduction: draft ? draft.has_deduction : true,
+        sorting_order: resolveInitialSortingOrder(draft),
         deduction_percentage: draft
             ? Number(draft.deduction_percentage)
             : (deductionConfig?.percentage ?? 5),

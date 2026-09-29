@@ -99,6 +99,7 @@ function createSampleTransaction(
         has_sorting: false,
         sorting_weight: 0,
         sorting_price_per_kg: 0,
+        sorting_order: 'sortiran_dulu',
         sorting_deduction_percentage: 5,
         sorting_deduction_weight: 5,
         sorting_net_weight: 95,

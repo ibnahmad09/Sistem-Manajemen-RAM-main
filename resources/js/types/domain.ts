@@ -1,5 +1,7 @@
 // Domain types for siSawit RAM Management System
 
+import type { SortingOrder } from '@/lib/utils';
+
 export interface Farmer {
     id: number;
     name: string;
@@ -61,6 +63,7 @@ export interface WeighingTransaction {
     has_sorting: boolean;
     sorting_weight: number;
     sorting_price_per_kg: number;
+    sorting_order: SortingOrder;
     sorting_deduction_percentage: number;
     sorting_deduction_weight: number;
     sorting_net_weight: number;
